@@ -63,8 +63,8 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
         <View style={styles.headerBorder} />
       </View>
 
-      {/* Progress Section for Step 3 */}
-      {stepData.showProgressBar && (
+      {/* Progress Section for Step 3 only */}
+      {stepData.showProgressBar && currentStep === 3 && (
         <View style={styles.progressContainer}>
           <Text style={styles.stepText}>{stepData.stepText}</Text>
           <View style={styles.progressBar}>
@@ -81,15 +81,25 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           resizeMode="cover"
         />
       </View>
-{/* Main Content */}
-        <View style={styles.contentSection}>
-          <Text style={styles.mainHeading}>
-            {stepData.mainHeading}
-          </Text>
-          <Text style={styles.description}>
-            {stepData.description}
-          </Text>
+      {/* Main Content */}
+      <View style={styles.contentSection}>
+        <Text style={styles.mainHeading}>
+          {stepData.mainHeading}
+        </Text>
+        <Text style={styles.description}>
+          {stepData.description}
+        </Text>
+      </View>
+
+      {/* Progress Section for Step 2 only */}
+      {stepData.showProgressBar && currentStep === 2 && (
+        <View style={styles.progressContainer}>
+          <Text style={styles.stepText}>{stepData.stepText}</Text>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: stepData.progressFill }]} />
+          </View>
         </View>
+      )}
       {/* Bottom Content Container */}
       <View style={styles.bottomContent}>
         
