@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, Text, View, StatusBar, SafeAreaView, Image, TouchableOpacity } from 'react-native'
 
-const LoginScreen = ({ onBack, onSignUp, onPhoneLogin }) => {
+const LoginScreen = ({ onBack, onPhoneLogin }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#4A90E2" />
@@ -34,13 +34,6 @@ const LoginScreen = ({ onBack, onSignUp, onPhoneLogin }) => {
             <Text style={styles.mobileButtonText}>Continue with Mobile Number</Text>
           </TouchableOpacity>
           
-          {/* Sign Up Link */}
-          <View style={styles.signUpSection}>
-            <Text style={styles.signUpText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={onSignUp}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
       
@@ -70,7 +63,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(74, 144, 226, 0.7)',
+    backgroundColor: 'rgba(46, 125, 50, 0.7)',
   },
   content: {
     flex: 1,
@@ -111,7 +104,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   mobileButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#2E7D32',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -128,20 +121,6 @@ const styles = StyleSheet.create({
   mobileButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  signUpSection: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  signUpText: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  signUpLink: {
-    fontSize: 14,
-    color: '#4A90E2',
     fontWeight: '600',
   },
   homeIndicator: {

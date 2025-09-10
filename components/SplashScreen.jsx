@@ -16,7 +16,7 @@ const SplashScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#007AFF', // iOS blue color
+    backgroundColor: '#2E7D32', 
   },
   content: {
     flex: 1,

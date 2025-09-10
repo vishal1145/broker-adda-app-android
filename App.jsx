@@ -2,14 +2,12 @@ import React, { useEffect, useState } from 'react'
 import SplashScreen from './components/SplashScreen'
 import OnboardingScreen from './components/OnboardingScreen'
 import LoginScreen from './components/LoginScreen'
-import SignupScreen from './components/SignupScreen'
 import PhoneLoginScreen from './components/PhoneLoginScreen'
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true)
   const [currentScreen, setCurrentScreen] = useState(1)
   const [showLogin, setShowLogin] = useState(false)
-  const [showSignup, setShowSignup] = useState(false)
   const [showPhoneLogin, setShowPhoneLogin] = useState(false)
 
   useEffect(() => {
@@ -47,13 +45,6 @@ const App = () => {
     setShowLogin(false)
   }
 
-  const handleSignUp = () => {
-    setShowSignup(true)
-  }
-
-  const handleBackToLogin = () => {
-    setShowSignup(false)
-  }
 
   const handlePhoneLogin = () => {
     setShowPhoneLogin(true)
@@ -71,12 +62,9 @@ const App = () => {
     return <PhoneLoginScreen onBack={handleBackToMainLogin} />
   }
 
-  if (showSignup) {
-    return <SignupScreen onBack={handleBackToLogin} />
-  }
 
   if (showLogin) {
-    return <LoginScreen onBack={handleBackToOnboarding} onSignUp={handleSignUp} onPhoneLogin={handlePhoneLogin} />
+    return <LoginScreen onBack={handleBackToOnboarding} onPhoneLogin={handlePhoneLogin} />
   }
 
   return (
