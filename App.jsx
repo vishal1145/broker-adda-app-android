@@ -1,26 +1,92 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import SplashScreen from './components/SplashScreen'
+import OnboardingScreen from './components/OnboardingScreen'
+import LoginScreen from './components/LoginScreen'
+import SignupScreen from './components/SignupScreen'
+import PhoneLoginScreen from './components/PhoneLoginScreen'
 
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true)
+  const [currentScreen, setCurrentScreen] = useState(1)
+  const [showLogin, setShowLogin] = useState(false)
+  const [showSignup, setShowSignup] = useState(false)
+  const [showPhoneLogin, setShowPhoneLogin] = useState(false)
+
+  useEffect(() => {
+    // Show splash screen for 2 seconds, then show onboarding
+    const timer = setTimeout(() => {
+      setShowSplash(false)
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleNext = () => {
+    if (currentScreen === 1) {
+      setCurrentScreen(2)
+    } else if (currentScreen === 2) {
+      setCurrentScreen(3)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentScreen === 2) {
+      setCurrentScreen(1)
+    } else if (currentScreen === 3) {
+      setCurrentScreen(2)
+    }
+  }
+
+  const handleGetStarted = () => {
+    // Show login screen after onboarding completion
+    setShowLogin(true)
+  }
+
+  const handleBackToOnboarding = () => {
+    // Go back to onboarding from login
+    setShowLogin(false)
+  }
+
+  const handleSignUp = () => {
+    setShowSignup(true)
+  }
+
+  const handleBackToLogin = () => {
+    setShowSignup(false)
+  }
+
+  const handlePhoneLogin = () => {
+    setShowPhoneLogin(true)
+  }
+
+  const handleBackToMainLogin = () => {
+    setShowPhoneLogin(false)
+  }
+
+  if (showSplash) {
+    return <SplashScreen />
+  }
+
+  if (showPhoneLogin) {
+    return <PhoneLoginScreen onBack={handleBackToMainLogin} />
+  }
+
+  if (showSignup) {
+    return <SignupScreen onBack={handleBackToLogin} />
+  }
+
+  if (showLogin) {
+    return <LoginScreen onBack={handleBackToOnboarding} onSignUp={handleSignUp} onPhoneLogin={handlePhoneLogin} />
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Hello React Native App!</Text>
-    </View>
+    <OnboardingScreen 
+      currentStep={currentScreen}
+      onNext={handleNext}
+      onBack={handleBack}
+      onGetStarted={handleGetStarted}
+    />
   )
 }
 
 export default App
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-})
