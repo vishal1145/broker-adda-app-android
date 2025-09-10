@@ -81,10 +81,7 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           resizeMode="cover"
         />
       </View>
-
-      {/* Bottom Content Container */}
-      <View style={styles.bottomContent}>
-        {/* Main Content */}
+{/* Main Content */}
         <View style={styles.contentSection}>
           <Text style={styles.mainHeading}>
             {stepData.mainHeading}
@@ -93,6 +90,9 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
             {stepData.description}
           </Text>
         </View>
+      {/* Bottom Content Container */}
+      <View style={styles.bottomContent}>
+        
 
         {/* Feature List for Step 3 */}
         {stepData.showFeatures && (
