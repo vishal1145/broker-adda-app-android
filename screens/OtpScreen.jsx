@@ -16,8 +16,8 @@ import { authAPI } from '../services/api'
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const [otp, setOtp] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showOtpDialpad, setShowOtpDialpad] = useState(false)
-  const [otpDialpadAnimation] = useState(new Animated.Value(0))
+  const [showOtpDialpad, setShowOtpDialpad] = useState(true)
+  const [otpDialpadAnimation] = useState(new Animated.Value(1))
 
   const handleVerifyOtp = async () => {
     if (!otp.trim()) {
@@ -95,16 +95,6 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
     }
   }
 
-  const toggleOtpDialpad = () => {
-    const newShowOtpDialpad = !showOtpDialpad
-    setShowOtpDialpad(newShowOtpDialpad)
-    
-    Animated.timing(otpDialpadAnimation, {
-      toValue: newShowOtpDialpad ? 1 : 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start()
-  }
 
   const handleOtpDialpadPress = (number) => {
     if (otp.length < 6) {
@@ -211,14 +201,12 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
             <View style={styles.otpContainer}>
               <View style={styles.otpBoxesContainer}>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <TouchableOpacity
+                  <View
                     key={index}
                     style={[
                       styles.otpBox,
                       { borderColor: otp.length > index ? '#2E7D32' : '#E5E5EA' }
                     ]}
-                    onPress={toggleOtpDialpad}
-                    activeOpacity={0.7}
                   >
                     <Text style={[
                       styles.otpBoxText,
@@ -226,7 +214,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                     ]}>
                       {otp[index] || '0'}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 ))}
               </View>
               <TouchableOpacity onPress={handleResendOtp} style={styles.resendButton}>
@@ -234,27 +222,24 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
               </TouchableOpacity>
             </View>
 
-            {/* Action Button */}
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                otp.length < 6 ? styles.actionButtonDisabled : null
-              ]} 
-              onPress={handleVerifyOtp}
-              disabled={isLoading || otp.length < 6}
-            >
-              <Text style={styles.actionButtonText}>
-                {isLoading ? 'Please wait...' : 'Verify OTP'}
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Terms */}
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              By continuing, you agree to our Terms of Service and Privacy Policy
+        </View>
+
+        {/* Action Button - Above dialpad */}
+        <View style={styles.actionButtonContainer}>
+          <TouchableOpacity 
+            style={[
+              styles.actionButton, 
+              otp.length < 6 ? styles.actionButtonDisabled : null
+            ]} 
+            onPress={handleVerifyOtp}
+            disabled={isLoading || otp.length < 6}
+          >
+            <Text style={styles.actionButtonText}>
+              {isLoading ? 'Please wait...' : 'Verify OTP'}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* OTP Dialpad */}
@@ -320,14 +305,14 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerSection: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 25,
   },
   illustrationTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#000000',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 15,
     lineHeight: 34,
   },
@@ -335,9 +320,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     color: '#8E8E93',
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 24,
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
   inputSection: {
     marginBottom: 30,
@@ -383,11 +368,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2E7D32',
   },
+  actionButtonContainer: {
+    paddingHorizontal: 30,
+    paddingBottom: 15,
+    paddingTop: 10,
+  },
   actionButton: {
     backgroundColor: '#2E7D32',
     paddingVertical: 18,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: 'center',
     shadowColor: '#2E7D32',
     shadowOffset: {
@@ -399,7 +389,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   actionButtonDisabled: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#C7C7CC',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -408,26 +398,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-  termsContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  termsText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
   dialpadSection: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 400,
+    height: 350,
     backgroundColor: '#F2F2F7',
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
@@ -442,7 +421,7 @@ const styles = StyleSheet.create({
   dialpadContainer: {
     flex: 1,
     backgroundColor: 'transparent',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 20,
   },
@@ -451,7 +430,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     minHeight: 60,
   },
   dialpadButton: {

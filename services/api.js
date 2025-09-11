@@ -1,7 +1,13 @@
 import axios from 'axios';
+import { API_BASE_URL } from '@env';
+
 const getBaseURL = () => {
-  // Your working ngrok URL from Postman
-  return 'https://9406b10bff6c.ngrok-free.app';
+  // Debug environment variable loading
+  console.log('API_BASE_URL from env:', API_BASE_URL);
+  console.log('Type of API_BASE_URL:', typeof API_BASE_URL);
+  
+  // Use environment variable or fallback to ngrok URL
+  return API_BASE_URL || 'https://9406b10bff6c.ngrok-free.app';
 };
 
 // Create axios instance with base configuration
@@ -49,17 +55,12 @@ api.interceptors.response.use(
   }
 );
 
-// Test connection function
+// Test connection function - simplified
 export const testConnection = async () => {
-  try {
-    console.log('Testing connection to:', getBaseURL());
-    const response = await api.get('/');
-    console.log('Connection test successful:', response.status);
-    return true;
-  } catch (error) {
-    console.log('Connection test failed:', error.message);
-    return false;
-  }
+  // Skip connection test to avoid 404 errors
+  // The actual API call will handle connection issues
+  console.log('Skipping connection test, proceeding with API call...');
+  return true;
 };
 
 // Auth API functions
@@ -67,17 +68,14 @@ export const authAPI = {
   // Send OTP to phone number
   sendOTP: async (phone) => {
     try {
-      // Test connection first
-      const isConnected = await testConnection();
-      if (!isConnected) {
-        throw new Error('Cannot connect to server. Please check if your backend is running.');
-      }
-
+      console.log('Sending OTP to:', phone);
       const response = await api.post('/api/auth/login', {
         phone: phone
       });
+      console.log('OTP sent successfully:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Send OTP error:', error);
       throw error;
     }
   },

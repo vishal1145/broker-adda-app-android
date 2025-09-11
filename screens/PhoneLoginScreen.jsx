@@ -274,32 +274,26 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
                   </Text>
                 </View>
               </TouchableOpacity>
-              <Text style={styles.inputHelper}>
-                {phoneNumber.length > 0 ? `${phoneNumber.length}/10 digits` : 'Use the dialpad below to enter your number'}
-              </Text>
             </View>
 
-            {/* Action Button */}
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                phoneNumber.length < 10 ? styles.actionButtonDisabled : null
-              ]} 
-              onPress={handleSendOtp}
-              disabled={isLoading || phoneNumber.length < 10}
-            >
-              <Text style={styles.actionButtonText}>
-                {isLoading ? 'Please wait...' : 'Login'}
-              </Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Terms */}
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              By continuing, you agree to our Terms of Service and Privacy Policy
+        </View>
+
+        {/* Action Button - Above dialpad */}
+        <View style={styles.actionButtonContainer}>
+          <TouchableOpacity 
+            style={[
+              styles.actionButton, 
+              phoneNumber.length < 10 ? styles.actionButtonDisabled : null
+            ]} 
+            onPress={handleSendOtp}
+            disabled={isLoading || phoneNumber.length < 10}
+          >
+            <Text style={styles.actionButtonText}>
+              {isLoading ? 'Please wait...' : 'Login'}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Dialpad - Only show for phone number entry */}
@@ -316,10 +310,8 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
               }]
             }
           ]}
-        >
+        >          
           {renderDialpad()}
-          {/* Home Indicator */}
-          {/* <View style={styles.homeIndicator} /> */}
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -361,13 +353,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    flex: 0.5,
+    flex: 0.4,
     paddingHorizontal: 30,
     paddingTop: 20,
     paddingBottom: 20,
   },
   headerSection: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 25,
   },
   illustrationContainer: {
@@ -382,7 +374,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#000000',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 15,
     lineHeight: 34,
   },
@@ -390,9 +382,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     color: '#8E8E93',
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 24,
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
   inputSection: {
     marginBottom: 30,
@@ -452,11 +444,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
+  actionButtonContainer: {
+    paddingHorizontal:30,
+    paddingBottom: 15,
+    paddingTop: 10,
+  },
   actionButton: {
     backgroundColor: '#2E7D32',
     paddingVertical: 18,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: 'center',
     shadowColor: '#2E7D32',
     shadowOffset: {
@@ -468,7 +465,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   actionButtonDisabled: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#C7C7CC',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -493,10 +490,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 400,
+    height: 350,
     backgroundColor: '#F2F2F7',
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingTop: 10,
+    paddingBottom: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
@@ -511,7 +508,7 @@ const styles = StyleSheet.create({
   dialpadContainer: {
     flex: 1,
     backgroundColor: 'transparent',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 20,
   },
@@ -546,7 +543,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     minHeight: 60,
   },
   dialpadButton: {
