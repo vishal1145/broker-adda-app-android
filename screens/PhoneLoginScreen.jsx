@@ -319,7 +319,7 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
         >
           {renderDialpad()}
           {/* Home Indicator */}
-          <View style={styles.homeIndicator} />
+          {/* <View style={styles.homeIndicator} /> */}
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -493,8 +493,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 450,
-    backgroundColor: '#F5F5F5',
+    height: 400,
+    backgroundColor: '#F2F2F7',
     paddingTop: 20,
     paddingBottom: 30,
     borderTopLeftRadius: 20,
@@ -543,29 +543,29 @@ const styles = StyleSheet.create({
   },
   dialpadRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    minHeight: 70,
+    marginBottom: 15,
+    paddingHorizontal: 20,
+    minHeight: 60,
   },
   dialpadButton: {
-    width: 70,
-    height: 70,
+    flex: 1,
+    height: 60,
     backgroundColor: '#FFFFFF',
-    borderRadius: 35,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 0,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   emptyButton: {
     backgroundColor: 'transparent',
@@ -574,29 +574,30 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   backspaceButton: {
-    backgroundColor: '#F8F9FA',
-    borderColor: '#2E7D32',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
+    borderWidth: 0,
   },
   zeroButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#2E7D32',
-    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderWidth: 0,
   },
   dialpadNumber: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
-    color: '#333333',
+    color: '#000000',
     marginBottom: 2,
   },
   dialpadLetters: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: '#000000',
     letterSpacing: 0.3,
   },
   backspaceIcon: {
-    fontSize: 24,
-    color: '#2E7D32',
+    fontSize: 20,
+    color: '#000000',
     fontWeight: '700',
   },
   homeIndicator: {

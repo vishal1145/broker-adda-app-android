@@ -209,18 +209,26 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
           {/* Input Section */}
           <View style={styles.inputSection}>
             <View style={styles.otpContainer}>
-              <TouchableOpacity 
-                style={styles.otpInput}
-                onPress={toggleOtpDialpad}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  styles.otpInputText,
-                  { color: otp ? '#000000' : '#8E8E93' }
-                ]}>
-                  {otp || '000000'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.otpBoxesContainer}>
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.otpBox,
+                      { borderColor: otp.length > index ? '#2E7D32' : '#E5E5EA' }
+                    ]}
+                    onPress={toggleOtpDialpad}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.otpBoxText,
+                      { color: otp[index] ? '#000000' : '#8E8E93' }
+                    ]}>
+                      {otp[index] || '0'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <TouchableOpacity onPress={handleResendOtp} style={styles.resendButton}>
                 <Text style={styles.resendButtonText}>Resend OTP</Text>
               </TouchableOpacity>
@@ -265,8 +273,6 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
           ]}
         >
           {renderOtpDialpad()}
-          {/* Home Indicator */}
-          <View style={styles.homeIndicator} />
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -340,22 +346,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
-  otpInput: {
+  otpBoxesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     width: '100%',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  otpBox: {
+    width: 45,
+    height: 55,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  otpInputText: {
+  otpBoxText: {
     fontSize: 24,
     fontWeight: '600',
-    letterSpacing: 8,
+    color: '#8E8E93',
   },
   resendButton: {
     paddingVertical: 10,
@@ -407,8 +424,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 450,
-    backgroundColor: '#F5F5F5',
+    height: 400,
+    backgroundColor: '#F2F2F7',
     paddingTop: 20,
     paddingBottom: 30,
     borderTopLeftRadius: 20,
@@ -431,29 +448,29 @@ const styles = StyleSheet.create({
   },
   dialpadRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    minHeight: 70,
+    marginBottom: 15,
+    paddingHorizontal: 20,
+    minHeight: 60,
   },
   dialpadButton: {
-    width: 70,
-    height: 70,
+    flex: 1,
+    height: 60,
     backgroundColor: '#FFFFFF',
-    borderRadius: 35,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 0,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   emptyButton: {
     backgroundColor: 'transparent',
@@ -462,29 +479,30 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   backspaceButton: {
-    backgroundColor: '#F8F9FA',
-    borderColor: '#2E7D32',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E0E0E0',
+    borderWidth: 0,
   },
   zeroButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#2E7D32',
-    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    borderWidth: 0,
   },
   dialpadNumber: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
-    color: '#333333',
+    color: '#000000',
     marginBottom: 2,
   },
   dialpadLetters: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: '#000000',
     letterSpacing: 0.3,
   },
   backspaceIcon: {
-    fontSize: 24,
-    color: '#2E7D32',
+    fontSize: 20,
+    color: '#000000',
     fontWeight: '700',
   },
   homeIndicator: {
