@@ -11,6 +11,7 @@ import {
   Platform,
   Animated
 } from 'react-native'
+import { authAPI } from '../services/api'
 
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const [otp, setOtp] = useState('')
@@ -31,19 +32,66 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
 
     setIsLoading(true)
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Format phone number with country code
+      const formattedPhone = `+91${phoneNumber}`
+      
+      // Call the OTP verification API
+      const response = await authAPI.verifyOTP(formattedPhone, otp)
+      
       setIsLoading(false)
-      Alert.alert('Success', 'Phone number verified successfully!', [
-        { text: 'OK', onPress: onOtpVerified }
-      ])
-    }, 1500)
+      
+      // Navigate directly to home page without alert
+      console.log('OTP verified successfully, navigating to home...')
+      onOtpVerified()
+      
+      console.log('OTP Verification Response:', response)
+    } catch (error) {
+      setIsLoading(false)
+      
+      // Handle different types of errors
+      let errorMessage = 'Failed to verify OTP. Please try again.'
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status
+        const data = error.response.data
+        
+        if (status === 400) {
+          errorMessage = data.message || 'Invalid OTP format'
+        } else if (status === 401) {
+          errorMessage = 'Invalid OTP. Please check and try again.'
+        } else if (status === 404) {
+          errorMessage = 'OTP expired. Please request a new one.'
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.'
+        } else {
+          errorMessage = data.message || `Verification failed with status ${status}`
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Network error. Please check your internet connection.'
+      } else {
+        // Other error
+        errorMessage = error.message || 'An unexpected error occurred'
+      }
+      
+      console.error('OTP Verification Error:', error)
+      Alert.alert('Error', errorMessage)
+    }
   }
 
-  const handleResendOtp = () => {
-    Alert.alert('OTP Resent', 'New verification code sent to your phone')
-    if (onResendOtp) {
-      onResendOtp()
+  const handleResendOtp = async () => {
+    try {
+      const formattedPhone = `+91${phoneNumber}`
+      await authAPI.sendOTP(formattedPhone)
+      console.log('OTP resent successfully')
+      if (onResendOtp) {
+        onResendOtp()
+      }
+    } catch (error) {
+      console.error('Resend OTP Error:', error)
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.')
     }
   }
 
