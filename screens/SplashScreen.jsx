@@ -8,7 +8,7 @@ const SplashScreen = () => {
       <View style={styles.content}>
         <Text style={styles.logo}>Broker Adda</Text>
       </View>
-      <View style={styles.homeIndicator} />
+      {/* <View style={styles.homeIndicator} /> */}
     </SafeAreaView>
   )
 }

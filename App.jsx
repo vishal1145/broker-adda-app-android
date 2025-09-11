@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import SplashScreen from './components/SplashScreen'
-import OnboardingScreen from './components/OnboardingScreen'
-import LoginScreen from './components/LoginScreen'
-import PhoneLoginScreen from './components/PhoneLoginScreen'
+import SplashScreen from './screens/SplashScreen'
+import OnboardingScreen from './screens/OnboardingScreen'
+import LoginScreen from './screens/LoginScreen'
+import PhoneLoginScreen from './screens/PhoneLoginScreen'
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true)
