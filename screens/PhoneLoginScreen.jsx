@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    flex: 0.4,
+    flex: 0.5,
     paddingHorizontal: 30,
     paddingTop: 20,
     paddingBottom: 20,

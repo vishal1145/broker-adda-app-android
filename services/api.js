@@ -7,7 +7,7 @@ const getBaseURL = () => {
   console.log('Type of API_BASE_URL:', typeof API_BASE_URL);
   
   // Use environment variable or fallback to ngrok URL
-  return API_BASE_URL || 'https://9406b10bff6c.ngrok-free.app';
+  return API_BASE_URL || 'https://broker-adda-be.algofolks.com/';
 };
 
 // Create axios instance with base configuration

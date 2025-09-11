@@ -9,108 +9,241 @@ import {
   ScrollView,
   Dimensions
 } from 'react-native'
+import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
 import Footer from '../components/Footer'
 
 const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
-  const [userName] = useState('Ankit Yadav')
-  const [userRole] = useState('CHANNEL PARTNER')
+  const [userName] = useState('Jordan')
+  const [selectedTab, setSelectedTab] = useState('Broker')
   
-  // Performance data
+  // Performance data matching the screenshot
   const [performanceData] = useState({
-    totalVisitors: 3847,
-    activeTags: 1264,
-    expiredTags: 586,
-    visitorsChange: 12,
-    activeTagsChange: 8.3,
-    expiredTagsChange: -4.2
+    totalLeadsCreated: 1250,
+    leadsReceived: 890,
+    leadsClosed: 450,
+    leadsInProgress: 210,
+    leadsCreatedChange: 8.5,
+    leadsReceivedChange: 12.3,
+    leadsClosedChange: 5.1,
+    leadsInProgressChange: 2.8
   })
 
-  // Tag validity data
-  const [tagValidityData] = useState({
-    active: 45,
-    expiring7Days: 25,
-    expiring30Days: 15,
-    expired: 15
+  // Properties data
+  const [propertiesData] = useState({
+    activeProperties: 75,
+    soldExpired: 15,
+    pendingApproval: 8,
+    activeChange: 4.5,
+    soldChange: 4.5,
+    pendingChange: 4.5
+  })
+
+  // Messages data
+  const [messagesData] = useState({
+    unreadMessages: 12,
+    customerInquiries: 5
+  })
+
+  // Notifications data
+  const [notifications] = useState([
+    {
+      id: 1,
+      title: 'New Announcement: Q3 Performance Review',
+      description: 'Read the latest company-wide performance update.',
+      time: '2 hours ago',
+      type: 'announcement',
+      icon: '🔔'
+    },
+    {
+      id: 2,
+      title: 'Lead Transfer: John Doe from Sarah K.',
+      description: 'New lead for \'123 Oak St\' transferred to you.',
+      time: '5 hours ago',
+      type: 'transfer',
+      icon: '⚡'
+    },
+    {
+      id: 3,
+      title: 'Action Required: Incomplete Lead Profile',
+      description: 'Update missing details for \'Jane Smith\'.',
+      time: '1 day ago',
+      type: 'action',
+      icon: '⚠️'
+    }
+  ])
+
+  // Leads by status data
+  const [leadsStatusData] = useState({
+    closed: 45,
+    inProgress: 25,
+    new: 18,
+    rejected: 12
   })
 
   const DonutChart = ({ data, size = 200 }) => {
     const colors = {
-      active: '#1A1A1A',
-      expiring7Days: '#FFD700',
-      expiring30Days: '#87CEEB',
-      expired: '#FF6B6B'
+      closed: '#2E7D32',
+      inProgress: '#FFD700', 
+      new: '#2196F3',
+      rejected: '#F44336'
     }
 
-    // Create a simple circular representation using colored circles
     const segments = [
-      { color: colors.active, percentage: data.active, label: 'Active' },
-      { color: colors.expiring7Days, percentage: data.expiring7Days, label: 'Expiring in 7 Days' },
-      { color: colors.expiring30Days, percentage: data.expiring30Days, label: 'Expiring in 30 Days' },
-      { color: colors.expired, percentage: data.expired, label: 'Expired' }
+      { color: colors.closed, percentage: data.closed, label: 'Closed' },
+      { color: colors.inProgress, percentage: data.inProgress, label: 'In Progress' },
+      { color: colors.new, percentage: data.new, label: 'New' },
+      { color: colors.rejected, percentage: data.rejected, label: 'Rejected' }
     ]
 
+    const radius = size / 2 - 20
+    const innerRadius = radius - 25
+    const centerX = size / 2
+    const centerY = size / 2
+
+    // Create donut chart using stroke-based approach
     return (
       <View style={styles.donutContainer}>
-        <View style={styles.donutChart}>
-          <View style={styles.donutCenter}>
-            <Text style={styles.donutCenterText}>100%</Text>
-            <Text style={styles.donutCenterSubtext}>Total Tags</Text>
-          </View>
-        </View>
-        <View style={styles.donutSegments}>
-          {segments.map((segment, index) => (
-            <View key={index} style={styles.segmentRow}>
-              <View style={[styles.segmentColor, { backgroundColor: segment.color }]} />
-              <Text style={styles.segmentText}>{segment.percentage}%</Text>
+        <Svg width={size} height={size} style={styles.donutSvg}>
+          <G transform={`translate(${centerX}, ${centerY})`}>
+            {/* Background circle */}
+            <Circle
+              r={radius}
+              stroke="#F5F5F5"
+              strokeWidth={25}
+              fill="transparent"
+            />
+            
+            {/* Segments using stroke */}
+            {segments.map((segment, index) => {
+              const circumference = 2 * Math.PI * radius
+              const segmentLength = (segment.percentage / 100) * circumference
+              const strokeDasharray = `${segmentLength} ${circumference}`
+              const strokeDashoffset = -((segments.slice(0, index).reduce((sum, s) => sum + s.percentage, 0) / 100) * circumference)
+              
+              return (
+                <Circle
+                  key={index}
+                  r={radius}
+                  stroke={segment.color}
+                  strokeWidth={25}
+                  fill="transparent"
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  transform={`rotate(-90)`}
+                />
+              )
+            })}
+            
+            {/* Center hole */}
+            <Circle
+              r={innerRadius}
+              fill="#FFFFFF"
+            />
+          </G>
+        </Svg>
+        
+        {/* Legend */}
+        <View style={styles.legendContainer}>
+          {/* First row: Closed and In Progress */}
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.closed }]} />
+              <Text style={styles.legendText}>Closed</Text>
             </View>
-          ))}
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.inProgress }]} />
+              <Text style={styles.legendText}>In Progress</Text>
+            </View>
+          </View>
+          
+          {/* Second row: New and Rejected */}
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.new }]} />
+              <Text style={styles.legendText}>New</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: colors.rejected }]} />
+              <Text style={styles.legendText}>Rejected</Text>
+            </View>
+          </View>
         </View>
       </View>
     )
   }
 
-  const PerformanceCard = ({ title, value, change, changeType, icon, iconColor }) => (
-    <View style={styles.performanceCard}>
+  const MetricCard = ({ title, value, change, icon, iconColor, isDownward = false }) => (
+    <View style={styles.metricCard}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
         <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
           <Text style={styles.iconText}>{icon}</Text>
         </View>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <View style={styles.changePill}>
+          <Text style={styles.changeArrow}>{isDownward ? '↘' : '↗'}</Text>
+          <Text style={styles.changeText}>{change}%</Text>
+        </View>
       </View>
       <Text style={styles.cardValue}>{value.toLocaleString()}</Text>
-      <Text style={[
-        styles.cardChange,
-        { color: changeType === 'positive' ? '#4CAF50' : '#F44336' }
-      ]}>
-        {changeType === 'positive' ? '+' : ''}{change}% from last month
-      </Text>
     </View>
   )
 
-  // Tab press handler is now passed from parent component
-
+  const NotificationItem = ({ notification }) => (
+    <View style={styles.notificationItem}>
+      <View style={styles.notificationIcon}>
+        <Text style={styles.bellIcon}>{notification.icon}</Text>
+      </View>
+      <View style={styles.notificationContent}>
+        <Text style={styles.notificationTitle}>{notification.title}</Text>
+        <Text style={styles.notificationDescription}>{notification.description}</Text>
+        <Text style={styles.notificationTime}>{notification.time}</Text>
+      </View>
+    </View>
+  )
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.welcomeText}>Welcome, {userName}</Text>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>{userRole}</Text>
-            </View>
+          <View style={styles.headerLeft}></View>
+          <Text style={styles.welcomeText}>Welcome, {userName}!</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Text style={styles.bellIcon}>🔔</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.profileButton} onPress={onLogout}>
+              <View style={styles.profileIcon}>
+                <Text style={styles.profileInitials}>
+                  {userName[0]}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.profileButton} onPress={onLogout}>
-            <View style={styles.profileIcon}>
-              <Text style={styles.profileInitials}>
-                {userName.split(' ').map(n => n[0]).join('')}
-              </Text>
-            </View>
+        </View>
+
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'Broker' && styles.activeTab]}
+            onPress={() => setSelectedTab('Broker')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'Broker' && styles.activeTabText]}>
+              Broker
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, selectedTab === 'Channel Partner' && styles.activeTab]}
+            onPress={() => setSelectedTab('Channel Partner')}
+          >
+            <Text style={[styles.tabText, selectedTab === 'Channel Partner' && styles.activeTabText]}>
+              Channel Partner
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -118,46 +251,111 @@ const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Performance Summary</Text>
           <View style={styles.performanceGrid}>
-            <PerformanceCard
-              title="Total Visitors"
-              value={performanceData.totalVisitors}
-              change={performanceData.visitorsChange}
-              changeType="positive"
+            <MetricCard
+              title="Total Leads Created"
+              value={performanceData.totalLeadsCreated}
+              change={performanceData.leadsCreatedChange}
+              icon="📈"
+              iconColor="#E8F5E8"
+            />
+            <MetricCard
+              title="Leads Received"
+              value={performanceData.leadsReceived}
+              change={performanceData.leadsReceivedChange}
+              icon="$"
+              iconColor="#E8F5E8"
+            />
+            <MetricCard
+              title="Leads Closed"
+              value={performanceData.leadsClosed}
+              change={performanceData.leadsClosedChange}
+              icon="📋"
+              iconColor="#E8F5E8"
+            />
+            <MetricCard
+              title="Leads In Progress"
+              value={performanceData.leadsInProgress}
+              change={performanceData.leadsInProgressChange}
               icon="👥"
-              iconColor="#FF6B6B"
-            />
-            <PerformanceCard
-              title="Active Tags"
-              value={performanceData.activeTags}
-              change={performanceData.activeTagsChange}
-              changeType="positive"
-              icon="✓"
-              iconColor="#2196F3"
-            />
-            <PerformanceCard
-              title="Expired Tags"
-              value={performanceData.expiredTags}
-              change={performanceData.expiredTagsChange}
-              changeType="negative"
-              icon="⏰"
-              iconColor="#FFD700"
+              iconColor="#E8F5E8"
+              isDownward={true}
             />
           </View>
         </View>
 
-        {/* Tag Validity Status */}
+        {/* Properties Summary */}
         <View style={styles.section}>
-          <View style={styles.tagValidityCard}>
-            <View style={styles.tagValidityHeader}>
-              <Text style={styles.tagValidityTitle}>Tag Validity Status</Text>
-              <TouchableOpacity>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Properties Summary</Text>
+          <View style={styles.propertiesGrid}>
+            <MetricCard
+              title="Active Properties"
+              value={propertiesData.activeProperties}
+              change={propertiesData.activeChange}
+              icon="🏢"
+              iconColor="#2E7D32"
+            />
+            <MetricCard
+              title="Sold/Expired"
+              value={propertiesData.soldExpired}
+              change={propertiesData.soldChange}
+              icon="🏠"
+              iconColor="#2E7D32"
+            />
+            <MetricCard
+              title="Pending Approval"
+              value={propertiesData.pendingApproval}
+              change={propertiesData.pendingChange}
+              icon="📍"
+              iconColor="#2E7D32"
+            />
+          </View>
+        </View>
+
+        {/* Messages & Inquiries */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Messages & Inquiries</Text>
+          <View style={styles.messagesContainer}>
+            <View style={styles.messageItem}>
+              <View style={styles.messageIcon}>
+                <Text style={styles.envelopeIcon}>✉️</Text>
+              </View>
+              <Text style={styles.messageText}>Unread Messages</Text>
+              <View style={styles.messageBadge}>
+                <Text style={styles.badgeText}>{messagesData.unreadMessages}</Text>
+              </View>
             </View>
-            
-            <View style={styles.chartContainer}>
-              <DonutChart data={tagValidityData} size={200} />
+            <View style={styles.messageItem}>
+              <View style={styles.messageIcon}>
+                <Text style={styles.chatIcon}>💬</Text>
+              </View>
+              <Text style={styles.messageText}>Customer Inquiries</Text>
+              <View style={styles.messageBadge}>
+                <Text style={styles.badgeText}>{messagesData.customerInquiries}</Text>
+              </View>
             </View>
+          </View>
+        </View>
+
+        {/* Notifications */}
+        <View style={styles.section}>
+          <View style={styles.notificationsHeader}>
+            <Text style={styles.sectionTitle}>Notifications</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.notificationsContainer}>
+            {notifications.map((notification) => (
+              <NotificationItem key={notification.id} notification={notification} />
+            ))}
+          </View>
+        </View>
+
+        {/* Leads by Status */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Leads by Status</Text>
+          <View style={styles.chartCard}>
+            <DonutChart data={leadsStatusData} size={200} />
           </View>
         </View>
       </ScrollView>
@@ -169,7 +367,7 @@ const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: '#FFFFFF',
   },
   scrollView: {
     flex: 1,
@@ -177,47 +375,74 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingTop: 40,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   headerLeft: {
-    flex: 1,
+    width: 60,
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
+    color: '#000000',
   },
-  roleBadge: {
-    backgroundColor: '#333333',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 60,
+    justifyContent: 'flex-end',
   },
-  roleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+  notificationButton: {
+    marginRight: 6,
+    padding: 8,
+  },
+  bellIcon: {
+    fontSize: 20,
   },
   profileButton: {
-    marginLeft: 16,
+    marginLeft: 4,
   },
   profileIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#FF6B6B',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2E7D32',
     alignItems: 'center',
     justifyContent: 'center',
   },
   profileInitials: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginHorizontal: 5,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F5',
+  },
+  activeTab: {
+    backgroundColor: '#2E7D32',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666666',
+    textAlign: 'center',
+  },
+  activeTabText: {
     color: '#FFFFFF',
   },
   section: {
@@ -227,7 +452,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#000000',
     marginBottom: 20,
   },
   performanceGrid: {
@@ -235,100 +460,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  performanceCard: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: 16,
-    padding: 20,
+  propertiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  metricCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
     width: (width - 60) / 2,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  cardValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  cardChange: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  tagValidityCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  tagValidityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  tagValidityTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-  },
-  viewAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FF6B6B',
-  },
-  chartContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  donutContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  donutChart: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 30,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -337,38 +479,213 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    alignItems: 'flex-start',
   },
-  donutCenter: {
+  cardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
   },
-  donutCenterText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#333333',
-  },
-  donutCenterSubtext: {
-    fontSize: 12,
+  cardTitle: {
+    fontSize: 14,
     fontWeight: '500',
     color: '#666666',
-    marginTop: 4,
-  },
-  donutSegments: {
+    marginLeft: 8,
     flex: 1,
+    marginRight: 8,
   },
-  segmentRow: {
+  iconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconText: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '600',
+  },
+  cardValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+    textAlign: 'left',
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  changePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+  },
+  changeArrow: {
+    fontSize: 12,
+    color: '#2E7D32',
+    marginRight: 4,
+  },
+  changeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  messagesContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  messageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
   },
-  segmentColor: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  messageIcon: {
     marginRight: 12,
   },
-  segmentText: {
+  envelopeIcon: {
+    fontSize: 20,
+  },
+  chatIcon: {
+    fontSize: 20,
+  },
+  messageText: {
     fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    flex: 1,
+  },
+  messageBadge: {
+    backgroundColor: '#2E7D32',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
     fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  notificationsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  notificationsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  notificationIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  notificationDescription: {
+    fontSize: 12,
+    color: '#666666',
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 11,
+    color: '#999999',
+  },
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  donutContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutSvg: {
+    marginBottom: 20,
+  },
+  legendContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 12,
+    marginVertical: 2,
+  },
+  legendColor: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 13,
+    fontWeight: '400',
     color: '#333333',
   },
 })
