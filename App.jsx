@@ -54,12 +54,20 @@ const App = () => {
     setShowPhoneLogin(false)
   }
 
+  const handleLoginSuccess = () => {
+    // Handle successful login - you can navigate to main app or dashboard
+    setShowPhoneLogin(false)
+    setShowLogin(false)
+    // Add your main app navigation logic here
+    console.log('Login successful!')
+  }
+
   if (showSplash) {
     return <SplashScreen />
   }
 
   if (showPhoneLogin) {
-    return <PhoneLoginScreen onBack={handleBackToMainLogin} />
+    return <PhoneLoginScreen onBack={handleBackToMainLogin} onLoginSuccess={handleLoginSuccess} />
   }
 
 

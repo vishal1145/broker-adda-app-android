@@ -5,30 +5,27 @@ import {
   View, 
   StatusBar, 
   SafeAreaView, 
-  TextInput, 
   TouchableOpacity, 
   Alert,
   KeyboardAvoidingView,
   Platform,
   Animated
 } from 'react-native'
-import OtpScreen from './OtpScreen'
 
-const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [isOtpSent, setIsOtpSent] = useState(false)
+const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
+  const [otp, setOtp] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showDialpad, setShowDialpad] = useState(true)
-  const [dialpadAnimation] = useState(new Animated.Value(1))
+  const [showOtpDialpad, setShowOtpDialpad] = useState(false)
+  const [otpDialpadAnimation] = useState(new Animated.Value(0))
 
-  const handleSendOtp = async () => {
-    if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter your phone number')
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) {
+      Alert.alert('Error', 'Please enter the OTP')
       return
     }
 
-    if (phoneNumber.length < 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number')
+    if (otp.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit OTP')
       return
     }
 
@@ -37,78 +34,47 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
-      setIsOtpSent(true)
-      Alert.alert('OTP Sent', `Verification code sent to +91 ${phoneNumber}`)
+      Alert.alert('Success', 'Phone number verified successfully!', [
+        { text: 'OK', onPress: onOtpVerified }
+      ])
     }, 1500)
-  }
-
-  const handleOtpVerified = () => {
-    onLoginSuccess()
   }
 
   const handleResendOtp = () => {
     Alert.alert('OTP Resent', 'New verification code sent to your phone')
+    if (onResendOtp) {
+      onResendOtp()
+    }
   }
 
-  const handleBackToPhone = () => {
-    setIsOtpSent(false)
-  }
-
-  const formatPhoneNumber = (text) => {
-    // Remove all non-numeric characters
-    const cleaned = text.replace(/\D/g, '')
+  const toggleOtpDialpad = () => {
+    const newShowOtpDialpad = !showOtpDialpad
+    setShowOtpDialpad(newShowOtpDialpad)
     
-    // Limit to 10 digits
-    const limited = cleaned.slice(0, 10)
-    
-    setPhoneNumber(limited)
+    Animated.timing(otpDialpadAnimation, {
+      toValue: newShowOtpDialpad ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start()
   }
 
-  const handleDialpadPress = (number) => {
-    if (phoneNumber.length < 10) {
-      setPhoneNumber(prev => prev + number)
+  const handleOtpDialpadPress = (number) => {
+    if (otp.length < 6) {
+      setOtp(prev => prev + number)
     }
   }
 
-  const handleZeroPress = () => {
-    if (phoneNumber.length < 10) {
-      setPhoneNumber(prev => prev + '0')
+  const handleOtpZeroPress = () => {
+    if (otp.length < 6) {
+      setOtp(prev => prev + '0')
     }
   }
 
-
-  const handleDialpadPressIn = (number) => {
-    // Add haptic feedback or visual feedback here if needed
+  const handleOtpBackspace = () => {
+    setOtp(prev => prev.slice(0, -1))
   }
 
-  const handleBackspace = () => {
-    setPhoneNumber(prev => prev.slice(0, -1))
-  }
-
-  const openDialpad = () => {
-    if (!isOtpSent && !showDialpad) {
-      setShowDialpad(true)
-      
-      Animated.timing(dialpadAnimation, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start()
-    }
-  }
-
-  const hideDialpad = () => {
-    if (showDialpad) {
-      setShowDialpad(false)
-      Animated.timing(dialpadAnimation, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start()
-    }
-  }
-
-  const renderDialpad = () => {
+  const renderOtpDialpad = () => {
     const dialpadNumbers = [
       ['1', '2', '3'],
       ['4', '5', '6'],
@@ -123,7 +89,7 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
               <TouchableOpacity
                 key={`${rowIndex}-${colIndex}`}
                 style={styles.dialpadButton}
-                onPress={() => handleDialpadPress(number)}
+                onPress={() => handleOtpDialpadPress(number)}
               >
                 <Text style={styles.dialpadNumber}>{number}</Text>
                 {number === '2' && <Text style={styles.dialpadLetters}>ABC</Text>}
@@ -146,33 +112,20 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.dialpadButton, styles.zeroButton]} 
-            onPress={handleZeroPress}
+            onPress={handleOtpZeroPress}
             activeOpacity={0.7}
           >
             <Text style={styles.dialpadNumber}>0</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.dialpadButton, styles.backspaceButton]} 
-            onPress={handleBackspace}
+            onPress={handleOtpBackspace}
             activeOpacity={0.7}
           >
             <Text style={styles.backspaceIcon}>⌫</Text>
           </TouchableOpacity>
         </View>
       </View>
-    )
-  }
-
-
-  // Show OTP screen when OTP is sent
-  if (isOtpSent) {
-    return (
-      <OtpScreen
-        phoneNumber={phoneNumber}
-        onBack={handleBackToPhone}
-        onOtpVerified={handleOtpVerified}
-        onResendOtp={handleResendOtp}
-      />
     )
   }
 
@@ -189,7 +142,7 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Phone Verification</Text>
+          <Text style={styles.headerTitle}>Enter Verification Code</Text>
           <View style={styles.headerBorder} />
         </View>
 
@@ -198,52 +151,44 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
           {/* Header Section */}
           <View style={styles.headerSection}>
             <Text style={styles.illustrationTitle}>
-              Login with Phone Number
+              Enter Verification Code
             </Text>
             <Text style={styles.illustrationSubtitle}>
-              Please enter your phone number correctly
+              We've sent a 6-digit code to +91 {phoneNumber}
             </Text>
           </View>
 
           {/* Input Section */}
           <View style={styles.inputSection}>
-            <View>
+            <View style={styles.otpContainer}>
               <TouchableOpacity 
-                style={[
-                  styles.phoneInputContainer,
-                  { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
-                ]}
-                onPress={openDialpad}
+                style={styles.otpInput}
+                onPress={toggleOtpDialpad}
                 activeOpacity={0.7}
               >
-                <View style={styles.countryCode}>
-                  <Text style={styles.countryCodeText}>+91</Text>
-                </View>
-                <View style={styles.phoneInputWrapper}>
-                  <Text style={[
-                    styles.phoneInputText,
-                    { color: phoneNumber ? '#000000' : '#8E8E93' }
-                  ]}>
-                    {phoneNumber || 'Enter your phone number'}
-                  </Text>
-                </View>
+                <Text style={[
+                  styles.otpInputText,
+                  { color: otp ? '#000000' : '#8E8E93' }
+                ]}>
+                  {otp || '000000'}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.inputHelper}>
-                {phoneNumber.length > 0 ? `${phoneNumber.length}/10 digits` : 'Use the dialpad below to enter your number'}
-              </Text>
+              <TouchableOpacity onPress={handleResendOtp} style={styles.resendButton}>
+                <Text style={styles.resendButtonText}>Resend OTP</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Action Button */}
             <TouchableOpacity 
               style={[
                 styles.actionButton, 
-                phoneNumber.length < 10 ? styles.actionButtonDisabled : null
+                otp.length < 6 ? styles.actionButtonDisabled : null
               ]} 
-              onPress={handleSendOtp}
-              disabled={isLoading || phoneNumber.length < 10}
+              onPress={handleVerifyOtp}
+              disabled={isLoading || otp.length < 6}
             >
               <Text style={styles.actionButtonText}>
-                {isLoading ? 'Please wait...' : 'Login'}
+                {isLoading ? 'Please wait...' : 'Verify OTP'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -256,14 +201,14 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
           </View>
         </View>
 
-        {/* Dialpad - Only show for phone number entry */}
+        {/* OTP Dialpad */}
         <Animated.View 
           style={[
             styles.dialpadSection,
             {
-              opacity: dialpadAnimation,
+              opacity: otpDialpadAnimation,
               transform: [{
-                translateY: dialpadAnimation.interpolate({
+                translateY: otpDialpadAnimation.interpolate({
                   inputRange: [0, 1],
                   outputRange: [300, 0],
                 })
@@ -271,7 +216,7 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
             }
           ]}
         >
-          {renderDialpad()}
+          {renderOtpDialpad()}
           {/* Home Indicator */}
           <View style={styles.homeIndicator} />
         </Animated.View>
@@ -324,14 +269,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 25,
   },
-  illustrationContainer: {
-    alignItems: 'center',
-    marginBottom: 50,
-  },
-  phoneIcon: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
   illustrationTitle: {
     fontSize: 28,
     fontWeight: '700',
@@ -351,60 +288,35 @@ const styles = StyleSheet.create({
   inputSection: {
     marginBottom: 30,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  inputHelper: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  phoneInputContainer: {
-    flexDirection: 'row',
+  otpContainer: {
     alignItems: 'center',
+    marginBottom: 30,
+  },
+  otpInput: {
+    width: '100%',
     backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    borderWidth: 2,
-    marginBottom: 8,
-    overflow: 'hidden',
-    minHeight: 56,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  countryCode: {
-    backgroundColor: '#2E7D32',
-    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    paddingVertical: 20,
     paddingHorizontal: 20,
+    marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  countryCodeText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  otpInputText: {
+    fontSize: 24,
     fontWeight: '600',
+    letterSpacing: 8,
   },
-  phoneInputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
+  resendButton: {
+    paddingVertical: 10,
     paddingHorizontal: 20,
   },
-  phoneInputText: {
-    fontSize: 18,
-    fontWeight: '500',
-    flex: 1,
+  resendButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E7D32',
   },
   actionButton: {
     backgroundColor: '#2E7D32',
@@ -468,32 +380,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 20,
-  },
-  dialpadHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    marginBottom: 10,
-  },
-  dialpadTitlePlaceholder: {
-    flex: 1,
-  },
-  closeButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F0F0F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    color: '#666666',
-    fontWeight: '600',
   },
   dialpadRow: {
     flexDirection: 'row',
@@ -565,4 +451,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default PhoneLoginScreen
+export default OtpScreen

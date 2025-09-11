@@ -2,6 +2,23 @@ import React from 'react'
 import { StyleSheet, Text, View, StatusBar, SafeAreaView, Image, TouchableOpacity } from 'react-native'
 
 const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
+  // Dotted line indicator component
+  const DottedLineIndicator = ({ activeStep }) => {
+    return (
+      <View style={styles.dottedLineContainer}>
+        {[1, 2, 3].map((step) => (
+          <View
+            key={step}
+            style={[
+              styles.dottedLine,
+              step <= activeStep ? styles.dottedLineActive : styles.dottedLineInactive
+            ]}
+          />
+        ))}
+      </View>
+    )
+  }
+
   const getStepData = () => {
     switch (currentStep) {
       case 1:
@@ -11,7 +28,6 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
-          stepText: 'Step 1 of 3',
           buttons: [
             { text: 'Next', style: 'next', onPress: onNext },
             { text: 'Skip', style: 'skip', onPress: onNext }
@@ -25,7 +41,6 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: true,
           progressFill: '66%',
-          stepText: 'Step 2 of 3',
           buttons: [
             { text: '← Back', style: 'back', onPress: onBack },
             { text: 'Next →', style: 'next', onPress: onNext }
@@ -39,7 +54,6 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           description: 'Access powerful features designed to expand your network and grow your business today.',
           showProgressBar: true,
           progressFill: '100%',
-          stepText: 'Step 3 of 3',
           showFeatures: true,
           buttons: [
             { text: 'Get Started', style: 'getStarted', onPress: onGetStarted }
@@ -63,15 +77,6 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
         <View style={styles.headerBorder} />
       </View>
 
-      {/* Progress Section for Step 3 only */}
-      {stepData.showProgressBar && currentStep === 3 && (
-        <View style={styles.progressContainer}>
-          <Text style={styles.stepText}>{stepData.stepText}</Text>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: stepData.progressFill }]} />
-          </View>
-        </View>
-      )}
 
       {/* Central Image */}
       <View style={styles.imageContainer}>
@@ -94,7 +99,7 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
       {/* Progress Section for Step 2 only */}
       {stepData.showProgressBar && currentStep === 2 && (
         <View style={styles.progressContainer}>
-          <Text style={styles.stepText}>{stepData.stepText}</Text>
+          <DottedLineIndicator activeStep={2} />
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: stepData.progressFill }]} />
           </View>
@@ -139,7 +144,17 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
         {/* Step Indicator for Step 1 */}
         {!stepData.showProgressBar && (
           <View style={styles.stepIndicator}>
-            <Text style={styles.stepText}>{stepData.stepText}</Text>
+            <DottedLineIndicator activeStep={1} />
+          </View>
+        )}
+
+        {/* Progress Section for Step 3 only - above Get Started button */}
+        {stepData.showProgressBar && currentStep === 3 && (
+          <View style={styles.progressContainer}>
+            <DottedLineIndicator activeStep={3} />
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: stepData.progressFill }]} />
+            </View>
           </View>
         )}
 
@@ -245,6 +260,23 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#8E8E93',
   },
+  dottedLineContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  dottedLine: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dottedLineActive: {
+    backgroundColor: '#2E7D32',
+  },
+  dottedLineInactive: {
+    backgroundColor: '#E5E5EA',
+  },
   featureList: {
     paddingHorizontal: 30,
     paddingBottom: 40,
@@ -335,6 +367,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 10,
   },
   getStartedButtonText: {
     color: '#FFFFFF',
