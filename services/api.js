@@ -91,6 +91,21 @@ export const authAPI = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Resend OTP
+  resendOTP: async (phone) => {
+    try {
+      console.log('Resending OTP to:', phone);
+      const response = await api.post('/api/auth/resend-otp', {
+        phone: phone
+      });
+      console.log('OTP resent successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      throw error;
+    }
   }
 };
 

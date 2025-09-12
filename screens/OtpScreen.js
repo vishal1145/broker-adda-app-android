@@ -84,7 +84,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const handleResendOtp = async () => {
     try {
       const formattedPhone = `+91${phoneNumber}`
-      await authAPI.sendOTP(formattedPhone)
+      await authAPI.resendOTP(formattedPhone)
       console.log('OTP resent successfully')
       if (onResendOtp) {
         onResendOtp()
