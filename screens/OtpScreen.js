@@ -130,14 +130,6 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                 onPress={() => handleOtpDialpadPress(number)}
               >
                 <Text style={styles.dialpadNumber}>{number}</Text>
-                {number === '2' && <Text style={styles.dialpadLetters}>ABC</Text>}
-                {number === '3' && <Text style={styles.dialpadLetters}>DEF</Text>}
-                {number === '4' && <Text style={styles.dialpadLetters}>GHI</Text>}
-                {number === '5' && <Text style={styles.dialpadLetters}>JKL</Text>}
-                {number === '6' && <Text style={styles.dialpadLetters}>MNO</Text>}
-                {number === '7' && <Text style={styles.dialpadLetters}>PQRS</Text>}
-                {number === '8' && <Text style={styles.dialpadLetters}>TUV</Text>}
-                {number === '9' && <Text style={styles.dialpadLetters}>WXYZ</Text>}
               </TouchableOpacity>
             ))}
           </View>
@@ -472,12 +464,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     marginBottom: 2,
-  },
-  dialpadLetters: {
-    fontSize: 9,
-    fontWeight: '400',
-    color: '#000000',
-    letterSpacing: 0.3,
   },
   backspaceIcon: {
     fontSize: 20,

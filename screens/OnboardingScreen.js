@@ -39,8 +39,7 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop',
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
-          showProgressBar: true,
-          progressFill: '66%',
+          showProgressBar: false,
           buttons: [
             { text: '← Back', style: 'back', onPress: onBack },
             { text: 'Next →', style: 'next', onPress: onNext }
@@ -52,8 +51,7 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=300&fit=crop',
           mainHeading: 'Unlock Your BrokerLink Potential',
           description: 'Access powerful features designed to expand your network and grow your business today.',
-          showProgressBar: true,
-          progressFill: '100%',
+          showProgressBar: false,
           showFeatures: true,
           buttons: [
             { text: 'Get Started', style: 'getStarted', onPress: onGetStarted }
@@ -96,15 +94,6 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
         </Text>
       </View>
 
-      {/* Progress Section for Step 2 only */}
-      {stepData.showProgressBar && currentStep === 2 && (
-        <View style={styles.progressContainer}>
-          <DottedLineIndicator activeStep={2} />
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: stepData.progressFill }]} />
-          </View>
-        </View>
-      )}
       {/* Bottom Content Container */}
       <View style={styles.bottomContent}>
         
@@ -141,22 +130,13 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           </View>
         )}
 
-        {/* Step Indicator for Step 1 */}
+        {/* Step Indicator for all steps */}
         {!stepData.showProgressBar && (
           <View style={styles.stepIndicator}>
-            <DottedLineIndicator activeStep={1} />
+            <DottedLineIndicator activeStep={currentStep} />
           </View>
         )}
 
-        {/* Progress Section for Step 3 only - above Get Started button */}
-        {stepData.showProgressBar && currentStep === 3 && (
-          <View style={styles.progressContainer}>
-            <DottedLineIndicator activeStep={3} />
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, { width: stepData.progressFill }]} />
-            </View>
-          </View>
-        )}
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>

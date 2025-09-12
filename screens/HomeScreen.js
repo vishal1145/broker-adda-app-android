@@ -16,7 +16,6 @@ const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
   const [userName] = useState('Jordan')
-  const [selectedTab, setSelectedTab] = useState('Broker')
   
   // Performance data matching the screenshot
   const [performanceData] = useState({
@@ -227,28 +226,9 @@ const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
           </View>
         </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Broker' && styles.activeTab]}
-            onPress={() => setSelectedTab('Broker')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Broker' && styles.activeTabText]}>
-              Broker
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'Channel Partner' && styles.activeTab]}
-            onPress={() => setSelectedTab('Channel Partner')}
-          >
-            <Text style={[styles.tabText, selectedTab === 'Channel Partner' && styles.activeTabText]}>
-              Channel Partner
-            </Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Performance Summary */}
-        <View style={styles.section}>
+        <View style={[styles.section, styles.performanceSection]}>
           <Text style={styles.sectionTitle}>Performance Summary</Text>
           <View style={styles.performanceGrid}>
             <MetricCard
@@ -419,35 +399,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  tabsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginHorizontal: 5,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-  },
-  activeTab: {
-    backgroundColor: '#2E7D32',
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666666',
-    textAlign: 'center',
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-  },
   section: {
     paddingHorizontal: 20,
     marginBottom: 30,
+  },
+  performanceSection: {
+    paddingTop: 20,
   },
   sectionTitle: {
     fontSize: 20,
