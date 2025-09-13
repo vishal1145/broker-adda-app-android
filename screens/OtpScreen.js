@@ -4,13 +4,13 @@ import {
   Text, 
   View, 
   StatusBar, 
-  SafeAreaView, 
   TouchableOpacity, 
   Alert,
   KeyboardAvoidingView,
   Platform,
   Animated
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { authAPI } from '../services/api'
 
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {

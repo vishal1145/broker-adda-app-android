@@ -4,12 +4,10 @@ import {
   Text, 
   View, 
   StatusBar, 
-  SafeAreaView, 
   ScrollView
 } from 'react-native'
-import Footer from '../components/Footer'
-
-const NetworkScreen = ({ activeTab, onTabPress }) => {
+import { SafeAreaView } from 'react-native-safe-area-context'
+const NetworkScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
@@ -24,8 +22,6 @@ const NetworkScreen = ({ activeTab, onTabPress }) => {
           </Text>
         </View>
       </ScrollView>
-      
-      <Footer activeTab={activeTab} onTabPress={onTabPress} />
     </SafeAreaView>
   )
 }

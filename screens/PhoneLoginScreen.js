@@ -4,7 +4,6 @@ import {
   Text, 
   View, 
   StatusBar, 
-  SafeAreaView, 
   TextInput, 
   TouchableOpacity, 
   Alert,
@@ -12,10 +11,11 @@ import {
   Platform,
   Animated
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import OtpScreen from './OtpScreen'
 import { authAPI } from '../services/api'
 
-const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
+const PhoneLoginScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isOtpSent, setIsOtpSent] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -82,7 +82,8 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
   }
 
   const handleOtpVerified = () => {
-    onLoginSuccess()
+    // Navigate to main tabs after successful login
+    navigation.navigate('MainTabs')
   }
 
   const handleResendOtp = async () => {
@@ -224,7 +225,7 @@ const PhoneLoginScreen = ({ onBack, onLoginSuccess }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Phone Verification</Text>

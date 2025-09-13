@@ -1,7 +1,16 @@
-import React from 'react'
-import { StyleSheet, Text, View, StatusBar, SafeAreaView } from 'react-native'
+import React, { useEffect } from 'react'
+import { StyleSheet, Text, View, StatusBar } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-const SplashScreen = () => {
+const SplashScreen = ({ navigation }) => {
+  useEffect(() => {
+    // Show splash screen for 2 seconds, then navigate to onboarding
+    const timer = setTimeout(() => {
+      navigation.replace('Onboarding')
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [navigation])
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#007AFF" />

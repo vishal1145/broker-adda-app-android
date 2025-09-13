@@ -4,18 +4,21 @@ import {
   Text, 
   View, 
   StatusBar, 
-  SafeAreaView, 
   TouchableOpacity, 
   ScrollView,
   Dimensions
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
-import Footer from '../components/Footer'
-
 const { width } = Dimensions.get('window')
 
-const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
+const HomeScreen = ({ navigation }) => {
   const [userName] = useState('Jordan')
+
+  const handleLogout = () => {
+    // Navigate back to login screen
+    navigation.navigate('Login')
+  }
   
   // Performance data matching the screenshot
   const [performanceData] = useState({
@@ -216,7 +219,7 @@ const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
             <TouchableOpacity style={styles.notificationButton}>
               <Text style={styles.bellIcon}>🔔</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.profileButton} onPress={onLogout}>
+            <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
               <View style={styles.profileIcon}>
                 <Text style={styles.profileInitials}>
                   {userName[0]}
@@ -339,7 +342,6 @@ const HomeScreen = ({ onLogout, activeTab, onTabPress }) => {
           </View>
         </View>
       </ScrollView>
-      <Footer activeTab={activeTab} onTabPress={onTabPress} />
     </SafeAreaView>
   )
 }

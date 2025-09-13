@@ -3,14 +3,26 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 
 const { width } = Dimensions.get('window')
 
-const Footer = ({ activeTab, onTabPress }) => {
+const Footer = ({ state, descriptors, navigation }) => {
   const tabs = [
-    { id: 'home', label: 'Home', icon: 'Home' },
-    { id: 'network', label: 'Network', icon: 'Network' },
-    { id: 'jobs', label: 'Jobs', icon: 'Jobs' },
-    { id: 'notifications', label: 'Notifications', icon: 'Notifications' },
-    { id: 'setting', label: 'Setting', icon: 'Setting' }
+    { key: 'Home', label: 'Home', icon: 'Home' },
+    { key: 'Network', label: 'Network', icon: 'Network' },
+    { key: 'Jobs', label: 'Jobs', icon: 'Jobs' },
+    { key: 'Notifications', label: 'Notifications', icon: 'Notifications' },
+    { key: 'Settings', label: 'Setting', icon: 'Setting' }
   ]
+
+  const handleTabPress = (routeName, isFocused) => {
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: routeName,
+      canPreventDefault: true,
+    });
+
+    if (!isFocused && !event.defaultPrevented) {
+      navigation.navigate(routeName);
+    }
+  };
 
   const renderIcon = (iconName, isActive) => {
     const iconColor = isActive ? '#2E7D32' : '#9E9E9E'
@@ -74,24 +86,29 @@ const Footer = ({ activeTab, onTabPress }) => {
   return (
     <View style={styles.footer}>
       <View style={styles.tabContainer}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            style={styles.tab}
-            onPress={() => onTabPress(tab.id)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.iconContainer}>
-              {renderIcon(tab.icon, activeTab === tab.id)}
-            </View>
-            <Text style={[
-              styles.label,
-              { color: activeTab === tab.id ? '#2E7D32' : '#9E9E9E' }
-            ]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {tabs.map((tab) => {
+          const route = state.routes.find(route => route.name === tab.key);
+          const isFocused = state.index === state.routes.findIndex(route => route.name === tab.key);
+          
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tab}
+              onPress={() => handleTabPress(tab.key, isFocused)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                {renderIcon(tab.icon, isFocused)}
+              </View>
+              <Text style={[
+                styles.label,
+                { color: isFocused ? '#2E7D32' : '#9E9E9E' }
+              ]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   )

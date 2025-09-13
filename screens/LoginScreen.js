@@ -1,7 +1,11 @@
 import React from 'react'
-import { StyleSheet, Text, View, StatusBar, SafeAreaView, Image, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-const LoginScreen = ({ onBack, onPhoneLogin }) => {
+const LoginScreen = ({ navigation }) => {
+  const handlePhoneLogin = () => {
+    navigation.navigate('PhoneLogin')
+  }
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#2E7D32" />
@@ -29,7 +33,7 @@ const LoginScreen = ({ onBack, onPhoneLogin }) => {
         {/* Bottom Section */}
         <View style={styles.bottomSection}>
           {/* Mobile Number Button */}
-          <TouchableOpacity style={styles.mobileButton} onPress={onPhoneLogin}>
+          <TouchableOpacity style={styles.mobileButton} onPress={handlePhoneLogin}>
             <View style={styles.phoneIconContainer}>
               <Text style={styles.phoneIcon}>📱</Text>
             </View>

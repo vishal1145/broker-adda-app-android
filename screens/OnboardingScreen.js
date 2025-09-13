@@ -1,7 +1,30 @@
-import React from 'react'
-import { StyleSheet, Text, View, StatusBar, SafeAreaView, Image, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
+const OnboardingScreen = ({ navigation }) => {
+  const [currentStep, setCurrentStep] = useState(1)
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      setCurrentStep(2)
+    } else if (currentStep === 2) {
+      setCurrentStep(3)
+    }
+  }
+
+  const handleBack = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1)
+    } else if (currentStep === 3) {
+      setCurrentStep(2)
+    }
+  }
+
+  const handleGetStarted = () => {
+    // Navigate to login screen after onboarding completion
+    navigation.navigate('Login')
+  }
   // Dotted line indicator component
   const DottedLineIndicator = ({ activeStep }) => {
     return (
@@ -29,8 +52,8 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
           buttons: [
-            { text: 'Next', style: 'next', onPress: onNext },
-            { text: 'Skip', style: 'skip', onPress: onNext }
+            { text: 'Next', style: 'next', onPress: handleNext },
+            { text: 'Skip', style: 'skip', onPress: handleNext }
           ]
         }
       case 2:
@@ -41,8 +64,8 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
           buttons: [
-            { text: '← Back', style: 'back', onPress: onBack },
-            { text: 'Next →', style: 'next', onPress: onNext }
+            { text: '← Back', style: 'back', onPress: handleBack },
+            { text: 'Next →', style: 'next', onPress: handleNext }
           ]
         }
       case 3:
@@ -54,7 +77,7 @@ const OnboardingScreen = ({ currentStep, onNext, onBack, onGetStarted }) => {
           showProgressBar: false,
           showFeatures: true,
           buttons: [
-            { text: 'Get Started', style: 'getStarted', onPress: onGetStarted }
+            { text: 'Get Started', style: 'getStarted', onPress: handleGetStarted }
           ]
         }
       default:
