@@ -7,7 +7,7 @@ const LoginScreen = ({ navigation }) => {
     navigation.navigate('PhoneLogin')
   }
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor="#2E7D32" />
       
       {/* Background Image */}

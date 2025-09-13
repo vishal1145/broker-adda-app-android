@@ -12,7 +12,7 @@ const SplashScreen = ({ navigation }) => {
     return () => clearTimeout(timer)
   }, [navigation])
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
       <View style={styles.content}>
         <Text style={styles.logo}>Broker Adda</Text>

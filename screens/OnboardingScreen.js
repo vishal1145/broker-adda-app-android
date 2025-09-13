@@ -89,7 +89,7 @@ const OnboardingScreen = ({ navigation }) => {
   if (!stepData) return null
 
   return (
-    <SafeAreaView style={styles.onboardingContainer}>
+    <SafeAreaView style={styles.onboardingContainer} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
