@@ -9,6 +9,7 @@ import {
   Dimensions
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { MaterialIcons } from '@expo/vector-icons'
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
 const { width } = Dimensions.get('window')
 
@@ -56,7 +57,8 @@ const HomeScreen = ({ navigation }) => {
       description: 'Read the latest company-wide performance update.',
       time: '2 hours ago',
       type: 'announcement',
-      icon: '🔔'
+      icon: 'notifications',
+      iconColor: '#FFD700'
     },
     {
       id: 2,
@@ -64,7 +66,8 @@ const HomeScreen = ({ navigation }) => {
       description: 'New lead for \'123 Oak St\' transferred to you.',
       time: '5 hours ago',
       type: 'transfer',
-      icon: '⚡'
+      icon: 'flash-on',
+      iconColor: '#FF9800'
     },
     {
       id: 3,
@@ -72,7 +75,8 @@ const HomeScreen = ({ navigation }) => {
       description: 'Update missing details for \'Jane Smith\'.',
       time: '1 day ago',
       type: 'action',
-      icon: '⚠️'
+      icon: 'warning',
+      iconColor: '#F44336'
     }
   ])
 
@@ -181,11 +185,11 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.metricCard}>
       <View style={styles.cardHeader}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-          <Text style={styles.iconText}>{icon}</Text>
+          <MaterialIcons name={icon} size={16} color={iconColor === "#2E7D32" ? "#FFFFFF" : "#2E7D32"} />
         </View>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.changePill}>
-          <Text style={styles.changeArrow}>{isDownward ? '↘' : '↗'}</Text>
+          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#2E7D32" />
           <Text style={styles.changeText}>{change}%</Text>
         </View>
       </View>
@@ -196,7 +200,7 @@ const HomeScreen = ({ navigation }) => {
   const NotificationItem = ({ notification }) => (
     <View style={styles.notificationItem}>
       <View style={styles.notificationIcon}>
-        <Text style={styles.bellIcon}>{notification.icon}</Text>
+        <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
       </View>
       <View style={styles.notificationContent}>
         <Text style={styles.notificationTitle}>{notification.title}</Text>
@@ -213,11 +217,10 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}></View>
           <Text style={styles.welcomeText}>Welcome, {userName}!</Text>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.notificationButton}>
-              <Text style={styles.bellIcon}>🔔</Text>
+              <MaterialIcons name="notifications" size={20} color="#000000" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
               <View style={styles.profileIcon}>
@@ -238,28 +241,28 @@ const HomeScreen = ({ navigation }) => {
               title="Total Leads Created"
               value={performanceData.totalLeadsCreated}
               change={performanceData.leadsCreatedChange}
-              icon="📈"
+              icon="trending-up"
               iconColor="#E8F5E8"
             />
             <MetricCard
               title="Leads Received"
               value={performanceData.leadsReceived}
               change={performanceData.leadsReceivedChange}
-              icon="$"
+              icon="attach-money"
               iconColor="#E8F5E8"
             />
             <MetricCard
               title="Leads Closed"
               value={performanceData.leadsClosed}
               change={performanceData.leadsClosedChange}
-              icon="📋"
+              icon="assignment-turned-in"
               iconColor="#E8F5E8"
             />
             <MetricCard
               title="Leads In Progress"
               value={performanceData.leadsInProgress}
               change={performanceData.leadsInProgressChange}
-              icon="👥"
+              icon="group"
               iconColor="#E8F5E8"
               isDownward={true}
             />
@@ -274,21 +277,21 @@ const HomeScreen = ({ navigation }) => {
               title="Active Properties"
               value={propertiesData.activeProperties}
               change={propertiesData.activeChange}
-              icon="🏢"
+              icon="business"
               iconColor="#2E7D32"
             />
             <MetricCard
               title="Sold/Expired"
               value={propertiesData.soldExpired}
               change={propertiesData.soldChange}
-              icon="🏠"
+              icon="home"
               iconColor="#2E7D32"
             />
             <MetricCard
               title="Pending Approval"
               value={propertiesData.pendingApproval}
               change={propertiesData.pendingChange}
-              icon="📍"
+              icon="location-on"
               iconColor="#2E7D32"
             />
           </View>
@@ -300,7 +303,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.messagesContainer}>
             <View style={styles.messageItem}>
               <View style={styles.messageIcon}>
-                <Text style={styles.envelopeIcon}>✉️</Text>
+                <MaterialIcons name="mail" size={20} color="#2E7D32" />
               </View>
               <Text style={styles.messageText}>Unread Messages</Text>
               <View style={styles.messageBadge}>
@@ -309,7 +312,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <View style={styles.messageItem}>
               <View style={styles.messageIcon}>
-                <Text style={styles.chatIcon}>💬</Text>
+                <MaterialIcons name="chat" size={20} color="#2E7D32" />
               </View>
               <Text style={styles.messageText}>Customer Inquiries</Text>
               <View style={styles.messageBadge}>
@@ -364,26 +367,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
-  headerLeft: {
-    width: 60,
-  },
   welcomeText: {
     fontSize: 24,
     fontWeight: '700',
     color: '#000000',
+    flex: 1,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 60,
-    justifyContent: 'flex-end',
   },
   notificationButton: {
     marginRight: 6,
     padding: 8,
-  },
-  bellIcon: {
-    fontSize: 20,
   },
   profileButton: {
     marginLeft: 4,
@@ -462,11 +458,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconText: {
-    fontSize: 14,
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
   cardValue: {
     fontSize: 24,
     fontWeight: '700',
@@ -484,11 +475,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
     alignSelf: 'flex-start',
-  },
-  changeArrow: {
-    fontSize: 12,
-    color: '#2E7D32',
-    marginRight: 4,
   },
   changeText: {
     fontSize: 11,
@@ -517,12 +503,6 @@ const styles = StyleSheet.create({
   },
   messageIcon: {
     marginRight: 12,
-  },
-  envelopeIcon: {
-    fontSize: 20,
-  },
-  chatIcon: {
-    fontSize: 20,
   },
   messageText: {
     fontSize: 16,
