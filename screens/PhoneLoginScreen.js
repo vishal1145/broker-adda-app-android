@@ -21,6 +21,16 @@ const PhoneLoginScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [showDialpad, setShowDialpad] = useState(true)
   const [dialpadAnimation] = useState(new Animated.Value(1))
+  const [selectedCountryCode, setSelectedCountryCode] = useState('+91')
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  
+  const countryCodes = [
+    { code: '+91', country: 'India' },
+    { code: '+62', country: 'Indonesia' },
+    { code: '+1', country: 'USA' },
+    { code: '+44', country: 'UK' },
+    { code: '+86', country: 'China' }
+  ]
 
   const handleSendOtp = async () => {
     if (!phoneNumber.trim()) {
@@ -36,8 +46,8 @@ const PhoneLoginScreen = ({ navigation }) => {
     setIsLoading(true)
     
     try {
-      // Format phone number with country code
-      const formattedPhone = `+91${phoneNumber}`
+      // Format phone number with selected country code
+      const formattedPhone = `${selectedCountryCode}${phoneNumber}`
       
       // Call the API
       const response = await authAPI.sendOTP(formattedPhone)
@@ -88,7 +98,7 @@ const PhoneLoginScreen = ({ navigation }) => {
 
   const handleResendOtp = async () => {
     try {
-      const formattedPhone = `+91${phoneNumber}`
+      const formattedPhone = `${selectedCountryCode}${phoneNumber}`
       await authAPI.sendOTP(formattedPhone)
       console.log('OTP resent successfully')
     } catch (error) {
@@ -99,6 +109,15 @@ const PhoneLoginScreen = ({ navigation }) => {
 
   const handleBackToPhone = () => {
     setIsOtpSent(false)
+  }
+
+  const handleCountryCodeSelect = (countryCode) => {
+    setSelectedCountryCode(countryCode)
+    setShowCountryDropdown(false)
+  }
+
+  const toggleCountryDropdown = () => {
+    setShowCountryDropdown(!showCountryDropdown)
   }
 
   const formatPhoneNumber = (text) => {
@@ -247,26 +266,52 @@ const PhoneLoginScreen = ({ navigation }) => {
           {/* Input Section */}
           <View style={styles.inputSection}>
             <View>
-              <TouchableOpacity 
-                style={[
-                  styles.phoneInputContainer,
-                  { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
-                ]}
-                onPress={openDialpad}
-                activeOpacity={0.7}
-              >
-                <View style={styles.countryCode}>
-                  <Text style={styles.countryCodeText}>+91</Text>
-                </View>
-                <View style={styles.phoneInputWrapper}>
+              <View style={styles.inputRow}>
+                <TouchableOpacity 
+                  style={[
+                    styles.countryCode,
+                    { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
+                  ]}
+                  onPress={toggleCountryDropdown}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
+                  <Text style={styles.dropdownIcon}>▼</Text>
+                </TouchableOpacity>
+                
+                <View style={styles.inputGap} />
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.phoneInputWrapper,
+                    { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
+                  ]}
+                  onPress={openDialpad}
+                  activeOpacity={0.7}
+                >
                   <Text style={[
                     styles.phoneInputText,
                     { color: phoneNumber ? '#000000' : '#8E8E93' }
                   ]}>
                     {phoneNumber || 'Enter your phone number'}
                   </Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Country Code Dropdown */}
+              {showCountryDropdown && (
+                <View style={styles.dropdownContainer}>
+                  {countryCodes.map((country, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.dropdownItem}
+                      onPress={() => handleCountryCodeSelect(country.code)}
+                    >
+                      <Text style={styles.dropdownItemText}>{country.code}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </TouchableOpacity>
+              )}
             </View>
 
           </View>
@@ -395,15 +440,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  phoneInputContainer: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
+  },
+  countryCode: {
     backgroundColor: '#F8F9FA',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    minWidth: 80,
     borderRadius: 12,
     borderWidth: 2,
-    marginBottom: 8,
-    overflow: 'hidden',
-    minHeight: 56,
+    borderColor: '#E5E5EA',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -413,17 +465,70 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  countryCode: {
-    backgroundColor: '#2E7D32',
+  inputGap: {
+    width: 12,
+  },
+  phoneInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   countryCodeText: {
-    color: '#FFFFFF',
+    color: '#2E7D32',
     fontSize: 16,
     fontWeight: '600',
+    marginRight: 5,
+  },
+  dropdownIcon: {
+    color: '#2E7D32',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    width: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E7D32',
   },
   phoneInputWrapper: {
     flex: 1,
@@ -436,6 +541,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     flex: 1,
+    color: '#000000',
   },
   actionButtonContainer: {
     paddingHorizontal:30,

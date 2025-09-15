@@ -29,9 +29,11 @@ const LoginScreen = ({ navigation }) => {
             Connect with trusted brokers and find the perfect property for your needs.
           </Text>
         </View>
-        
-        {/* Bottom Section */}
-        <View style={styles.bottomSection}>
+      </View>
+      
+      {/* Bottom Popup Container */}
+      <View style={styles.popupContainer}>
+        <View style={styles.popupContent}>
           {/* Mobile Number Button */}
           <TouchableOpacity style={styles.mobileButton} onPress={handlePhoneLogin}>
             <View style={styles.phoneIconContainer}>
@@ -65,7 +67,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(46, 125, 50, 0.7)',
+    backgroundColor: 'rgba(46, 125, 50, 0)',
   },
   content: {
     flex: 1,
@@ -91,9 +93,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  bottomSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  popupContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+  },
+  popupContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 32,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -6,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 12,
   },
   mobileButton: {
     backgroundColor: '#2E7D32',
@@ -101,11 +123,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: '#2E7D32',
+    paddingHorizontal: 24,
+    borderRadius: 50,
     shadowColor: '#2E7D32',
     shadowOffset: {
       width: 0,
@@ -121,10 +140,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  phoneIcon: {
-    fontSize: 20,
-    color: '#FFFFFF',
   },
   mobileButtonText: {
     color: '#FFFFFF',

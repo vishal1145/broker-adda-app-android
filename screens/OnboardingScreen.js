@@ -4,6 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
+  const [checkboxes, setCheckboxes] = useState({
+    connectBrokers: true,
+    shareListings: true,
+    networkingEvents: true,
+    trackConnections: false
+  })
 
   const handleNext = () => {
     if (currentStep === 1) {
@@ -24,6 +30,13 @@ const OnboardingScreen = ({ navigation }) => {
   const handleGetStarted = () => {
     // Navigate to login screen after onboarding completion
     navigation.navigate('Login')
+  }
+
+  const toggleCheckbox = (checkboxKey) => {
+    setCheckboxes(prev => ({
+      ...prev,
+      [checkboxKey]: !prev[checkboxKey]
+    }))
   }
   // Dotted line indicator component
   const DottedLineIndicator = ({ activeStep }) => {
@@ -124,32 +137,49 @@ const OnboardingScreen = ({ navigation }) => {
         {/* Feature List for Step 3 */}
         {stepData.showFeatures && (
           <View style={styles.featureList}>
-            <View style={styles.featureItem}>
-              <View style={styles.checkboxChecked}>
-                <Text style={styles.checkmark}>✓</Text>
+            <TouchableOpacity 
+              style={styles.featureItem} 
+              onPress={() => toggleCheckbox('connectBrokers')}
+              activeOpacity={0.7}
+            >
+              <View style={checkboxes.connectBrokers ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                {checkboxes.connectBrokers && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.featureText}>Connect with verified brokers across regions.</Text>
-            </View>
+            </TouchableOpacity>
             
-            <View style={styles.featureItem}>
-              <View style={styles.checkboxChecked}>
-                <Text style={styles.checkmark}>✓</Text>
+            <TouchableOpacity 
+              style={styles.featureItem} 
+              onPress={() => toggleCheckbox('shareListings')}
+              activeOpacity={0.7}
+            >
+              <View style={checkboxes.shareListings ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                {checkboxes.shareListings && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.featureText}>Share listings and find exclusive opportunities.</Text>
-            </View>
+            </TouchableOpacity>
             
-            <View style={styles.featureItem}>
-              <View style={styles.checkboxChecked}>
-                <Text style={styles.checkmark}>✓</Text>
+            <TouchableOpacity 
+              style={styles.featureItem} 
+              onPress={() => toggleCheckbox('networkingEvents')}
+              activeOpacity={0.7}
+            >
+              <View style={checkboxes.networkingEvents ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                {checkboxes.networkingEvents && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.featureText}>Participate in local and national networking events.</Text>
-            </View>
+            </TouchableOpacity>
             
-            <View style={styles.featureItem}>
-              <View style={styles.checkboxUnchecked}>
+            <TouchableOpacity 
+              style={styles.featureItem} 
+              onPress={() => toggleCheckbox('trackConnections')}
+              activeOpacity={0.7}
+            >
+              <View style={checkboxes.trackConnections ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                {checkboxes.trackConnections && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -328,7 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E7D32',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 50,
     alignItems: 'center',
   },
   nextButtonText: {
@@ -342,7 +372,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 50,
     alignItems: 'center',
   },
   skipButtonText: {
@@ -356,7 +386,7 @@ const styles = StyleSheet.create({
     borderColor: '#2E7D32',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 50,
     alignItems: 'center',
   },
   backButtonText: {
@@ -368,7 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E7D32',
     paddingVertical: 18,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 50,
     alignItems: 'center',
     marginTop: 10,
   },
