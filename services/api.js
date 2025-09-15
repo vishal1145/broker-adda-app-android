@@ -1,13 +1,12 @@
 import axios from 'axios';
-import { API_BASE_URL } from '@env';
+import config from '../config/env';
 
 const getBaseURL = () => {
   // Debug environment variable loading
-  console.log('API_BASE_URL from env:', API_BASE_URL);
-  console.log('Type of API_BASE_URL:', typeof API_BASE_URL);
+  console.log('API_BASE_URL from config:', config.API_BASE_URL);
+  console.log('Type of API_BASE_URL:', typeof config.API_BASE_URL);
   
-  // Use environment variable or fallback to ngrok URL
-  return API_BASE_URL || 'https://broker-adda-be.algofolks.com/';
+  return config.API_BASE_URL;
 };
 
 // Create axios instance with base configuration
