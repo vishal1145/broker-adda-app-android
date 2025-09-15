@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { MaterialIcons } from '@expo/vector-icons'
 
 const LoginScreen = ({ navigation }) => {
   const handlePhoneLogin = () => {
@@ -37,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
           {/* Mobile Number Button */}
           <TouchableOpacity style={styles.mobileButton} onPress={handlePhoneLogin}>
             <View style={styles.phoneIconContainer}>
-              <Text style={styles.phoneIcon}>📱</Text>
+              <MaterialIcons name="phone-android" size={24} color="#FFFFFF" />
             </View>
             <Text style={styles.mobileButtonText}>Continue with Mobile Number</Text>
           </TouchableOpacity>
@@ -135,8 +136,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   phoneIconContainer: {
-    width: 24,
-    height: 24,
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
