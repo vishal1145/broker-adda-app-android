@@ -278,21 +278,21 @@ const HomeScreen = ({ navigation }) => {
               value={propertiesData.activeProperties}
               change={propertiesData.activeChange}
               icon="business"
-              iconColor="#2E7D32"
+              iconColor="#E8F5E8"
             />
             <MetricCard
               title="Sold/Expired"
               value={propertiesData.soldExpired}
               change={propertiesData.soldChange}
               icon="home"
-              iconColor="#2E7D32"
+              iconColor="#E8F5E8"
             />
             <MetricCard
               title="Pending Approval"
               value={propertiesData.pendingApproval}
               change={propertiesData.pendingChange}
               icon="location-on"
-              iconColor="#2E7D32"
+              iconColor="#E8F5E8"
             />
           </View>
         </View>
@@ -352,7 +352,7 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   scrollView: {
     flex: 1,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
     borderRadius: 12,
     padding: 16,
     width: (width - 60) / 2,

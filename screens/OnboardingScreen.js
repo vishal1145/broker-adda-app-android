@@ -8,7 +8,7 @@ const OnboardingScreen = ({ navigation }) => {
     connectBrokers: true,
     shareListings: true,
     networkingEvents: true,
-    trackConnections: false
+    trackConnections: true
   })
 
   const handleNext = () => {
@@ -60,7 +60,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 1:
         return {
           headerTitle: 'Welcome to BrokerLink',
-          image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop',
+          image: 'https://img.freepik.com/free-vector/real-estate-searching_52683-46407.jpg',
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
@@ -72,19 +72,19 @@ const OnboardingScreen = ({ navigation }) => {
       case 2:
         return {
           headerTitle: 'Onboarding',
-          image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop',
+          image: 'https://img.freepik.com/free-vector/flat-design-illustration-real-estate-searching_23-2148650470.jpg?semt=ais_hybrid&w=740',
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
           buttons: [
-            { text: '← Back', style: 'back', onPress: handleBack },
-            { text: 'Next →', style: 'next', onPress: handleNext }
+            { text: 'Next →', style: 'next', onPress: handleNext },
+            { text: '← Back', style: 'back', onPress: handleBack }
           ]
         }
       case 3:
         return {
           headerTitle: 'Final Step',
-          image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=300&fit=crop',
+          image: 'https://img.freepik.com/free-vector/real-estate-searching-illustration_23-2148649592.jpg',
           mainHeading: 'Unlock Your BrokerLink Potential',
           description: 'Access powerful features designed to expand your network and grow your business today.',
           showProgressBar: false,
@@ -105,34 +105,28 @@ const OnboardingScreen = ({ navigation }) => {
     <SafeAreaView style={styles.onboardingContainer} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{stepData.headerTitle}</Text>
-        <View style={styles.headerBorder} />
-      </View>
+      {/* Main Content Container - Centered */}
+      <View style={styles.mainContentContainer}>
+        {/* Central Image */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: stepData.image }}
+            style={styles.centralImage}
+            resizeMode="cover"
+            onError={(error) => console.log('Image load error:', error)}
+            onLoad={() => console.log('Image loaded successfully')}
+          />
+        </View>
 
-
-      {/* Central Image */}
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: stepData.image }}
-          style={styles.centralImage}
-          resizeMode="cover"
-        />
-      </View>
-      {/* Main Content */}
-      <View style={styles.contentSection}>
-        <Text style={styles.mainHeading}>
-          {stepData.mainHeading}
-        </Text>
-        <Text style={styles.description}>
-          {stepData.description}
-        </Text>
-      </View>
-
-      {/* Bottom Content Container */}
-      <View style={styles.bottomContent}>
-        
+        {/* Main Content */}
+        <View style={styles.contentSection}>
+          <Text style={styles.mainHeading}>
+            {stepData.mainHeading}
+          </Text>
+          <Text style={styles.description}>
+            {stepData.description}
+          </Text>
+        </View>
 
         {/* Feature List for Step 3 */}
         {stepData.showFeatures && (
@@ -189,20 +183,19 @@ const OnboardingScreen = ({ navigation }) => {
             <DottedLineIndicator activeStep={currentStep} />
           </View>
         )}
+      </View>
 
-
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          {stepData.buttons.map((button, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={styles[`${button.style}Button`]} 
-              onPress={button.onPress}
-            >
-              <Text style={styles[`${button.style}ButtonText`]}>{button.text}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      {/* Bottom Action Buttons */}
+      <View style={styles.buttonContainer}>
+        {stepData.buttons.map((button, index) => (
+          <TouchableOpacity 
+            key={index}
+            style={styles[`${button.style}Button`]} 
+            onPress={button.onPress}
+          >
+            <Text style={styles[`${button.style}ButtonText`]}>{button.text}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </SafeAreaView>
   )
@@ -212,6 +205,11 @@ const styles = StyleSheet.create({
   onboardingContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  mainContentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     paddingTop: 50,
@@ -245,28 +243,24 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     borderRadius: 2,
   },
   imageContainer: {
     paddingHorizontal: 20,
-    paddingTop: 20,
     paddingBottom: 30,
+    width: '100%',
+    alignItems: 'center',
   },
   centralImage: {
     width: '100%',
     height: 250,
     borderRadius: 0,
   },
-  bottomContent: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 0,
-  },
   contentSection: {
     paddingHorizontal: 30,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingTop: 30,
+    paddingBottom: 30,
     alignItems: 'center',
   },
   mainHeading: {
@@ -305,7 +299,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dottedLineActive: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
   },
   dottedLineInactive: {
     backgroundColor: '#E5E5EA',
@@ -313,20 +307,23 @@ const styles = StyleSheet.create({
   featureList: {
     paddingHorizontal: 30,
     paddingBottom: 40,
+    alignItems: 'center',
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
+    width: '100%',
+    justifyContent: 'center',
   },
   checkboxChecked: {
     width: 20,
     height: 20,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     borderRadius: 4,
-    marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   checkboxUnchecked: {
     width: 20,
@@ -335,7 +332,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 4,
-    marginRight: 12,
+    flexShrink: 0,
   },
   checkmark: {
     color: '#FFFFFF',
@@ -348,14 +345,17 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#000000',
     lineHeight: 22,
+    textAlign: 'left',
+    marginLeft: 12,
   },
   buttonContainer: {
     paddingHorizontal: 30,
     paddingBottom: 40,
+    paddingTop: 20,
     gap: 15,
   },
   nextButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 50,
@@ -376,26 +376,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skipButtonText: {
-    color: '#000000',
+    color: '#16BCC0',
     fontSize: 16,
     fontWeight: '500',
   },
   backButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#2E7D32',
+    borderColor: '#E0E0E0',
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#2E7D32',
+    color: '#16BCC0',
     fontSize: 16,
     fontWeight: '600',
   },
   getStartedButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,

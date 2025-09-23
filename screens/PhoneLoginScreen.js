@@ -9,9 +9,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { MaterialIcons } from '@expo/vector-icons'
 import OtpScreen from './OtpScreen'
 import { authAPI } from '../services/api'
 
@@ -245,10 +247,10 @@ const PhoneLoginScreen = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Phone Verification</Text>
-          <View style={styles.headerBorder} />
+          {/* <Text style={styles.headerTitle}>Phone Verification</Text>
+          <View style={styles.headerBorder} /> */}
         </View>
 
         {/* Content */}
@@ -270,7 +272,7 @@ const PhoneLoginScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   style={[
                     styles.countryCode,
-                    { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
+                    { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
                   ]}
                   onPress={toggleCountryDropdown}
                   activeOpacity={0.7}
@@ -284,7 +286,7 @@ const PhoneLoginScreen = ({ navigation }) => {
                 <TouchableOpacity 
                   style={[
                     styles.phoneInputWrapper,
-                    { borderColor: phoneNumber.length > 0 ? '#2E7D32' : '#E5E5EA' }
+                    { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
                   ]}
                   onPress={openDialpad}
                   activeOpacity={0.7}
@@ -328,9 +330,16 @@ const PhoneLoginScreen = ({ navigation }) => {
             onPress={handleSendOtp}
             disabled={isLoading || phoneNumber.length < 10}
           >
-            <Text style={styles.actionButtonText}>
-              {isLoading ? 'Please wait...' : 'Login'}
-            </Text>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={[styles.actionButtonText, styles.loadingText]}>
+                  Please wait...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.actionButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -372,11 +381,14 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 15,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2E7D32',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
   },
   headerTitle: {
     fontSize: 24,
@@ -488,13 +500,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   countryCodeText: {
-    color: '#2E7D32',
+    color: '#16BCC0',
     fontSize: 16,
     fontWeight: '600',
     marginRight: 5,
   },
   dropdownIcon: {
-    color: '#2E7D32',
+    color: '#16BCC0',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -528,14 +540,7 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2E7D32',
-  },
-  phoneInputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    color: '#16BCC0',
   },
   phoneInputText: {
     fontSize: 18,
@@ -549,12 +554,12 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   actionButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#2E7D32',
+    shadowColor: '#16BCC0',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -572,6 +577,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 8,
   },
   termsContainer: {
     alignItems: 'center',

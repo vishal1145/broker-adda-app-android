@@ -8,9 +8,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
 
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
@@ -170,10 +172,10 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <Text style={styles.backButtonText}>← Back</Text>
+            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Enter Verification Code</Text>
-          <View style={styles.headerBorder} />
+          {/* <Text style={styles.headerTitle}>Enter Verification Code</Text>
+          <View style={styles.headerBorder} /> */}
         </View>
 
         {/* Content */}
@@ -197,7 +199,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                     key={index}
                     style={[
                       styles.otpBox,
-                      { borderColor: otp.length > index ? '#2E7D32' : '#E5E5EA' }
+                      { borderColor: otp.length > index ? '#16BCC0' : '#E5E5EA' }
                     ]}
                   >
                     <Text style={[
@@ -228,9 +230,16 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
             onPress={handleVerifyOtp}
             disabled={isLoading || otp.length < 6}
           >
-            <Text style={styles.actionButtonText}>
-              {isLoading ? 'Please wait...' : 'Verify OTP'}
-            </Text>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={[styles.actionButtonText, styles.loadingText]}>
+                  Please wait...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.actionButtonText}>Verify OTP</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -272,11 +281,14 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 15,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2E7D32',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
   },
   headerTitle: {
     fontSize: 24,
@@ -325,14 +337,17 @@ const styles = StyleSheet.create({
   },
   otpBoxesContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     width: '100%',
     marginBottom: 20,
+    paddingHorizontal:20,
+    gap:8,
+    
   },
   otpBox: {
     width: 45,
     height: 55,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 2,
     alignItems: 'center',
@@ -358,7 +373,7 @@ const styles = StyleSheet.create({
   resendButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#16BCC0',
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
@@ -366,12 +381,12 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   actionButton: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#2E7D32',
+    shadowColor: '#16BCC0',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -389,6 +404,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 8,
   },
   dialpadSection: {
     position: 'absolute',
