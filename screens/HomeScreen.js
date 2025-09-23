@@ -185,11 +185,11 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.metricCard}>
       <View style={styles.cardHeader}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-          <MaterialIcons name={icon} size={16} color={iconColor === "#2E7D32" ? "#FFFFFF" : "#2E7D32"} />
+          <MaterialIcons name={icon} size={16} color={iconColor === "#16BCC0" ? "#FFFFFF" : "#16BCC0"} />
         </View>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.changePill}>
-          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#2E7D32" />
+          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#16BCC0" />
           <Text style={styles.changeText}>{change}%</Text>
         </View>
       </View>
@@ -242,28 +242,28 @@ const HomeScreen = ({ navigation }) => {
               value={performanceData.totalLeadsCreated}
               change={performanceData.leadsCreatedChange}
               icon="trending-up"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
             <MetricCard
               title="Leads Received"
               value={performanceData.leadsReceived}
               change={performanceData.leadsReceivedChange}
               icon="attach-money"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
             <MetricCard
               title="Leads Closed"
               value={performanceData.leadsClosed}
               change={performanceData.leadsClosedChange}
               icon="assignment-turned-in"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
             <MetricCard
               title="Leads In Progress"
               value={performanceData.leadsInProgress}
               change={performanceData.leadsInProgressChange}
               icon="group"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
               isDownward={true}
             />
           </View>
@@ -278,21 +278,21 @@ const HomeScreen = ({ navigation }) => {
               value={propertiesData.activeProperties}
               change={propertiesData.activeChange}
               icon="business"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
             <MetricCard
               title="Sold/Expired"
               value={propertiesData.soldExpired}
               change={propertiesData.soldChange}
               icon="home"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
             <MetricCard
               title="Pending Approval"
               value={propertiesData.pendingApproval}
               change={propertiesData.pendingChange}
               icon="location-on"
-              iconColor="#E8F5E8"
+              iconColor="#16BCC0"
             />
           </View>
         </View>
@@ -303,7 +303,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.messagesContainer}>
             <View style={styles.messageItem}>
               <View style={styles.messageIcon}>
-                <MaterialIcons name="mail" size={20} color="#2E7D32" />
+                <MaterialIcons name="mail" size={20} color="#16BCC0" />
               </View>
               <Text style={styles.messageText}>Unread Messages</Text>
               <View style={styles.messageBadge}>
@@ -312,7 +312,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <View style={styles.messageItem}>
               <View style={styles.messageIcon}>
-                <MaterialIcons name="chat" size={20} color="#2E7D32" />
+                <MaterialIcons name="chat" size={20} color="#16BCC0" />
               </View>
               <Text style={styles.messageText}>Customer Inquiries</Text>
               <View style={styles.messageBadge}>
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   changePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#16BCC0',
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 10,
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   changeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#FFFFFF',
   },
   messagesContainer: {
     backgroundColor: '#FFFFFF',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messageBadge: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#16BCC0',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#16BCC0',
   },
   notificationsContainer: {
     backgroundColor: '#FFFFFF',
