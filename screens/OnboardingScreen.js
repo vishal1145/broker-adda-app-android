@@ -77,8 +77,8 @@ const OnboardingScreen = ({ navigation }) => {
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
           buttons: [
-            { text: 'Next →', style: 'next', onPress: handleNext },
-            { text: '← Back', style: 'back', onPress: handleBack }
+            { text: 'Next', style: 'next', onPress: handleNext },
+            { text: 'Back', style: 'back', onPress: handleBack }
           ]
         }
       case 3:

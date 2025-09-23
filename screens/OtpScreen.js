@@ -337,15 +337,14 @@ const styles = StyleSheet.create({
   },
   otpBoxesContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between', 
     width: '100%',
     marginBottom: 20,
-    paddingHorizontal:20,
-    gap:8,
-    
+    paddingHorizontal: 0,            
   },
   otpBox: {
-    width: 45,
+    flex: 1,                         
+    marginHorizontal: 4,             
     height: 55,
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
