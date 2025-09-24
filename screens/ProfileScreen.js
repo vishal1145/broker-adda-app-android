@@ -115,16 +115,12 @@ const ProfileScreen = ({ navigation }) => {
             </View>
             <Text style={styles.profileName}>{profileData.name}</Text>
             <Text style={styles.firmName}>{profileData.firm}</Text>
-            <TouchableOpacity style={styles.blockButton}>
-              <MaterialIcons name="block" size={16} color="#FFFFFF" />
-              <Text style={styles.blockButtonText}>Block</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
         {/* Brokerage Details */}
         <View style={[styles.brokerageCard, styles.firstCard]}>
-          <Text style={styles.brokerageTitle}>Brokerage Details</Text>
+          <Text style={styles.brokerageTitle}>Broker Details</Text>
           
           {/* Firm */}
           <View style={styles.brokerageItem}>
@@ -369,30 +365,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: width * 0.9,
     lineHeight: width * 0.05,
-  },
-  blockButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#DC2626',
-    borderRadius: width * 0.05,
-    paddingHorizontal: width * 0.04,
-    paddingVertical: height * 0.01,
-    gap: width * 0.015,
-    minWidth: width * 0.3,
-    justifyContent: 'center',
-    shadowColor: '#DC2626',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  blockButtonText: {
-    fontSize: width * 0.035,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
   infoCard: {
     backgroundColor: '#FFFFFF',
