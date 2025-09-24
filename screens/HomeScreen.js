@@ -20,6 +20,11 @@ const HomeScreen = ({ navigation }) => {
     // Navigate back to login screen
     navigation.navigate('Login')
   }
+
+  const handleProfilePress = () => {
+    // Navigate to profile screen
+    navigation.navigate('Profile')
+  }
   
   // Performance data matching the screenshot
   const [performanceData] = useState({
@@ -222,7 +227,7 @@ const HomeScreen = ({ navigation }) => {
             <TouchableOpacity style={styles.notificationButton}>
               <MaterialIcons name="notifications" size={20} color="#000000" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.profileButton} onPress={handleLogout}>
+            <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
               <View style={styles.profileIcon}>
                 <Text style={styles.profileInitials}>
                   {userName[0]}
