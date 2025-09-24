@@ -6,10 +6,12 @@ import {
   StatusBar, 
   TouchableOpacity, 
   ScrollView,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
 const { width } = Dimensions.get('window')
 
@@ -220,133 +222,310 @@ const HomeScreen = ({ navigation }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome, {userName}!</Text>
-          <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.notificationButton}>
-              <MaterialIcons name="notifications" size={20} color="#000000" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
-              <View style={styles.profileIcon}>
-                <Text style={styles.profileInitials}>
-                  {userName[0]}
-                </Text>
+        {/* Modern Header */}
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modernHeader}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeGreeting}>Welcome back,</Text>
+                <Text style={styles.welcomeName}>{userName}!</Text>
               </View>
-            </TouchableOpacity>
+              <View style={styles.statusIndicator}>
+                <View style={styles.statusDot} />
+                <Text style={styles.statusText}>Online</Text>
+              </View>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.notificationButton}>
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.badgeNumber}>3</Text>
+                </View>
+                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+                <View style={styles.profileImageContainer}>
+                  <Text style={styles.profileInitials}>
+                    {userName[0]}
+                  </Text>
+                  <View style={styles.profileOnlineIndicator} />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
 
 
-        {/* Performance Summary */}
-        <View style={[styles.section, styles.performanceSection]}>
-          <Text style={styles.sectionTitle}>Performance Summary</Text>
+        {/* Performance Summary - Modern Design */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Performance Summary</Text>
+            </View>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>Live</Text>
+            </View>
+          </View>
+          
           <View style={styles.performanceGrid}>
-            <MetricCard
-              title="Total Leads Created"
-              value={performanceData.totalLeadsCreated}
-              change={performanceData.leadsCreatedChange}
-              icon="trending-up"
-              iconColor="#16BCC0"
-            />
-            <MetricCard
-              title="Leads Received"
-              value={performanceData.leadsReceived}
-              change={performanceData.leadsReceivedChange}
-              icon="attach-money"
-              iconColor="#16BCC0"
-            />
-            <MetricCard
-              title="Leads Closed"
-              value={performanceData.leadsClosed}
-              change={performanceData.leadsClosedChange}
-              icon="assignment-turned-in"
-              iconColor="#16BCC0"
-            />
-            <MetricCard
-              title="Leads In Progress"
-              value={performanceData.leadsInProgress}
-              change={performanceData.leadsInProgressChange}
-              icon="group"
-              iconColor="#16BCC0"
-              isDownward={true}
-            />
+            <View style={[styles.metricCard, { backgroundColor: '#667eea' }]}>
+              <View style={styles.metricCardHeader}>
+                <View style={styles.metricIconContainer}>
+                  <MaterialIcons name="trending-up" size={20} color="#FFFFFF" />
+                </View>
+                <View style={styles.changeIndicator}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.changeText}>+{performanceData.leadsCreatedChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.metricValue}>{performanceData.totalLeadsCreated.toLocaleString()}</Text>
+              <Text style={styles.metricLabel}>Total Leads Created</Text>
+            </View>
+
+            <View style={[styles.metricCard, { backgroundColor: '#f093fb' }]}>
+              <View style={styles.metricCardHeader}>
+                <View style={styles.metricIconContainer}>
+                  <MaterialIcons name="attach-money" size={20} color="#FFFFFF" />
+                </View>
+                <View style={styles.changeIndicator}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.changeText}>+{performanceData.leadsReceivedChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.metricValue}>{performanceData.leadsReceived.toLocaleString()}</Text>
+              <Text style={styles.metricLabel}>Leads Received</Text>
+            </View>
+
+            <View style={[styles.metricCard, { backgroundColor: '#4facfe' }]}>
+              <View style={styles.metricCardHeader}>
+                <View style={styles.metricIconContainer}>
+                  <MaterialIcons name="assignment-turned-in" size={20} color="#FFFFFF" />
+                </View>
+                <View style={styles.changeIndicator}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.changeText}>+{performanceData.leadsClosedChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.metricValue}>{performanceData.leadsClosed.toLocaleString()}</Text>
+              <Text style={styles.metricLabel}>Leads Closed</Text>
+            </View>
+
+            <View style={[styles.metricCard, { backgroundColor: '#43e97b' }]}>
+              <View style={styles.metricCardHeader}>
+                <View style={styles.metricIconContainer}>
+                  <MaterialIcons name="group" size={20} color="#FFFFFF" />
+                </View>
+                <View style={styles.changeIndicator}>
+                  <MaterialIcons name="keyboard-arrow-down" size={16} color="#EF4444" />
+                  <Text style={styles.changeTextDown}>-{performanceData.leadsInProgressChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.metricValue}>{performanceData.leadsInProgress.toLocaleString()}</Text>
+              <Text style={styles.metricLabel}>Leads In Progress</Text>
+            </View>
           </View>
         </View>
 
-        {/* Properties Summary */}
+        {/* Properties Summary - Modern Design */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Properties Summary</Text>
-          <View style={styles.propertiesGrid}>
-            <MetricCard
-              title="Active Properties"
-              value={propertiesData.activeProperties}
-              change={propertiesData.activeChange}
-              icon="business"
-              iconColor="#16BCC0"
-            />
-            <MetricCard
-              title="Sold/Expired"
-              value={propertiesData.soldExpired}
-              change={propertiesData.soldChange}
-              icon="home"
-              iconColor="#16BCC0"
-            />
-            <MetricCard
-              title="Pending Approval"
-              value={propertiesData.pendingApproval}
-              change={propertiesData.pendingChange}
-              icon="location-on"
-              iconColor="#16BCC0"
-            />
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="business" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Properties Summary</Text>
+            </View>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>Real Estate</Text>
+            </View>
+          </View>
+          
+          <View style={styles.propertiesContainer}>
+            <View style={styles.propertyCard}>
+              <View style={styles.propertyCardHeader}>
+                <View style={styles.propertyIconContainer}>
+                  <MaterialIcons name="business" size={24} color="#16BCC0" />
+                </View>
+                <View style={styles.propertyChangeContainer}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.propertyChangeText}>+{propertiesData.activeChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.propertyValue}>{propertiesData.activeProperties}</Text>
+              <Text style={styles.propertyLabel}>Active Properties</Text>
+              <View style={styles.propertyProgressBar}>
+                <View style={[styles.propertyProgressFill, { width: '75%' }]} />
+              </View>
+            </View>
+
+            <View style={styles.propertyCard}>
+              <View style={styles.propertyCardHeader}>
+                <View style={styles.propertyIconContainer}>
+                  <MaterialIcons name="home" size={24} color="#16BCC0" />
+                </View>
+                <View style={styles.propertyChangeContainer}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.propertyChangeText}>+{propertiesData.soldChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.propertyValue}>{propertiesData.soldExpired}</Text>
+              <Text style={styles.propertyLabel}>Sold/Expired</Text>
+              <View style={styles.propertyProgressBar}>
+                <View style={[styles.propertyProgressFill, { width: '15%' }]} />
+              </View>
+            </View>
+
+            <View style={styles.propertyCard}>
+              <View style={styles.propertyCardHeader}>
+                <View style={styles.propertyIconContainer}>
+                  <MaterialIcons name="location-on" size={24} color="#16BCC0" />
+                </View>
+                <View style={styles.propertyChangeContainer}>
+                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
+                  <Text style={styles.propertyChangeText}>+{propertiesData.pendingChange}%</Text>
+                </View>
+              </View>
+              <Text style={styles.propertyValue}>{propertiesData.pendingApproval}</Text>
+              <Text style={styles.propertyLabel}>Pending Approval</Text>
+              <View style={styles.propertyProgressBar}>
+                <View style={[styles.propertyProgressFill, { width: '8%' }]} />
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Messages & Inquiries */}
+        {/* Messages & Inquiries - Modern Design */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Messages & Inquiries</Text>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="mail" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Messages & Inquiries</Text>
+            </View>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>Communication</Text>
+            </View>
+          </View>
+          
           <View style={styles.messagesContainer}>
-            <View style={styles.messageItem}>
-              <View style={styles.messageIcon}>
-                <MaterialIcons name="mail" size={20} color="#16BCC0" />
-              </View>
-              <Text style={styles.messageText}>Unread Messages</Text>
-              <View style={styles.messageBadge}>
-                <Text style={styles.badgeText}>{messagesData.unreadMessages}</Text>
+            <View style={[styles.messageCard, { backgroundColor: '#667eea' }]}>
+              <View style={styles.messageCardContent}>
+                <View style={styles.messageIconContainer}>
+                  <MaterialIcons name="mail" size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.messageInfo}>
+                  <Text style={styles.messageTitle}>Unread Messages</Text>
+                  <Text style={styles.messageSubtitle}>New messages waiting</Text>
+                </View>
+                <View style={styles.messageBadgeContainer}>
+                  <Text style={styles.messageBadgeText}>{messagesData.unreadMessages}</Text>
+                </View>
               </View>
             </View>
-            <View style={styles.messageItem}>
-              <View style={styles.messageIcon}>
-                <MaterialIcons name="chat" size={20} color="#16BCC0" />
-              </View>
-              <Text style={styles.messageText}>Customer Inquiries</Text>
-              <View style={styles.messageBadge}>
-                <Text style={styles.badgeText}>{messagesData.customerInquiries}</Text>
+
+            <View style={[styles.messageCard, { backgroundColor: '#f093fb' }]}>
+              <View style={styles.messageCardContent}>
+                <View style={styles.messageIconContainer}>
+                  <MaterialIcons name="chat" size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.messageInfo}>
+                  <Text style={styles.messageTitle}>Customer Inquiries</Text>
+                  <Text style={styles.messageSubtitle}>Pending responses</Text>
+                </View>
+                <View style={styles.messageBadgeContainer}>
+                  <Text style={styles.messageBadgeText}>{messagesData.customerInquiries}</Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Notifications */}
+        {/* Notifications - Modern Design */}
         <View style={styles.section}>
-          <View style={styles.notificationsHeader}>
-            <Text style={styles.sectionTitle}>Notifications</Text>
-            <TouchableOpacity>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Notifications</Text>
+            </View>
+            <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See All</Text>
+              <MaterialIcons name="arrow-forward" size={16} color="#16BCC0" />
             </TouchableOpacity>
           </View>
+          
           <View style={styles.notificationsContainer}>
-            {notifications.map((notification) => (
-              <NotificationItem key={notification.id} notification={notification} />
+            {notifications.map((notification, index) => (
+              <View key={notification.id} style={styles.notificationCard}>
+                <View style={styles.notificationCardHeader}>
+                  <View style={[styles.notificationIconContainer, { backgroundColor: notification.iconColor + '20' }]}>
+                    <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
+                  </View>
+                  <View style={styles.notificationTimeContainer}>
+                    <Text style={styles.notificationTime}>{notification.time}</Text>
+                  </View>
+                </View>
+                <Text style={styles.notificationTitle}>{notification.title}</Text>
+                <Text style={styles.notificationDescription}>{notification.description}</Text>
+                <View style={styles.notificationTypeContainer}>
+                  <Text style={[styles.notificationType, { color: notification.iconColor }]}>
+                    {notification.type.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
             ))}
           </View>
         </View>
 
-        {/* Leads by Status */}
+        {/* Leads by Status - Modern Design */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Leads by Status</Text>
-          <View style={styles.chartCard}>
-            <DonutChart data={leadsStatusData} size={200} />
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="pie-chart" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Leads by Status</Text>
+            </View>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>Analytics</Text>
+            </View>
+          </View>
+          
+          <View style={styles.chartContainer}>
+            <View style={styles.chartCard}>
+              <DonutChart data={leadsStatusData} size={200} />
+            </View>
+            <View style={styles.chartStats}>
+              <View style={styles.chartStatItem}>
+                <View style={[styles.chartStatColor, { backgroundColor: '#2E7D32' }]} />
+                <Text style={styles.chartStatLabel}>Closed</Text>
+                <Text style={styles.chartStatValue}>{leadsStatusData.closed}%</Text>
+              </View>
+              <View style={styles.chartStatItem}>
+                <View style={[styles.chartStatColor, { backgroundColor: '#FFD700' }]} />
+                <Text style={styles.chartStatLabel}>In Progress</Text>
+                <Text style={styles.chartStatValue}>{leadsStatusData.inProgress}%</Text>
+              </View>
+              <View style={styles.chartStatItem}>
+                <View style={[styles.chartStatColor, { backgroundColor: '#2196F3' }]} />
+                <Text style={styles.chartStatLabel}>New</Text>
+                <Text style={styles.chartStatValue}>{leadsStatusData.new}%</Text>
+              </View>
+              <View style={styles.chartStatItem}>
+                <View style={[styles.chartStatColor, { backgroundColor: '#F44336' }]} />
+                <Text style={styles.chartStatLabel}>Rejected</Text>
+                <Text style={styles.chartStatValue}>{leadsStatusData.rejected}%</Text>
+              </View>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -362,177 +541,355 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
+
+  // Modern Header Styles
+  modernHeader: {
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+  headerLeft: {
     flex: 1,
+  },
+  welcomeContainer: {
+    marginBottom: 8,
+  },
+  welcomeGreeting: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 2,
+  },
+  welcomeName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   notificationButton: {
-    marginRight: 6,
+    position: 'relative',
     padding: 8,
   },
-  profileButton: {
-    marginLeft: 4,
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
-  profileIcon: {
+  badgeNumber: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileButton: {
+    padding: 4,
+  },
+  profileImageContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    position: 'relative',
+  },
+  profileInitials: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileOnlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+
+  // Section Styles
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionIconWrapper: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#16BCC0',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  profileInitials: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  performanceSection: {
-    paddingTop: 20,
+    shadowColor: '#16BCC0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000',
-    marginBottom: 20,
+    color: '#1F2937',
   },
+  sectionBadge: {
+    backgroundColor: '#F0FDFA',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  sectionBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+  },
+
+  // Performance Grid Styles
   performanceGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  propertiesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 12,
   },
   metricCard: {
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    padding: 16,
-    width: (width - 60) / 2,
-    marginBottom: 16,
+    width: (width - 52) / 2,
+    borderRadius: 20,
+    padding: 20,
+    minHeight: 140,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    alignItems: 'flex-start',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  cardHeader: {
+  metricCardHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666666',
-    marginLeft: 8,
-    flex: 1,
-    marginRight: 8,
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  metricIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 8,
-    textAlign: 'left',
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  changePill: {
+  changeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16BCC0',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-  },
-  changeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  messagesContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  messageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  messageIcon: {
-    marginRight: 12,
-  },
-  messageText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    flex: 1,
-  },
-  messageBadge: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    minWidth: 24,
-    alignItems: 'center',
   },
-  badgeText: {
+  changeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#10B981',
+    marginLeft: 2,
   },
-  notificationsHeader: {
+  changeTextDown: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#EF4444',
+    marginLeft: 2,
+  },
+  metricValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  metricLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+
+  // Properties Container Styles
+  propertiesContainer: {
+    gap: 16,
+  },
+  propertyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  propertyCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  propertyIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#A7F3D0',
+  },
+  propertyChangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  propertyChangeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#10B981',
+    marginLeft: 2,
+  },
+  propertyValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  propertyLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  propertyProgressBar: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  propertyProgressFill: {
+    height: '100%',
+    backgroundColor: '#16BCC0',
+    borderRadius: 3,
+  },
+
+  // Messages Container Styles
+  messagesContainer: {
+    gap: 16,
+  },
+  messageCard: {
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  messageCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  messageIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  messageInfo: {
+    flex: 1,
+  },
+  messageTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  messageSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  messageBadgeContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  messageBadgeText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Notifications Styles
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   seeAllText: {
     fontSize: 14,
@@ -540,62 +897,115 @@ const styles = StyleSheet.create({
     color: '#16BCC0',
   },
   notificationsContainer: {
+    gap: 16,
+  },
+  notificationCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 4,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#E5E7EB',
   },
-  notificationItem: {
+  notificationCardHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  notificationIcon: {
-    marginRight: 12,
-    marginTop: 2,
+  notificationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  notificationDescription: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 4,
+  notificationTimeContainer: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   notificationTime: {
-    fontSize: 11,
-    color: '#999999',
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
   },
-  chartCard: {
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  notificationDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#6B7280',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  notificationTypeContainer: {
+    alignSelf: 'flex-start',
+  },
+  notificationType: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Chart Styles
+  chartContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#E5E7EB',
   },
+  chartCard: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  chartStats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  chartStatItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: (width - 100) / 2,
+  },
+  chartStatColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  chartStatLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+    flex: 1,
+  },
+  chartStatValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+
+  // Donut Chart Styles
   donutContainer: {
     alignItems: 'center',
     justifyContent: 'center',

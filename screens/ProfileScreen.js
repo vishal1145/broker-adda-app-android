@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -7,14 +7,23 @@ import {
   TouchableOpacity, 
   ScrollView,
   Image,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 
 const { width, height } = Dimensions.get('window')
 
 const ProfileScreen = ({ navigation }) => {
+  // Debug navigation state
+  useEffect(() => {
+    console.log('ProfileScreen mounted');
+    console.log('Navigation state:', navigation.getState());
+    console.log('Can go back:', navigation.canGoBack());
+  }, []);
+
   const [profileData] = useState({
     name: 'Ethan Smith',
     brokerId: 'BRK-23579',
@@ -35,36 +44,42 @@ const ProfileScreen = ({ navigation }) => {
     totalClients: '245',
     activeDeals: '12',
     commissionEarned: '$1.2M',
+    rating: 4.8,
     documents: [
       {
         id: 1,
         name: 'Aadhar Card',
         fileType: 'JPEG',
-        hasFile: true
+        hasFile: true,
+        uploadDate: '2024-01-15'
       },
       {
         id: 2,
         name: 'PAN Card',
         fileType: 'JPEG',
-        hasFile: true
+        hasFile: true,
+        uploadDate: '2024-01-15'
       },
       {
         id: 3,
         name: 'GST Certificate',
         fileType: 'JPEG',
-        hasFile: true
+        hasFile: true,
+        uploadDate: '2024-01-20'
       },
       {
         id: 4,
         name: 'Broker License',
-        fileType: 'N/A',
-        hasFile: false
+        fileType: 'PDF',
+        hasFile: true,
+        uploadDate: '2024-02-01'
       },
       {
         id: 5,
         name: 'Company ID',
-        fileType: 'N/A',
-        hasFile: false
+        fileType: 'JPEG',
+        hasFile: true,
+        uploadDate: '2024-01-10'
       }
     ]
   })
@@ -85,12 +100,34 @@ const ProfileScreen = ({ navigation }) => {
     console.log('Download document:', documentId)
   }
 
-  const InfoCard = ({ title, items }) => (
+  const handleEditProfile = () => {
+    // Handle edit profile
+    console.log('Edit profile')
+  }
+
+  const StatCard = ({ icon, title, value, color, bgColor }) => (
+    <View style={[styles.statCard, { backgroundColor: bgColor }]}>
+      <View style={[styles.statIcon, { backgroundColor: color }]}>
+        <MaterialIcons name={icon} size={24} color="#FFFFFF" />
+      </View>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statTitle}>{title}</Text>
+    </View>
+  )
+
+  const InfoCard = ({ title, items, icon }) => (
     <View style={styles.infoCard}>
+      <View style={styles.cardHeader}>
+        <View style={styles.cardTitleContainer}>
+          <MaterialIcons name={icon} size={24} color="#16BCC0" />
       <Text style={styles.cardTitle}>{title}</Text>
+        </View>
+      </View>
       {items.map((item, index) => (
         <View key={index} style={styles.infoItem}>
-          <MaterialIcons name={item.icon} size={20} color="#666666" />
+          <View style={styles.infoIconContainer}>
+            <MaterialIcons name={item.icon} size={20} color="#16BCC0" />
+          </View>
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>{item.label}</Text>
             <Text style={styles.infoValue}>{item.value}</Text>
@@ -102,213 +139,478 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                style={styles.profileImage}
-              />
+        {/* Modern Profile Header */}
+        <View style={styles.modernHeaderContainer}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2', '#f093fb']}
+            style={styles.modernHeaderGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            {/* Background Pattern */}
+            <View style={styles.headerPattern}>
+              <View style={styles.patternCircle1} />
+              <View style={styles.patternCircle2} />
+              <View style={styles.patternCircle3} />
             </View>
-            <Text style={styles.profileName}>{profileData.name}</Text>
-            <Text style={styles.firmName}>{profileData.firm}</Text>
-          </View>
+            
+            <View style={styles.modernHeaderContent}>
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => {
+                  console.log('Back button pressed');
+                  try {
+                    // Try to go back first
+                    if (navigation.canGoBack()) {
+                      navigation.goBack();
+                    } else {
+                      // If can't go back, navigate to MainTabs
+                      navigation.navigate('MainTabs');
+                    }
+                  } catch (error) {
+                    console.log('Navigation error:', error);
+                    // Fallback: navigate to MainTabs
+                    navigation.navigate('MainTabs');
+                  }
+                }}
+              >
+                <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
+                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              <View style={styles.modernProfileSection}>
+                <View style={styles.modernProfileImageContainer}>
+                  <View style={styles.profileImageWrapper}>
+                    <Image 
+                      source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
+                      style={styles.modernProfileImage}
+                    />
+                    <View style={styles.profileImageOverlay} />
+                  </View>
+                  <View style={styles.modernStatusIndicator}>
+                    <View style={styles.modernStatusDot} />
+                    <View style={styles.statusPulse} />
+                  </View>
+                  <View style={styles.profileBadge}>
+                    <MaterialIcons name="verified" size={16} color="#FFFFFF" />
+                  </View>
+                </View>
+                
+                <View style={styles.profileInfoContainer}>
+                  <Text style={styles.modernProfileName}>{profileData.name}</Text>
+                  <View style={styles.roleContainer}>
+                    <MaterialIcons name="work" size={16} color="#FFFFFF" />
+                    <Text style={styles.modernProfileRole}>{profileData.role}</Text>
+                  </View>
+                  <View style={styles.companyContainer}>
+                    <MaterialIcons name="business" size={16} color="#FFFFFF" />
+                    <Text style={styles.modernFirmName}>{profileData.firm}</Text>
+                  </View>
+                  
+                  <View style={styles.modernRatingContainer}>
+                    <View style={styles.ratingStars}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FontAwesome5 
+                          key={star} 
+                          name="star" 
+                          size={14} 
+                          color={star <= Math.floor(profileData.rating) ? "#FFD700" : "#FFFFFF"} 
+                          style={styles.ratingStar}
+                        />
+                      ))}
+                    </View>
+                    <Text style={styles.modernRatingText}>{profileData.rating}</Text>
+                    <Text style={styles.modernRatingLabel}>(245 reviews)</Text>
+                  </View>
+                  
+                  <View style={styles.profileStats}>
+                    <View style={styles.profileStatItem}>
+                      <Text style={styles.profileStatValue}>8+</Text>
+                      <Text style={styles.profileStatLabel}>Years</Text>
+                    </View>
+                    <View style={styles.profileStatDivider} />
+                    <View style={styles.profileStatItem}>
+                      <Text style={styles.profileStatValue}>245</Text>
+                      <Text style={styles.profileStatLabel}>Clients</Text>
+                    </View>
+                    <View style={styles.profileStatDivider} />
+                    <View style={styles.profileStatItem}>
+                      <Text style={styles.profileStatValue}>12</Text>
+                      <Text style={styles.profileStatLabel}>Deals</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
-        {/* Brokerage Details */}
-        <View style={[styles.brokerageCard, styles.firstCard]}>
-          <Text style={styles.brokerageTitle}>Broker Details</Text>
+        {/* Advanced Statistics Section */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsHeader}>
+            <Text style={styles.sectionTitle}>Performance Overview</Text>
+            <View style={styles.statsSubtitle}>
+              <MaterialIcons name="analytics" size={16} color="#16BCC0" />
+              <Text style={styles.statsSubtitleText}>Real-time metrics</Text>
+            </View>
+          </View>
           
-          {/* Firm */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="business" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Firm</Text>
-              <Text style={styles.brokerageValue}>{profileData.firm}</Text>
+          <View style={styles.advancedStatsGrid}>
+            {/* Commission Card */}
+            <View style={styles.advancedStatCard}>
+              <LinearGradient
+                colors={['#10B981', '#059669', '#047857']}
+                style={styles.statGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.statCardHeader}>
+                  <View style={styles.statCardIcon}>
+                    <MaterialIcons name="trending-up" size={28} color="#FFFFFF" />
+            </View>
+                  <View style={styles.statCardTrend}>
+                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
+                    <Text style={styles.statTrendText}>+12%</Text>
+                  </View>
+                </View>
+                <Text style={styles.advancedStatValue}>{profileData.commissionEarned}</Text>
+                <Text style={styles.advancedStatLabel}>Commission Earned</Text>
+                <View style={styles.statProgressBar}>
+                  <View style={[styles.statProgressFill, { width: '85%', backgroundColor: '#FFFFFF' }]} />
+                </View>
+              </LinearGradient>
+          </View>
+
+            {/* Clients Card */}
+            <View style={styles.advancedStatCard}>
+              <LinearGradient
+                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
+                style={styles.statGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.statCardHeader}>
+                  <View style={styles.statCardIcon}>
+                    <MaterialIcons name="people" size={28} color="#FFFFFF" />
+            </View>
+                  <View style={styles.statCardTrend}>
+                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
+                    <Text style={styles.statTrendText}>+8%</Text>
+                  </View>
+                </View>
+                <Text style={styles.advancedStatValue}>{profileData.totalClients}</Text>
+                <Text style={styles.advancedStatLabel}>Total Clients</Text>
+                <View style={styles.statProgressBar}>
+                  <View style={[styles.statProgressFill, { width: '92%', backgroundColor: '#FFFFFF' }]} />
+                </View>
+              </LinearGradient>
+          </View>
+
+            {/* Active Deals Card */}
+            <View style={styles.advancedStatCard}>
+              <LinearGradient
+                colors={['#F59E0B', '#D97706', '#B45309']}
+                style={styles.statGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.statCardHeader}>
+                  <View style={styles.statCardIcon}>
+                    <MaterialIcons name="work" size={28} color="#FFFFFF" />
+              </View>
+                  <View style={styles.statCardTrend}>
+                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
+                    <Text style={styles.statTrendText}>+5%</Text>
+            </View>
+                </View>
+                <Text style={styles.advancedStatValue}>{profileData.activeDeals}</Text>
+                <Text style={styles.advancedStatLabel}>Active Deals</Text>
+                <View style={styles.statProgressBar}>
+                  <View style={[styles.statProgressFill, { width: '68%', backgroundColor: '#FFFFFF' }]} />
+                </View>
+              </LinearGradient>
+          </View>
+
+            {/* Experience Card */}
+            <View style={styles.advancedStatCard}>
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
+                style={styles.statGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.statCardHeader}>
+                  <View style={styles.statCardIcon}>
+                    <MaterialIcons name="schedule" size={28} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.statCardTrend}>
+                    <MaterialIcons name="star" size={16} color="#FFFFFF" />
+                    <Text style={styles.statTrendText}>Expert</Text>
+                  </View>
+                </View>
+                <Text style={styles.advancedStatValue}>{profileData.yearsExperience}</Text>
+                <Text style={styles.advancedStatLabel}>Experience</Text>
+                <View style={styles.statProgressBar}>
+                  <View style={[styles.statProgressFill, { width: '100%', backgroundColor: '#FFFFFF' }]} />
+                </View>
+              </LinearGradient>
             </View>
           </View>
 
-          {/* Gender */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="person" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Gender</Text>
-              <Text style={styles.brokerageValue}>{profileData.gender}</Text>
-            </View>
           </View>
 
-          {/* Status */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="schedule" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Status</Text>
-              <View style={styles.statusTag}>
-                <Text style={styles.statusText}>{profileData.status}</Text>
+        {/* Broker Information - Modern Design */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.sectionIconWrapper}>
+                <MaterialIcons name="business" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Broker Information</Text>
+            </View>
+            <View style={styles.sectionBadge}>
+              <Text style={styles.sectionBadgeText}>Professional</Text>
+            </View>
+          </View>
+          
+          <View style={styles.brokerInfoContainer}>
+            <View style={styles.brokerInfoCard}>
+              <View style={styles.brokerInfoHeader}>
+                <View style={styles.brokerInfoIconContainer}>
+                  <MaterialIcons name="account-circle" size={32} color="#16BCC0" />
+                </View>
+                <View style={styles.brokerInfoTitleContainer}>
+                  <Text style={styles.brokerInfoTitle}>Professional Details</Text>
+                  <Text style={styles.brokerInfoSubtitle}>Company & Personal Information</Text>
+                </View>
+              </View>
+              
+              <View style={styles.brokerInfoList}>
+                <View style={styles.brokerInfoRow}>
+                  <View style={styles.brokerInfoLeft}>
+                    <View style={styles.brokerInfoIcon}>
+                      <MaterialIcons name="business" size={20} color="#16BCC0" />
+                    </View>
+                    <Text style={styles.brokerInfoLabel}>Firm</Text>
+                  </View>
+                  <Text style={styles.brokerInfoValue}>{profileData.firm}</Text>
+                </View>
+                
+                <View style={styles.brokerInfoDivider} />
+                
+                <View style={styles.brokerInfoRow}>
+                  <View style={styles.brokerInfoLeft}>
+                    <View style={styles.brokerInfoIcon}>
+                      <MaterialIcons name="person" size={20} color="#16BCC0" />
+                    </View>
+                    <Text style={styles.brokerInfoLabel}>Gender</Text>
+                  </View>
+                  <Text style={styles.brokerInfoValue}>{profileData.gender}</Text>
+                </View>
+                
+                <View style={styles.brokerInfoDivider} />
+                
+                <View style={styles.brokerInfoRow}>
+                  <View style={styles.brokerInfoLeft}>
+                    <View style={styles.brokerInfoIcon}>
+                      <MaterialIcons name="schedule" size={20} color="#16BCC0" />
+                    </View>
+                    <Text style={styles.brokerInfoLabel}>Status</Text>
+                  </View>
+                  <View style={styles.statusContainer}>
+                    <View style={styles.statusIndicator}>
+                      <View style={styles.statusDot} />
+                    </View>
+                    <Text style={styles.statusText}>{profileData.status}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.brokerInfoDivider} />
+                
+                <View style={styles.brokerInfoRow}>
+                  <View style={styles.brokerInfoLeft}>
+                    <View style={styles.brokerInfoIcon}>
+                      <MaterialIcons name="calendar-today" size={20} color="#16BCC0" />
+                    </View>
+                    <Text style={styles.brokerInfoLabel}>Joined Date</Text>
+                  </View>
+                  <Text style={styles.brokerInfoValue}>{profileData.joinedDate}</Text>
+                </View>
+                
+                <View style={styles.brokerInfoDivider} />
+                
+                <View style={styles.brokerInfoRow}>
+                  <View style={styles.brokerInfoLeft}>
+                    <View style={styles.brokerInfoIcon}>
+                      <MaterialIcons name="description" size={20} color="#16BCC0" />
+                    </View>
+                    <Text style={styles.brokerInfoLabel}>License Number</Text>
+                  </View>
+                  <Text style={styles.brokerInfoValue}>{profileData.licenseNumber}</Text>
+                </View>
               </View>
             </View>
           </View>
+        </View>
 
-          {/* Joined Date */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="calendar-today" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Joined Date</Text>
-              <Text style={styles.brokerageValue}>{profileData.joinedDate}</Text>
-            </View>
-          </View>
-
-          {/* License */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="description" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>License</Text>
-              <Text style={styles.brokerageValue}>{profileData.licenseNumber}</Text>
-            </View>
-          </View>
-
-          {/* Specializations */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="work" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Specializations</Text>
-              <View style={styles.specializationTags}>
+        {/* Specializations Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Specializations</Text>
+          <View style={styles.tagsContainer}>
                 {profileData.specializations.map((spec, index) => (
-                  <View key={index} style={styles.specializationTag}>
-                    <Text style={styles.specializationText}>{spec}</Text>
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{spec}</Text>
                   </View>
                 ))}
-              </View>
             </View>
           </View>
 
-          {/* Regions */}
-          <View style={styles.brokerageItem}>
-            <MaterialIcons name="public" size={20} color="#666666" />
-            <View style={styles.brokerageContent}>
-              <Text style={styles.brokerageLabel}>Regions</Text>
-              <View style={styles.regionTags}>
+        {/* Regions Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Regions</Text>
+          <View style={styles.tagsContainer}>
                 {profileData.regions.map((region, index) => (
-                  <View key={index} style={styles.regionTag}>
-                    <Text style={styles.regionText}>{region}</Text>
+              <View key={index} style={[styles.tag, styles.regionTag]}>
+                <Text style={[styles.tagText, styles.regionTagText]}>{region}</Text>
                   </View>
                 ))}
               </View>
             </View>
+
+        {/* Contact Information - Floating Design */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <View style={styles.floatingContainer}>
+            <View style={styles.floatingHeader}>
+              <View style={styles.floatingIconWrapper}>
+                <MaterialIcons name="contact-phone" size={28} color="#FFFFFF" />
+              </View>
+              <View style={styles.floatingHeaderText}>
+                <Text style={styles.floatingTitle}>Get In Touch</Text>
+                <Text style={styles.floatingSubtitle}>Reach out anytime</Text>
           </View>
         </View>
 
-        {/* Contact Information */}
-        <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Contact Information</Text>
-          
-          {/* Mobile */}
-          <View style={styles.contactItem}>
-            <MaterialIcons name="phone" size={20} color="#666666" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Mobile</Text>
-              <View style={styles.contactValueRow}>
-                <Text style={styles.contactValueGreen}>{profileData.mobileNumber}</Text>
-                <MaterialIcons name="check-circle" size={16} color="#16BCC0" />
+            <View style={styles.contactFloatingGrid}>
+              <View style={styles.contactFloatingItem}>
+                <View style={styles.contactFloatingIcon}>
+                  <MaterialIcons name="phone" size={22} color="#FFFFFF" />
               </View>
+                <View style={styles.contactFloatingContent}>
+                  <Text style={styles.contactFloatingLabel}>Mobile</Text>
+                  <View style={styles.contactFloatingValueRow}>
+                    <Text style={styles.contactFloatingValue}>{profileData.mobileNumber}</Text>
+                    <View style={styles.verifiedBadge}>
+                      <MaterialIcons name="check" size={12} color="#FFFFFF" />
+            </View>
+          </View>
             </View>
           </View>
 
-          {/* WhatsApp */}
-          <View style={styles.contactItem}>
-            <MaterialIcons name="chat" size={20} color="#666666" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>WhatsApp</Text>
-              <Text style={styles.contactValueGreen}>{profileData.whatsappNumber}</Text>
-            </View>
-          </View>
-
-          {/* Email */}
-          <View style={styles.contactItem}>
-            <MaterialIcons name="email" size={20} color="#666666" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Email</Text>
-              <View style={styles.contactValueRow}>
-                <Text style={styles.contactValueGreen}>{profileData.email}</Text>
-                <MaterialIcons name="check-circle" size={16} color="#16BCC0" />
+              <View style={styles.contactFloatingItem}>
+                <View style={styles.contactFloatingIcon}>
+                  <MaterialIcons name="chat" size={22} color="#FFFFFF" />
               </View>
+                <View style={styles.contactFloatingContent}>
+                  <Text style={styles.contactFloatingLabel}>WhatsApp</Text>
+                  <Text style={styles.contactFloatingValue}>{profileData.whatsappNumber}</Text>
             </View>
           </View>
 
-          {/* Office Address */}
-          <View style={styles.contactItem}>
-            <MaterialIcons name="location-on" size={20} color="#666666" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Office Address</Text>
-              <Text style={styles.contactValueBlack}>{profileData.officeAddress}</Text>
-            </View>
-          </View>
-
-          {/* Website */}
-          <View style={styles.contactItem}>
-            <MaterialIcons name="language" size={20} color="#666666" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Website</Text>
-              <Text style={styles.contactValueBlack}>{profileData.website}</Text>
-            </View>
-          </View>
-
-          {/* Social Media */}
-          <View style={styles.contactItem}>
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Social Media</Text>
-              <View style={styles.socialMediaIcons}>
-                <View style={styles.socialIcon}>
-                  <MaterialIcons name="linkedin" size={20} color="#FFFFFF" />
+              <View style={styles.contactFloatingItem}>
+                <View style={styles.contactFloatingIcon}>
+                  <MaterialIcons name="email" size={22} color="#FFFFFF" />
                 </View>
-                <View style={styles.socialIcon}>
-                  <MaterialIcons name="facebook" size={20} color="#FFFFFF" />
+                <View style={styles.contactFloatingContent}>
+                  <Text style={styles.contactFloatingLabel}>Email</Text>
+                  <View style={styles.contactFloatingValueRow}>
+                    <Text style={styles.contactFloatingValue}>{profileData.email}</Text>
+                    <View style={styles.verifiedBadge}>
+                      <MaterialIcons name="check" size={12} color="#FFFFFF" />
+                    </View>
+                  </View>
+            </View>
+          </View>
+
+              <View style={styles.contactFloatingItem}>
+                <View style={styles.contactFloatingIcon}>
+                  <MaterialIcons name="location-on" size={22} color="#FFFFFF" />
+                </View>
+                <View style={styles.contactFloatingContent}>
+                  <Text style={styles.contactFloatingLabel}>Office Address</Text>
+                  <Text style={styles.contactFloatingValue}>{profileData.officeAddress}</Text>
+            </View>
+          </View>
+
+              <View style={styles.contactFloatingItem}>
+                <View style={styles.contactFloatingIcon}>
+                  <MaterialIcons name="language" size={22} color="#FFFFFF" />
+                </View>
+                <View style={styles.contactFloatingContent}>
+                  <Text style={styles.contactFloatingLabel}>Website</Text>
+                  <Text style={styles.contactFloatingValue}>{profileData.website}</Text>
                 </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Documents */}
-        <View style={styles.documentsCard}>
-          <Text style={styles.documentsTitle}>Documents</Text>
+        {/* Documents Section - Neumorphism Design */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Documents</Text>
+            <TouchableOpacity style={styles.neuUploadButton}>
+              <MaterialIcons name="add" size={20} color="#16BCC0" />
+              <Text style={styles.neuUploadText}>Upload</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.documentsNeuContainer}>
           {profileData.documents.map((document, index) => (
-            <View key={document.id} style={styles.documentItem}>
-              <View style={styles.documentIcon}>
-                <MaterialIcons name="description" size={20} color="#666666" />
+              <View key={document.id} style={styles.documentNeuItem}>
+                <View style={styles.documentNeuIcon}>
+                  <MaterialIcons 
+                    name={document.fileType === 'PDF' ? 'picture-as-pdf' : 'image'} 
+                    size={24} 
+                    color="#16BCC0" 
+                  />
               </View>
-              <View style={styles.documentInfo}>
-                <Text style={styles.documentName}>{document.name}</Text>
-                <View style={styles.fileTypeTag}>
-                  <Text style={styles.fileTypeText}>{document.fileType}</Text>
+                <View style={styles.documentNeuContent}>
+                  <Text style={styles.documentNeuName}>{document.name}</Text>
+                  <View style={styles.documentNeuMeta}>
+                    <View style={styles.neuFileType}>
+                      <Text style={styles.neuFileTypeText}>{document.fileType}</Text>
                 </View>
+                    <Text style={styles.documentNeuDate}>{document.uploadDate}</Text>
               </View>
-              <View style={styles.documentActions}>
+                </View>
+                <View style={styles.documentNeuActions}>
                 <TouchableOpacity 
-                  style={styles.previewButton}
+                    style={styles.neuActionButton}
                   onPress={() => handlePreviewDocument(document.id)}
                 >
                   <MaterialIcons name="visibility" size={18} color="#16BCC0" />
-                  <Text style={styles.previewButtonText}>Preview</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={styles.downloadButton}
+                    style={[styles.neuActionButton, styles.neuDownloadButton]}
                   onPress={() => handleDownloadDocument(document.id)}
                 >
                   <MaterialIcons name="download" size={18} color="#FFFFFF" />
-                  <Text style={styles.downloadButtonText}>Download</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ))}
+          </View>
         </View>
 
         {/* Action Buttons */}
-        <View style={styles.actionButtons}>
+        <View style={styles.actionSection}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <MaterialIcons name="logout" size={18} color="#FFFFFF" />
+            <MaterialIcons name="logout" size={20} color="#FFFFFF" />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -320,407 +622,878 @@ const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   scrollView: {
     flex: 1,
   },
-  profileHeader: {
-    backgroundColor: '#16BCC0',
-    paddingBottom: height * 0.04,
-    minHeight: height * 0.35,
+  
+  // Modern Header Styles
+  modernHeaderContainer: {
+    marginBottom: 32,
   },
-  profileSection: {
+  modernHeaderGradient: {
+    paddingTop: 20,
+    paddingBottom: 50,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  patternCircle1: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    top: -30,
+    right: -30,
+  },
+  patternCircle2: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    top: 100,
+    left: -20,
+  },
+  patternCircle3: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    bottom: 20,
+    right: 50,
+  },
+  modernHeaderContent: {
+    paddingHorizontal: 24,
+    position: 'relative',
+    zIndex: 2,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
-    paddingHorizontal: width * 0.05,
-    paddingTop: height * 0.04,
-    flex: 1,
     justifyContent: 'center',
+    zIndex: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  profileImageContainer: {
-    marginBottom: height * 0.02,
+  modernEditButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  profileImage: {
-    width: width * 0.25,
-    height: width * 0.25,
-    borderRadius: width * 0.125,
-    borderWidth: 3,
+  modernProfileSection: {
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  modernProfileImageContainer: {
+    position: 'relative',
+    marginBottom: 24,
+  },
+  profileImageWrapper: {
+    position: 'relative',
+  },
+  modernProfileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
     borderColor: '#FFFFFF',
-    maxWidth: 120,
-    maxHeight: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  profileName: {
-    fontSize: width * 0.06,
+  profileImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 60,
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+  },
+  modernStatusIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#667eea',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modernStatusDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#10B981',
+  },
+  statusPulse: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(16, 185, 129, 0.3)',
+    top: -3,
+    left: -3,
+  },
+  profileBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  profileInfoContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  modernProfileName: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  modernProfileRole: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  companyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 8,
+  },
+  modernFirmName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  modernRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 8,
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  ratingStar: {
+    marginRight: 1,
+  },
+  modernRatingText: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: height * 0.01,
-    textAlign: 'center',
-    maxWidth: width * 0.9,
+    marginLeft: 4,
   },
-  firmName: {
-    fontSize: width * 0.04,
+  modernRatingLabel: {
+    fontSize: 14,
     fontWeight: '400',
-    color: '#E3F2FD',
-    marginBottom: height * 0.02,
-    textAlign: 'center',
-    maxWidth: width * 0.9,
-    lineHeight: width * 0.05,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: width * 0.05,
-    marginBottom: height * 0.02,
-    borderRadius: width * 0.04,
-    padding: width * 0.06,
+  profileStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  profileStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileStatValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  profileStatLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  profileStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginHorizontal: 16,
+  },
+
+  // Advanced Statistics Section
+  statsSection: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  statsHeader: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  statsSubtitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statsSubtitleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#16BCC0',
+  },
+  advancedStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 24,
+  },
+  advancedStatCard: {
+    flex: 1,
+    minWidth: (width - 80) / 2,
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  statGradient: {
+    padding: 20,
+    minHeight: 140,
+  },
+  statCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statCardTrend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  statTrendText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  advancedStatValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  advancedStatLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 16,
+  },
+  statProgressBar: {
       height: 4,
-    },
-    shadowOpacity: 0.08,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  statProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+
+  // Section Styles
+  section: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  // Modern Broker Information Styles
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  sectionIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#16BCC0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#16BCC0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sectionBadge: {
+    backgroundColor: '#F0FDFA',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  sectionBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  brokerInfoContainer: {
+    marginBottom: 8,
+  },
+  brokerInfoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  brokerInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  brokerInfoIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: '#A7F3D0',
+  },
+  brokerInfoTitleContainer: {
+    flex: 1,
+  },
+  brokerInfoTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  brokerInfoSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  brokerInfoList: {
+    gap: 0,
+  },
+  brokerInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  brokerInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  brokerInfoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  brokerInfoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  brokerInfoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+  brokerInfoDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginLeft: 48,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+
+  // Floating Design Styles
+  floatingContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  floatingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  floatingIconWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  floatingHeaderText: {
+    flex: 1,
+  },
+  floatingTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  floatingSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  contactFloatingGrid: {
+    gap: 16,
+  },
+  contactFloatingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.05)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  contactFloatingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#16BCC0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  contactFloatingContent: {
+    flex: 1,
+  },
+  contactFloatingLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  contactFloatingValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  contactFloatingValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  verifiedBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Neumorphism Design Styles
+  documentsNeuContainer: {
+    gap: 16,
+  },
+  documentNeuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#E5E7EB',
   },
-  cardTitle: {
-    fontSize: width * 0.045,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: height * 0.02,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: height * 0.022,
-    minHeight: height * 0.06,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: width * 0.03,
+  documentNeuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
-  infoLabel: {
-    fontSize: width * 0.032,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: height * 0.007,
+  documentNeuContent: {
+    flex: 1,
+    marginRight: 16,
   },
-  infoValue: {
-    fontSize: width * 0.037,
+  documentNeuName: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
-    lineHeight: width * 0.05,
+    color: '#1F2937',
+    marginBottom: 8,
   },
-  actionButtons: {
-    paddingHorizontal: width * 0.05,
-    paddingBottom: height * 0.04,
+  documentNeuMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  neuFileType: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  neuFileTypeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2563EB',
+  },
+  documentNeuDate: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#9CA3AF',
+  },
+  documentNeuActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  neuActionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  neuDownloadButton: {
+    backgroundColor: '#16BCC0',
+    borderColor: '#16BCC0',
+  },
+  neuUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  neuUploadText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#16BCC0',
+  },
+
+  // Tags
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: '#F0FDFA',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  tagText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#059669',
+  },
+  regionTag: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  regionTagText: {
+    color: '#2563EB',
+  },
+
+  // Documents
+  documentsList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  documentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  documentIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  documentInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+  documentName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  documentMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  fileType: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  uploadDate: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#9CA3AF',
+  },
+  documentActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  downloadButton: {
+    backgroundColor: '#16BCC0',
+    borderColor: '#16BCC0',
+  },
+  uploadButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0FDFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+
+  // Action Section
+  actionSection: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
-    borderRadius: width * 0.02,
-    paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.04,
-    gap: width * 0.02,
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    gap: 8,
     justifyContent: 'center',
-    shadowColor: '#DC2626',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   logoutText: {
-    fontSize: width * 0.04,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  contactCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: width * 0.05,
-    marginBottom: height * 0.02,
-    borderRadius: width * 0.04,
-    padding: width * 0.06,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  contactTitle: {
-    fontSize: width * 0.045,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: height * 0.02,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: height * 0.022,
-    minHeight: height * 0.06,
-  },
-  contactContent: {
-    flex: 1,
-    marginLeft: width * 0.03,
-    justifyContent: 'center',
-  },
-  contactLabel: {
-    fontSize: width * 0.032,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: height * 0.007,
-  },
-  contactValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: width * 0.02,
-  },
-  contactValueGreen: {
-    fontSize: width * 0.037,
-    fontWeight: '600',
-    color: '#16BCC0',
-  },
-  contactValueBlack: {
-    fontSize: width * 0.037,
-    fontWeight: '600',
-    color: '#000000',
-    lineHeight: width * 0.05,
-  },
-  socialMediaIcons: {
-    flexDirection: 'row',
-    gap: width * 0.03,
-    marginTop: height * 0.005,
-  },
-  socialIcon: {
-    width: width * 0.08,
-    height: width * 0.08,
-    borderRadius: width * 0.01,
-    backgroundColor: '#333333',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brokerageCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: width * 0.05,
-    marginBottom: height * 0.02,
-    borderRadius: width * 0.04,
-    padding: width * 0.06,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  firstCard: {
-    marginTop: height * 0.025,
-  },
-  brokerageTitle: {
-    fontSize: width * 0.045,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: height * 0.02,
-  },
-  brokerageItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: height * 0.022,
-    minHeight: height * 0.06,
-  },
-  brokerageContent: {
-    flex: 1,
-    marginLeft: width * 0.03,
-    justifyContent: 'center',
-  },
-  brokerageLabel: {
-    fontSize: width * 0.032,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: height * 0.007,
-  },
-  brokerageValue: {
-    fontSize: width * 0.037,
-    fontWeight: '600',
-    color: '#000000',
-    lineHeight: width * 0.05,
-  },
-  statusTag: {
-    backgroundColor: '#DCFCE7',
-    borderRadius: width * 0.04,
-    paddingHorizontal: width * 0.025,
-    paddingVertical: height * 0.007,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    shadowColor: '#16A34A',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statusText: {
-    fontSize: width * 0.03,
-    fontWeight: '700',
-    color: '#16A34A',
-  },
-  specializationTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: width * 0.02,
-    marginTop: height * 0.002,
-  },
-  specializationTag: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: width * 0.04,
-    paddingHorizontal: width * 0.025,
-    paddingVertical: height * 0.007,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  specializationText: {
-    fontSize: width * 0.027,
-    fontWeight: '500',
-    color: '#495057',
-  },
-  regionTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: width * 0.02,
-  },
-  regionTag: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: width * 0.04,
-    paddingHorizontal: width * 0.025,
-    paddingVertical: height * 0.007,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  regionText: {
-    fontSize: width * 0.027,
-    fontWeight: '500',
-    color: '#16BCC0',
-  },
-  documentsCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: width * 0.05,
-    marginBottom: height * 0.02,
-    borderRadius: width * 0.04,
-    padding: width * 0.06,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  documentsTitle: {
-    fontSize: width * 0.045,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: height * 0.02,
-  },
-  documentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: width * 0.02,
-    padding: width * 0.04,
-    marginBottom: height * 0.015,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  documentIcon: {
-    width: width * 0.1,
-    height: width * 0.1,
-    borderRadius: width * 0.02,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-    marginRight: width * 0.03,
-  },
-  documentInfo: {
-    flex: 1,
-    marginRight: width * 0.03,
-  },
-  documentName: {
-    fontSize: width * 0.04,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: height * 0.005,
-  },
-  fileTypeTag: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: width * 0.03,
-    paddingHorizontal: width * 0.02,
-    paddingVertical: height * 0.005,
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  fileTypeText: {
-    fontSize: width * 0.03,
-    fontWeight: '500',
-    color: '#666666',
-  },
-  documentActions: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: width * 0.02,
-    minWidth: width * 0.3,
-  },
-  previewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.03,
-    paddingVertical: height * 0.01,
-    gap: width * 0.015,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    minWidth: width * 0.25,
-    justifyContent: 'center',
-  },
-  previewButtonText: {
-    fontSize: width * 0.032,
-    fontWeight: '600',
-    color: '#16BCC0',
-  },
-  downloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#16BCC0',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.03,
-    paddingVertical: height * 0.01,
-    gap: width * 0.015,
-    minWidth: width * 0.25,
-    justifyContent: 'center',
-  },
-  downloadButtonText: {
-    fontSize: width * 0.032,
+    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
   },
