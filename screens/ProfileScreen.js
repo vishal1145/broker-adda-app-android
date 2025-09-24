@@ -26,7 +26,7 @@ const ProfileScreen = ({ navigation }) => {
     website: '-',
     firm: 'Algofolks Private Limited',
     gender: 'Male',
-    status: 'Blocked',
+    status: 'Unblock',
     joinedDate: '19 Sept 2025',
     licenseNumber: '132456789',
     specializations: ['Residential Sales', 'Rental Properties', 'Property Management'],
@@ -215,7 +215,7 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.contactLabel}>Mobile</Text>
               <View style={styles.contactValueRow}>
                 <Text style={styles.contactValueGreen}>{profileData.mobileNumber}</Text>
-                <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
+                <MaterialIcons name="check-circle" size={16} color="#16BCC0" />
               </View>
             </View>
           </View>
@@ -236,7 +236,7 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.contactLabel}>Email</Text>
               <View style={styles.contactValueRow}>
                 <Text style={styles.contactValueGreen}>{profileData.email}</Text>
-                <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
+                <MaterialIcons name="check-circle" size={16} color="#16BCC0" />
               </View>
             </View>
           </View>
@@ -294,7 +294,7 @@ const ProfileScreen = ({ navigation }) => {
                   style={styles.previewButton}
                   onPress={() => handlePreviewDocument(document.id)}
                 >
-                  <MaterialIcons name="visibility" size={18} color="#4CAF50" />
+                  <MaterialIcons name="visibility" size={18} color="#16BCC0" />
                   <Text style={styles.previewButtonText}>Preview</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
@@ -312,6 +312,7 @@ const ProfileScreen = ({ navigation }) => {
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <MaterialIcons name="logout" size={18} color="#FFFFFF" />
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileHeader: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#16BCC0',
     paddingBottom: height * 0.04,
     minHeight: height * 0.35,
   },
@@ -372,13 +373,21 @@ const styles = StyleSheet.create({
   blockButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F44336',
+    backgroundColor: '#DC2626',
     borderRadius: width * 0.05,
     paddingHorizontal: width * 0.04,
     paddingVertical: height * 0.01,
     gap: width * 0.015,
     minWidth: width * 0.3,
     justifyContent: 'center',
+    shadowColor: '#DC2626',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   blockButtonText: {
     fontSize: width * 0.035,
@@ -436,10 +445,22 @@ const styles = StyleSheet.create({
     paddingBottom: height * 0.04,
   },
   logoutButton: {
-    backgroundColor: '#F44336',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DC2626',
     borderRadius: width * 0.02,
     paddingVertical: height * 0.02,
-    alignItems: 'center',
+    paddingHorizontal: width * 0.04,
+    gap: width * 0.02,
+    justifyContent: 'center',
+    shadowColor: '#DC2626',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   logoutText: {
     fontSize: width * 0.04,
@@ -494,7 +515,7 @@ const styles = StyleSheet.create({
   contactValueGreen: {
     fontSize: width * 0.037,
     fontWeight: '600',
-    color: '#4CAF50',
+    color: '#16BCC0',
   },
   contactValueBlack: {
     fontSize: width * 0.037,
@@ -565,18 +586,26 @@ const styles = StyleSheet.create({
     lineHeight: width * 0.05,
   },
   statusTag: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#DCFCE7',
     borderRadius: width * 0.04,
     paddingHorizontal: width * 0.025,
     paddingVertical: height * 0.007,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: '#BBF7D0',
+    shadowColor: '#16A34A',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   statusText: {
     fontSize: width * 0.03,
-    fontWeight: '600',
-    color: '#D32F2F',
+    fontWeight: '700',
+    color: '#16A34A',
   },
   specializationTags: {
     flexDirection: 'row',
@@ -603,17 +632,17 @@ const styles = StyleSheet.create({
     gap: width * 0.02,
   },
   regionTag: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#F8F9FA',
     borderRadius: width * 0.04,
     paddingHorizontal: width * 0.025,
     paddingVertical: height * 0.007,
     borderWidth: 1,
-    borderColor: '#BBDEFB',
+    borderColor: '#E0E0E0',
   },
   regionText: {
     fontSize: width * 0.027,
     fontWeight: '500',
-    color: '#1565C0',
+    color: '#16BCC0',
   },
   documentsCard: {
     backgroundColor: '#FFFFFF',
@@ -692,25 +721,25 @@ const styles = StyleSheet.create({
   previewButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#F8F9FA',
     borderRadius: width * 0.02,
     paddingHorizontal: width * 0.03,
     paddingVertical: height * 0.01,
     gap: width * 0.015,
     borderWidth: 1,
-    borderColor: '#C8E6C9',
+    borderColor: '#E0E0E0',
     minWidth: width * 0.25,
     justifyContent: 'center',
   },
   previewButtonText: {
     fontSize: width * 0.032,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#16BCC0',
   },
   downloadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1976D2',
+    backgroundColor: '#16BCC0',
     borderRadius: width * 0.02,
     paddingHorizontal: width * 0.03,
     paddingVertical: height * 0.01,
