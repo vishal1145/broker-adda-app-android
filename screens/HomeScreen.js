@@ -219,25 +219,28 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Modern Header */}
         <LinearGradient
-          colors={['#667eea', '#764ba2']}
+          colors={['#667eea', '#764ba2', '#f093fb']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.modernHeader}
         >
+          {/* Background Pattern */}
+          <View style={styles.headerPattern}>
+            <View style={styles.patternCircle1} />
+            <View style={styles.patternCircle2} />
+            <View style={styles.patternCircle3} />
+          </View>
+          
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
                 <Text style={styles.welcomeName}>{userName}!</Text>
-              </View>
-              <View style={styles.statusIndicator}>
-                <View style={styles.statusDot} />
-                <Text style={styles.statusText}>Online</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -275,60 +278,88 @@ const HomeScreen = ({ navigation }) => {
           </View>
           
           <View style={styles.performanceGrid}>
-            <View style={[styles.metricCard, { backgroundColor: '#667eea' }]}>
-              <View style={styles.metricCardHeader}>
-                <View style={styles.metricIconContainer}>
-                  <MaterialIcons name="trending-up" size={20} color="#FFFFFF" />
+            <View style={styles.metricCard}>
+              <LinearGradient
+                colors={['#10B981', '#059669', '#047857']}
+                style={styles.metricGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.metricCardHeader}>
+                  <View style={styles.metricIconContainer}>
+                    <MaterialIcons name="trending-up" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.changeIndicator}>
+                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
+                    <Text style={styles.changeTextWhite}>+{performanceData.leadsCreatedChange}%</Text>
+                  </View>
                 </View>
-                <View style={styles.changeIndicator}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.changeText}>+{performanceData.leadsCreatedChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.metricValue}>{performanceData.totalLeadsCreated.toLocaleString()}</Text>
-              <Text style={styles.metricLabel}>Total Leads Created</Text>
+                <Text style={styles.metricValue}>{performanceData.totalLeadsCreated.toLocaleString()}</Text>
+                <Text style={styles.metricLabel}>Total Leads Created</Text>
+              </LinearGradient>
             </View>
 
-            <View style={[styles.metricCard, { backgroundColor: '#f093fb' }]}>
-              <View style={styles.metricCardHeader}>
-                <View style={styles.metricIconContainer}>
-                  <MaterialIcons name="attach-money" size={20} color="#FFFFFF" />
+            <View style={styles.metricCard}>
+              <LinearGradient
+                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
+                style={styles.metricGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.metricCardHeader}>
+                  <View style={styles.metricIconContainer}>
+                    <MaterialIcons name="attach-money" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.changeIndicator}>
+                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
+                    <Text style={styles.changeTextWhite}>+{performanceData.leadsReceivedChange}%</Text>
+                  </View>
                 </View>
-                <View style={styles.changeIndicator}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.changeText}>+{performanceData.leadsReceivedChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.metricValue}>{performanceData.leadsReceived.toLocaleString()}</Text>
-              <Text style={styles.metricLabel}>Leads Received</Text>
+                <Text style={styles.metricValue}>{performanceData.leadsReceived.toLocaleString()}</Text>
+                <Text style={styles.metricLabel}>Leads Received</Text>
+              </LinearGradient>
             </View>
 
-            <View style={[styles.metricCard, { backgroundColor: '#4facfe' }]}>
-              <View style={styles.metricCardHeader}>
-                <View style={styles.metricIconContainer}>
-                  <MaterialIcons name="assignment-turned-in" size={20} color="#FFFFFF" />
+            <View style={styles.metricCard}>
+              <LinearGradient
+                colors={['#F59E0B', '#D97706', '#B45309']}
+                style={styles.metricGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.metricCardHeader}>
+                  <View style={styles.metricIconContainer}>
+                    <MaterialIcons name="assignment-turned-in" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.changeIndicator}>
+                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
+                    <Text style={styles.changeTextWhite}>+{performanceData.leadsClosedChange}%</Text>
+                  </View>
                 </View>
-                <View style={styles.changeIndicator}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.changeText}>+{performanceData.leadsClosedChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.metricValue}>{performanceData.leadsClosed.toLocaleString()}</Text>
-              <Text style={styles.metricLabel}>Leads Closed</Text>
+                <Text style={styles.metricValue}>{performanceData.leadsClosed.toLocaleString()}</Text>
+                <Text style={styles.metricLabel}>Leads Closed</Text>
+              </LinearGradient>
             </View>
 
-            <View style={[styles.metricCard, { backgroundColor: '#43e97b' }]}>
-              <View style={styles.metricCardHeader}>
-                <View style={styles.metricIconContainer}>
-                  <MaterialIcons name="group" size={20} color="#FFFFFF" />
+            <View style={styles.metricCard}>
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
+                style={styles.metricGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.metricCardHeader}>
+                  <View style={styles.metricIconContainer}>
+                    <MaterialIcons name="group" size={20} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.changeIndicator}>
+                    <MaterialIcons name="keyboard-arrow-down" size={16} color="#FFFFFF" />
+                    <Text style={styles.changeTextWhite}>-{performanceData.leadsInProgressChange}%</Text>
+                  </View>
                 </View>
-                <View style={styles.changeIndicator}>
-                  <MaterialIcons name="keyboard-arrow-down" size={16} color="#EF4444" />
-                  <Text style={styles.changeTextDown}>-{performanceData.leadsInProgressChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.metricValue}>{performanceData.leadsInProgress.toLocaleString()}</Text>
-              <Text style={styles.metricLabel}>Leads In Progress</Text>
+                <Text style={styles.metricValue}>{performanceData.leadsInProgress.toLocaleString()}</Text>
+                <Text style={styles.metricLabel}>Leads In Progress</Text>
+              </LinearGradient>
             </View>
           </View>
         </View>
@@ -416,34 +447,48 @@ const HomeScreen = ({ navigation }) => {
           </View>
           
           <View style={styles.messagesContainer}>
-            <View style={[styles.messageCard, { backgroundColor: '#667eea' }]}>
-              <View style={styles.messageCardContent}>
-                <View style={styles.messageIconContainer}>
-                  <MaterialIcons name="mail" size={24} color="#FFFFFF" />
+            <View style={styles.messageCard}>
+              <LinearGradient
+                colors={['#10B981', '#059669', '#047857']}
+                style={styles.messageGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.messageCardContent}>
+                  <View style={styles.messageIconContainer}>
+                    <MaterialIcons name="mail" size={24} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.messageInfo}>
+                    <Text style={styles.messageTitle}>Unread Messages</Text>
+                    <Text style={styles.messageSubtitle}>New messages waiting</Text>
+                  </View>
+                  <View style={styles.messageBadgeContainer}>
+                    <Text style={styles.messageBadgeText}>{messagesData.unreadMessages}</Text>
+                  </View>
                 </View>
-                <View style={styles.messageInfo}>
-                  <Text style={styles.messageTitle}>Unread Messages</Text>
-                  <Text style={styles.messageSubtitle}>New messages waiting</Text>
-                </View>
-                <View style={styles.messageBadgeContainer}>
-                  <Text style={styles.messageBadgeText}>{messagesData.unreadMessages}</Text>
-                </View>
-              </View>
+              </LinearGradient>
             </View>
 
-            <View style={[styles.messageCard, { backgroundColor: '#f093fb' }]}>
-              <View style={styles.messageCardContent}>
-                <View style={styles.messageIconContainer}>
-                  <MaterialIcons name="chat" size={24} color="#FFFFFF" />
+            <View style={styles.messageCard}>
+              <LinearGradient
+                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
+                style={styles.messageGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.messageCardContent}>
+                  <View style={styles.messageIconContainer}>
+                    <MaterialIcons name="chat" size={24} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.messageInfo}>
+                    <Text style={styles.messageTitle}>Customer Inquiries</Text>
+                    <Text style={styles.messageSubtitle}>Pending responses</Text>
+                  </View>
+                  <View style={styles.messageBadgeContainer}>
+                    <Text style={styles.messageBadgeText}>{messagesData.customerInquiries}</Text>
+                  </View>
                 </View>
-                <View style={styles.messageInfo}>
-                  <Text style={styles.messageTitle}>Customer Inquiries</Text>
-                  <Text style={styles.messageSubtitle}>Pending responses</Text>
-                </View>
-                <View style={styles.messageBadgeContainer}>
-                  <Text style={styles.messageBadgeText}>{messagesData.customerInquiries}</Text>
-                </View>
-              </View>
+              </LinearGradient>
             </View>
           </View>
         </View>
@@ -536,7 +581,7 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   scrollView: {
     flex: 1,
@@ -544,15 +589,53 @@ const styles = StyleSheet.create({
 
   // Modern Header Styles
   modernHeader: {
-    paddingTop: 20,
+    paddingTop: 50,
     paddingBottom: 30,
     paddingHorizontal: 20,
     marginBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  patternCircle1: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    top: -30,
+    right: -30,
+  },
+  patternCircle2: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    top: 100,
+    left: -20,
+  },
+  patternCircle3: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    bottom: 20,
+    right: 50,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 2,
   },
   headerLeft: {
     flex: 1,
@@ -569,27 +652,6 @@ const styles = StyleSheet.create({
   welcomeName: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignSelf: 'flex-start',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-    marginRight: 6,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
     color: '#FFFFFF',
   },
   headerRight: {
@@ -679,9 +741,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#1F2937',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   sectionBadge: {
     backgroundColor: '#F0FDFA',
@@ -707,13 +771,16 @@ const styles = StyleSheet.create({
   metricCard: {
     width: (width - 52) / 2,
     borderRadius: 20,
-    padding: 20,
-    minHeight: 140,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
+  },
+  metricGradient: {
+    padding: 20,
+    minHeight: 140,
   },
   metricCardHeader: {
     flexDirection: 'row',
@@ -747,6 +814,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#EF4444',
+    marginLeft: 2,
+  },
+  changeTextWhite: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
     marginLeft: 2,
   },
   metricValue: {
@@ -837,12 +910,15 @@ const styles = StyleSheet.create({
   },
   messageCard: {
     borderRadius: 16,
-    padding: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
+  },
+  messageGradient: {
+    padding: 20,
   },
   messageCardContent: {
     flexDirection: 'row',

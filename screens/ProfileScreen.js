@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernHeaderGradient: {
-    paddingTop: 20,
+    paddingTop: 50,
     paddingBottom: 50,
     position: 'relative',
     overflow: 'hidden',
@@ -679,8 +679,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 20,
+    left: 24,
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -698,8 +698,8 @@ const styles = StyleSheet.create({
   },
   modernEditButton: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 20,
+    right: 24,
     width: 48,
     height: 48,
     borderRadius: 24,

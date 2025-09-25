@@ -4,149 +4,187 @@ import {
   Text, 
   View, 
   StatusBar, 
+  TouchableOpacity, 
   ScrollView,
-  TouchableOpacity,
   Dimensions,
   FlatList
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 
 const { width } = Dimensions.get('window')
 
-const NotificationsScreen = ({ navigation }) => {
+const LeadsScreen = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all')
   
-  // Sample notifications data
-  const [notifications] = useState([
+  // Sample leads data
+  const [leadsData] = useState([
     {
       id: 1,
-      title: 'New Lead Assignment',
-      description: 'You have been assigned a new lead for "Downtown Luxury Condo"',
-      time: '2 minutes ago',
-      type: 'lead',
+      name: 'Sarah Johnson',
+      email: 'sarah.j@email.com',
+      phone: '+1 (555) 123-4567',
+      property: 'Downtown Luxury Condo',
+      budget: '$850,000',
+      status: 'new',
       priority: 'high',
-      isRead: false,
-      icon: 'trending-up',
-      iconColor: '#10B981'
+      source: 'Website',
+      createdDate: '2024-01-15',
+      lastContact: '2 hours ago',
+      notes: 'Looking for 2BR condo in downtown area',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 2,
-      title: 'Property Viewing Scheduled',
-      description: 'Property viewing for "Suburban Family Home" scheduled for tomorrow at 2:00 PM',
-      time: '1 hour ago',
-      type: 'property',
+      name: 'Michael Chen',
+      email: 'm.chen@email.com',
+      phone: '+1 (555) 987-6543',
+      property: 'Suburban Family Home',
+      budget: '$650,000',
+      status: 'in-progress',
       priority: 'medium',
-      isRead: false,
-      icon: 'home',
-      iconColor: '#3B82F6'
+      source: 'Referral',
+      createdDate: '2024-01-12',
+      lastContact: '1 day ago',
+      notes: 'Family with 2 kids, needs good school district',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 3,
-      title: 'Commission Payment Processed',
-      description: 'Your commission payment of $12,500 has been processed and will reflect in your account within 2-3 business days',
-      time: '3 hours ago',
-      type: 'payment',
+      name: 'Emily Rodriguez',
+      email: 'emily.r@email.com',
+      phone: '+1 (555) 456-7890',
+      property: 'Beachfront Villa',
+      budget: '$1,200,000',
+      status: 'qualified',
       priority: 'high',
-      isRead: true,
-      icon: 'attach-money',
-      iconColor: '#F59E0B'
+      source: 'Social Media',
+      createdDate: '2024-01-10',
+      lastContact: '3 days ago',
+      notes: 'Investment property, cash buyer',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 4,
-      title: 'New Message from Client',
-      description: 'Sarah Johnson sent you a message regarding the property inquiry',
-      time: '5 hours ago',
-      type: 'message',
-      priority: 'medium',
-      isRead: true,
-      icon: 'message',
-      iconColor: '#8B5CF6'
-    },
-    {
-      id: 5,
-      title: 'System Maintenance Notice',
-      description: 'Scheduled maintenance will occur tonight from 11 PM to 1 AM. Some features may be temporarily unavailable.',
-      time: '1 day ago',
-      type: 'system',
+      name: 'David Thompson',
+      email: 'david.t@email.com',
+      phone: '+1 (555) 321-0987',
+      property: 'Modern Townhouse',
+      budget: '$450,000',
+      status: 'closed',
       priority: 'low',
-      isRead: true,
-      icon: 'build',
-      iconColor: '#6B7280'
-    },
-    {
-      id: 6,
-      title: 'Property Status Updated',
-      description: 'The property "Beachfront Villa" status has been updated to "Under Contract"',
-      time: '2 days ago',
-      type: 'property',
-      priority: 'medium',
-      isRead: true,
-      icon: 'update',
-      iconColor: '#16BCC0'
+      source: 'Cold Call',
+      createdDate: '2024-01-08',
+      lastContact: '1 week ago',
+      notes: 'First-time buyer, pre-approved',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
     }
   ])
 
   const filterOptions = [
-    { key: 'all', label: 'All', count: notifications.length },
-    { key: 'unread', label: 'Unread', count: notifications.filter(notif => !notif.isRead).length },
-    { key: 'lead', label: 'Leads', count: notifications.filter(notif => notif.type === 'lead').length },
-    { key: 'property', label: 'Properties', count: notifications.filter(notif => notif.type === 'property').length },
-    { key: 'payment', label: 'Payments', count: notifications.filter(notif => notif.type === 'payment').length }
+    { key: 'all', label: 'All Leads', count: leadsData.length },
+    { key: 'new', label: 'New', count: leadsData.filter(lead => lead.status === 'new').length },
+    { key: 'in-progress', label: 'In Progress', count: leadsData.filter(lead => lead.status === 'in-progress').length },
+    { key: 'qualified', label: 'Qualified', count: leadsData.filter(lead => lead.status === 'qualified').length },
+    { key: 'closed', label: 'Closed', count: leadsData.filter(lead => lead.status === 'closed').length }
   ]
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'new': return '#3B82F6'
+      case 'in-progress': return '#F59E0B'
+      case 'qualified': return '#10B981'
+      case 'closed': return '#6B7280'
+      default: return '#6B7280'
+    }
+  }
 
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return '#EF4444'
       case 'medium': return '#F59E0B'
-      case 'low': return '#6B7280'
+      case 'low': return '#10B981'
       default: return '#6B7280'
     }
   }
 
-  const filteredNotifications = selectedFilter === 'all' 
-    ? notifications 
-    : selectedFilter === 'unread'
-    ? notifications.filter(notif => !notif.isRead)
-    : notifications.filter(notif => notif.type === selectedFilter)
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'new': return 'fiber-new'
+      case 'in-progress': return 'trending-up'
+      case 'qualified': return 'check-circle'
+      case 'closed': return 'done'
+      default: return 'help'
+    }
+  }
 
-  const NotificationCard = ({ notification }) => (
-    <TouchableOpacity style={[
-      styles.notificationCard,
-      !notification.isRead && styles.unreadCard
-    ]}>
-      <View style={styles.notificationHeader}>
-        <View style={[styles.notificationIcon, { backgroundColor: notification.iconColor + '20' }]}>
-          <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
+  const filteredLeads = selectedFilter === 'all' 
+    ? leadsData 
+    : leadsData.filter(lead => lead.status === selectedFilter)
+
+  const LeadCard = ({ lead }) => (
+    <View style={styles.leadCard}>
+      <View style={styles.leadHeader}>
+        <View style={styles.leadAvatarContainer}>
+          <View style={styles.leadAvatar}>
+            <Text style={styles.leadAvatarText}>{lead.name.charAt(0)}</Text>
+          </View>
+          <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(lead.priority) }]} />
         </View>
-        <View style={styles.notificationInfo}>
-          <Text style={[styles.notificationTitle, !notification.isRead && styles.unreadTitle]}>
-            {notification.title}
-          </Text>
-          <Text style={styles.notificationTime}>{notification.time}</Text>
+        <View style={styles.leadInfo}>
+          <Text style={styles.leadName}>{lead.name}</Text>
+          <Text style={styles.leadProperty}>{lead.property}</Text>
+          <Text style={styles.leadBudget}>{lead.budget}</Text>
         </View>
-        <View style={styles.notificationActions}>
-          {!notification.isRead && <View style={styles.unreadDot} />}
-          <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(notification.priority) }]} />
+        <View style={styles.leadActions}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(lead.status) + '20' }]}>
+            <MaterialIcons name={getStatusIcon(lead.status)} size={16} color={getStatusColor(lead.status)} />
+            <Text style={[styles.statusText, { color: getStatusColor(lead.status) }]}>
+              {lead.status.replace('-', ' ').toUpperCase()}
+            </Text>
+          </View>
         </View>
       </View>
       
-      <Text style={styles.notificationDescription}>{notification.description}</Text>
-      
-      <View style={styles.notificationFooter}>
-        <View style={styles.typeBadge}>
-          <Text style={[styles.typeText, { color: notification.iconColor }]}>
-            {notification.type.toUpperCase()}
-          </Text>
+      <View style={styles.leadDetails}>
+        <View style={styles.leadDetailRow}>
+          <MaterialIcons name="email" size={16} color="#6B7280" />
+          <Text style={styles.leadDetailText}>{lead.email}</Text>
         </View>
-        <View style={styles.priorityBadge}>
-          <Text style={[styles.priorityText, { color: getPriorityColor(notification.priority) }]}>
-            {notification.priority.toUpperCase()}
-          </Text>
+        <View style={styles.leadDetailRow}>
+          <MaterialIcons name="phone" size={16} color="#6B7280" />
+          <Text style={styles.leadDetailText}>{lead.phone}</Text>
+        </View>
+        <View style={styles.leadDetailRow}>
+          <MaterialIcons name="source" size={16} color="#6B7280" />
+          <Text style={styles.leadDetailText}>Source: {lead.source}</Text>
+        </View>
+        <View style={styles.leadDetailRow}>
+          <MaterialIcons name="schedule" size={16} color="#6B7280" />
+          <Text style={styles.leadDetailText}>Last contact: {lead.lastContact}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+
+      <View style={styles.leadNotes}>
+        <Text style={styles.notesText}>{lead.notes}</Text>
+      </View>
+
+      <View style={styles.leadFooter}>
+        <TouchableOpacity style={styles.actionButton}>
+          <MaterialIcons name="call" size={18} color="#16BCC0" />
+          <Text style={styles.actionButtonText}>Call</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <MaterialIcons name="email" size={18} color="#16BCC0" />
+          <Text style={styles.actionButtonText}>Email</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <MaterialIcons name="edit" size={18} color="#16BCC0" />
+          <Text style={styles.actionButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   )
 
   return (
@@ -170,15 +208,15 @@ const NotificationsScreen = ({ navigation }) => {
           
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Text style={styles.headerTitle}>Notifications</Text>
-              <Text style={styles.headerSubtitle}>Stay updated with latest activities</Text>
+              <Text style={styles.headerTitle}>Leads Management</Text>
+              <Text style={styles.headerSubtitle}>Track and manage your leads</Text>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.headerButton}>
-                <MaterialIcons name="mark-email-read" size={24} color="#FFFFFF" />
+                <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton}>
-                <MaterialIcons name="settings" size={24} color="#FFFFFF" />
+                <MaterialIcons name="search" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -194,9 +232,9 @@ const NotificationsScreen = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.length}</Text>
-                <Text style={styles.statLabel}>Total Notifications</Text>
+                <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
+                <Text style={styles.statValue}>{leadsData.length}</Text>
+                <Text style={styles.statLabel}>Total Leads</Text>
               </LinearGradient>
             </View>
             
@@ -208,8 +246,8 @@ const NotificationsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <MaterialIcons name="fiber-new" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => !notif.isRead).length}</Text>
-                <Text style={styles.statLabel}>Unread</Text>
+                <Text style={styles.statValue}>{leadsData.filter(lead => lead.status === 'new').length}</Text>
+                <Text style={styles.statLabel}>New Leads</Text>
               </LinearGradient>
             </View>
             
@@ -221,8 +259,8 @@ const NotificationsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => notif.type === 'lead').length}</Text>
-                <Text style={styles.statLabel}>Lead Updates</Text>
+                <Text style={styles.statValue}>{leadsData.filter(lead => lead.status === 'in-progress').length}</Text>
+                <Text style={styles.statLabel}>In Progress</Text>
               </LinearGradient>
             </View>
             
@@ -233,9 +271,9 @@ const NotificationsScreen = ({ navigation }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <MaterialIcons name="home" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => notif.type === 'property').length}</Text>
-                <Text style={styles.statLabel}>Property Updates</Text>
+                <MaterialIcons name="check-circle" size={24} color="#FFFFFF" />
+                <Text style={styles.statValue}>{leadsData.filter(lead => lead.status === 'qualified').length}</Text>
+                <Text style={styles.statLabel}>Qualified</Text>
               </LinearGradient>
             </View>
           </View>
@@ -275,10 +313,10 @@ const NotificationsScreen = ({ navigation }) => {
           </ScrollView>
         </View>
 
-        {/* Notifications List */}
-        <View style={styles.notificationsSection}>
+        {/* Leads List */}
+        <View style={styles.leadsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Notifications ({filteredNotifications.length})</Text>
+            <Text style={styles.sectionTitle}>Leads ({filteredLeads.length})</Text>
             <TouchableOpacity style={styles.sortButton}>
               <MaterialIcons name="sort" size={20} color="#16BCC0" />
               <Text style={styles.sortText}>Sort</Text>
@@ -286,9 +324,9 @@ const NotificationsScreen = ({ navigation }) => {
           </View>
           
           <FlatList
-            data={filteredNotifications}
+            data={filteredLeads}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <NotificationCard notification={item} />}
+            renderItem={({ item }) => <LeadCard lead={item} />}
             showsVerticalScrollIndicator={false}
             scrollEnabled={false}
           />
@@ -476,8 +514,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Notifications Section
-  notificationsSection: {
+  // Leads Section
+  leadsSection: {
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -509,12 +547,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
-  // Notification Card Styles
-  notificationCard: {
+  // Lead Card Styles
+  leadCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -523,88 +561,118 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  unreadCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#16BCC0',
-    backgroundColor: '#F8FAFC',
-  },
-  notificationHeader: {
+  leadHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  leadAvatarContainer: {
+    position: 'relative',
     marginRight: 12,
   },
-  notificationInfo: {
+  leadAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#16BCC0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leadAvatarText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  priorityIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  leadInfo: {
     flex: 1,
   },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  leadName: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 4,
   },
-  unreadTitle: {
-    fontWeight: '700',
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  notificationActions: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#16BCC0',
-  },
-  priorityIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  notificationDescription: {
+  leadProperty: {
     fontSize: 14,
+    fontWeight: '500',
     color: '#6B7280',
-    lineHeight: 20,
+    marginBottom: 2,
+  },
+  leadBudget: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#16BCC0',
+  },
+  leadActions: {
+    alignItems: 'flex-end',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  leadDetails: {
     marginBottom: 12,
   },
-  notificationFooter: {
+  leadDetailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
   },
-  typeBadge: {
+  leadDetailText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  leadNotes: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  notesText: {
+    fontSize: 14,
+    color: '#374151',
+    fontStyle: 'italic',
+  },
+  leadFooter: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F0FDFA',
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: '#A7F3D0',
+    gap: 6,
   },
-  typeText: {
-    fontSize: 12,
+  actionButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-  },
-  priorityBadge: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  priorityText: {
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#16BCC0',
   },
 })
 
-export default NotificationsScreen
+export default LeadsScreen

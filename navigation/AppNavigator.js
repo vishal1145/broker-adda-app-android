@@ -9,8 +9,8 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import HomeScreen from '../screens/HomeScreen';
-import NetworkScreen from '../screens/NetworkScreen';
-import JobsScreen from '../screens/JobsScreen';
+import LeadsScreen from '../screens/LeadsScreen';
+import PropertiesScreen from '../screens/PropertiesScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -36,14 +36,14 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen 
-        name="Network" 
-        component={NetworkScreen}
-        options={{ tabBarLabel: 'Network' }}
+        name="Leads" 
+        component={LeadsScreen}
+        options={{ tabBarLabel: 'Leads' }}
       />
       <Tab.Screen 
-        name="Jobs" 
-        component={JobsScreen}
-        options={{ tabBarLabel: 'Jobs' }}
+        name="Properties" 
+        component={PropertiesScreen}
+        options={{ tabBarLabel: 'Properties' }}
       />
       <Tab.Screen 
         name="Notifications" 

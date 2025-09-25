@@ -7,8 +7,8 @@ const { width } = Dimensions.get('window')
 const Footer = ({ state, descriptors, navigation }) => {
   const tabs = [
     { key: 'Home', label: 'Home', icon: 'home' },
-    { key: 'Network', label: 'Network', icon: 'people' },
-    { key: 'Jobs', label: 'Jobs', icon: 'work' },
+    { key: 'Leads', label: 'Leads', icon: 'trending-up' },
+    { key: 'Properties', label: 'Properties', icon: 'business' },
     { key: 'Notifications', label: 'Notifications', icon: 'notifications' },
     { key: 'Settings', label: 'Setting', icon: 'settings' }
   ]
