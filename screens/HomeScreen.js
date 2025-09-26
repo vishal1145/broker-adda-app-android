@@ -7,19 +7,67 @@ import {
   TouchableOpacity, 
   ScrollView,
   Dimensions,
-  Animated
+  Animated,
+  ActivityIndicator,
+  Image
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
+import { authAPI } from '../services/api'
+import { storage } from '../services/storage'
 const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ navigation }) => {
-  const [userName] = useState('Jordan')
+  const [userName, setUserName] = useState('')
+  const [userProfile, setUserProfile] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [profileImage, setProfileImage] = useState(null)
+
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Get token and broker ID from storage
+      const token = await storage.getToken()
+      const brokerId = await storage.getBrokerId()
+      
+      if (token && brokerId) {
+        const response = await authAPI.getProfile(brokerId, token)
+        
+        if (response && response.data && response.data.broker) {
+          const broker = response.data.broker
+          setUserProfile(broker)
+          
+          // Set user name from profile data
+          const name = broker.name || broker.userId?.name || 'User'
+          setUserName(name)
+          
+          // Set profile image if available
+          if (broker.brokerImage) {
+            setProfileImage(broker.brokerImage)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Set default name if API fails
+      setUserName('User')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Load profile data on component mount
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
 
   const handleLogout = () => {
-    // Navigate back to login screen
+    // Clear stored data and navigate back to login screen
+    storage.clearAuthData()
     navigation.navigate('Login')
   }
 
@@ -235,7 +283,14 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
-                <Text style={styles.welcomeName}>{userName}!</Text>
+                {isLoading ? (
+                  <View style={styles.nameLoadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.welcomeName}>Loading...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.welcomeName}>{userName}</Text>
+                )}
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -247,9 +302,17 @@ const HomeScreen = ({ navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
                 <View style={styles.profileImageContainer}>
-                  <Text style={styles.profileInitials}>
-                    {userName[0]}
-                  </Text>
+                  {profileImage ? (
+                    <Image 
+                      source={{ uri: profileImage }} 
+                      style={styles.profileImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.profileInitials}>
+                      {isLoading ? '?' : (userName[0] || 'U').toUpperCase()}
+                    </Text>
+                  )}
                   <View style={styles.profileOnlineIndicator} />
                 </View>
               </TouchableOpacity>
@@ -650,6 +713,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  nameLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -694,6 +762,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  profileImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   profileOnlineIndicator: {
     position: 'absolute',

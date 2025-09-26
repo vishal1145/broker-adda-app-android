@@ -12,8 +12,11 @@ import {
   ScrollView,
   Image,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  ActionSheetIOS,
+  PermissionsAndroid
 } from 'react-native'
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
@@ -62,6 +65,20 @@ const CreateProfileScreen = ({ navigation }) => {
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadedDocs, setUploadedDocs] = useState({
+    aadharCard: false,
+    panCard: false,
+    gstCertificate: false,
+    brokerLicense: false,
+    companyId: false
+  })
+  const [selectedImages, setSelectedImages] = useState({
+    aadharCard: null,
+    panCard: null,
+    gstCertificate: null,
+    brokerLicense: null,
+    companyId: null
+  })
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -115,6 +132,17 @@ const CreateProfileScreen = ({ navigation }) => {
             city: broker.city || '',
             regions: broker.region?.[0]?.name || '', // Using first region name
           }))
+          
+          // Check for uploaded documents
+          if (broker.kycDocs) {
+            setUploadedDocs({
+              aadharCard: !!broker.kycDocs.aadhar,
+              panCard: !!broker.kycDocs.pan,
+              gstCertificate: !!broker.kycDocs.gst,
+              brokerLicense: !!broker.brokerLicense,
+              companyId: !!broker.companyId
+            })
+          }
         }
       }
     } catch (error) {
@@ -129,6 +157,129 @@ const CreateProfileScreen = ({ navigation }) => {
   useEffect(() => {
     fetchProfileData()
   }, [])
+
+  // Request camera permission for Android
+  const requestCameraPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission',
+            message: 'App needs access to camera to take photos',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        )
+        return granted === PermissionsAndroid.RESULTS.GRANTED
+      } catch (err) {
+        console.warn(err)
+        return false
+      }
+    }
+    return true
+  }
+
+  // Show image picker options
+  const showImagePickerOptions = (docType) => {
+    const options = ['Camera', 'Gallery', 'Cancel']
+    const cancelButtonIndex = 2
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+        title: `Select ${docType} Image`
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) {
+          // Camera
+          handleImageSelection(docType, 'camera')
+        } else if (buttonIndex === 1) {
+          // Gallery
+          handleImageSelection(docType, 'gallery')
+        }
+      }
+    )
+  }
+
+  // Handle image selection
+  const handleImageSelection = async (docType, source) => {
+    if (source === 'camera') {
+      const hasPermission = await requestCameraPermission()
+      if (!hasPermission) {
+        Alert.alert('Permission Denied', 'Camera permission is required to take photos')
+        return
+      }
+    }
+
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 2000,
+      maxHeight: 2000,
+      includeBase64: false,
+    }
+
+    const callback = (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker')
+      } else if (response.errorMessage) {
+        console.log('ImagePicker Error: ', response.errorMessage)
+        Alert.alert('Error', 'Failed to select image')
+      } else if (response.assets && response.assets[0]) {
+        const asset = response.assets[0]
+        setSelectedImages(prev => ({
+          ...prev,
+          [docType]: asset
+        }))
+        setUploadedDocs(prev => ({
+          ...prev,
+          [docType]: true
+        }))
+        Alert.alert('Success', `${docType} image selected successfully!`)
+      }
+    }
+
+    if (source === 'camera') {
+      launchCamera(options, callback)
+    } else {
+      launchImageLibrary(options, callback)
+    }
+  }
+
+  // Handle document upload
+  const handleDocumentUpload = (docType) => {
+    if (Platform.OS === 'ios') {
+      showImagePickerOptions(docType)
+    } else {
+      // For Android, show alert with options
+      Alert.alert(
+        'Select Image',
+        'Choose an option',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Camera', onPress: () => handleImageSelection(docType, 'camera') },
+          { text: 'Gallery', onPress: () => handleImageSelection(docType, 'gallery') }
+        ]
+      )
+    }
+  }
+
+  // Handle view uploaded document
+  const handleViewDocument = (docType) => {
+    Alert.alert(
+      'View Document',
+      `View functionality for ${docType} will be implemented to open the uploaded file.`,
+      [
+        {
+          text: 'OK',
+          style: 'default'
+        }
+      ]
+    )
+  }
 
   const nextStep = () => {
     if (currentStep < 4) {
@@ -264,16 +415,9 @@ const CreateProfileScreen = ({ navigation }) => {
       
       setIsSubmitting(false)
       
-      Alert.alert(
-        'Profile Created!',
-        'Your broker profile has been created successfully.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('MainTabs')
-          }
-        ]
-      )
+      // Navigate directly to home page without alert (like OTP verification)
+      console.log('Profile created successfully, navigating to home...')
+      navigation.navigate('MainTabs')
       
     } catch (error) {
       setIsSubmitting(false)
@@ -602,27 +746,43 @@ const CreateProfileScreen = ({ navigation }) => {
       
       <View style={styles.documentsGrid}>
         {[
-          { key: 'aadharCard', title: 'Aadhar Card', uploaded: true },
-          { key: 'panCard', title: 'PAN Card', uploaded: true },
-          { key: 'gstCertificate', title: 'GST Certificate', uploaded: true },
-          { key: 'brokerLicense', title: 'Broker License', uploaded: false },
-          { key: 'companyId', title: 'Company Identification Details', uploaded: false }
-        ].map((doc, index) => (
-          <TouchableOpacity key={doc.key} style={styles.documentCard}>
-            <View style={styles.documentIcon}>
-              <MaterialIcons 
-                name={doc.uploaded ? "check-circle" : "cloud-upload"} 
-                size={32} 
-                color={doc.uploaded ? "#4CAF50" : "#16BCC0"} 
-              />
-            </View>
-            <Text style={styles.documentTitle}>{doc.title}</Text>
-            <Text style={styles.documentStatus}>
-              {doc.uploaded ? 'View uploaded file' : `Click to upload ${doc.title}`}
-            </Text>
-            <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
-          </TouchableOpacity>
-        ))}
+          { key: 'aadharCard', title: 'Aadhar Card' },
+          { key: 'panCard', title: 'PAN Card' },
+          { key: 'gstCertificate', title: 'GST Certificate' },
+          { key: 'brokerLicense', title: 'Broker License' },
+          { key: 'companyId', title: 'Company Identification Details' }
+        ].map((doc, index) => {
+          const isUploaded = uploadedDocs[doc.key]
+          const selectedImage = selectedImages[doc.key]
+          return (
+            <TouchableOpacity 
+              key={doc.key} 
+              style={styles.documentCard}
+              onPress={() => isUploaded ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
+            >
+              <View style={styles.documentIcon}>
+                {selectedImage ? (
+                  <Image 
+                    source={{ uri: selectedImage.uri }} 
+                    style={styles.documentPreview}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <MaterialIcons 
+                    name={isUploaded ? "check-circle" : "cloud-upload"} 
+                    size={32} 
+                    color={isUploaded ? "#4CAF50" : "#16BCC0"} 
+                  />
+                )}
+              </View>
+              <Text style={styles.documentTitle}>{doc.title}</Text>
+              <Text style={[styles.documentStatus, isUploaded && styles.documentStatusUploaded]}>
+                {isUploaded ? 'View uploaded file' : `Click to upload ${doc.title}`}
+              </Text>
+              <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
+            </TouchableOpacity>
+          )
+        })}
       </View>
     </View>
   )
@@ -775,9 +935,9 @@ const CreateProfileScreen = ({ navigation }) => {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <View style={styles.loadingContainer}>
+                <View style={styles.buttonLoadingContainer}>
                   <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={[styles.completeButtonText, styles.loadingText]}>
+                  <Text style={[styles.completeButtonText, styles.buttonLoadingText]}>
                     Creating Profile...
                   </Text>
                 </View>
@@ -1064,6 +1224,13 @@ const styles = StyleSheet.create({
   documentIcon: {
     marginBottom: 12,
   },
+  documentPreview: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+  },
   documentTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -1076,6 +1243,9 @@ const styles = StyleSheet.create({
     color: '#16BCC0',
     textAlign: 'center',
     marginBottom: 4,
+  },
+  documentStatusUploaded: {
+    color: '#4CAF50',
   },
   documentFormat: {
     fontSize: 10,
@@ -1201,6 +1371,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonLoadingText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
 
