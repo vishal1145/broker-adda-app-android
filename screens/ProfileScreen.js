@@ -144,12 +144,7 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Modern Profile Header */}
         <View style={styles.modernHeaderContainer}>
-          <LinearGradient
-            colors={['#667eea', '#764ba2', '#f093fb']}
-            style={styles.modernHeaderGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
+          <View style={styles.modernHeaderGradient}>
             {/* Background Pattern */}
             <View style={styles.headerPattern}>
               <View style={styles.patternCircle1} />
@@ -177,10 +172,10 @@ const ProfileScreen = ({ navigation }) => {
                   }
                 }}
               >
-                <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+                <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
-                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+                <MaterialIcons name="edit" size={20} color="#16BCC0" />
               </TouchableOpacity>
               
               <View style={styles.modernProfileSection}>
@@ -247,7 +242,7 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
               </View>
             </View>
-          </LinearGradient>
+          </View>
         </View>
 
         {/* Advanced Statistics Section */}
@@ -633,6 +628,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernHeaderGradient: {
+    backgroundColor: '#16BCC0',
     paddingTop: 50,
     paddingBottom: 50,
     position: 'relative',
@@ -681,39 +677,29 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 20,
     left: 24,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: '#E5E5EA',
   },
   modernEditButton: {
     position: 'absolute',
     top: 20,
     right: 24,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: '#E5E5EA',
   },
   modernProfileSection: {
     alignItems: 'center',

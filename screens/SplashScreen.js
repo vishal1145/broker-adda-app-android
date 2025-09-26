@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
 
 const { width, height } = Dimensions.get('window')
 
@@ -42,12 +41,7 @@ const SplashScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
-      <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
+      <View style={styles.gradient}>
         {/* Background Pattern */}
         <View style={styles.headerPattern}>
           <View style={styles.patternCircle1} />
@@ -80,28 +74,12 @@ const SplashScreen = ({ navigation }) => {
             <Text style={styles.tagline}>Your Real Estate Success Partner</Text>
           </Animated.View>
 
-          <Animated.View 
-            style={[
-              styles.loadingContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }]
-              }
-            ]}
-          >
-            <View style={styles.loadingDots}>
-              <View style={[styles.dot, styles.dot1]} />
-              <View style={[styles.dot, styles.dot2]} />
-              <View style={[styles.dot, styles.dot3]} />
-            </View>
-            <Text style={styles.loadingText}>Loading...</Text>
-          </Animated.View>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>© 2024 Broker Adda. All rights reserved.</Text>
         </View>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   )
 }
@@ -113,6 +91,7 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     position: 'relative',
+    backgroundColor: '#16BCC0',
   },
   headerPattern: {
     position: 'absolute',
@@ -203,35 +182,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     letterSpacing: 0.5,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-  },
-  loadingDots: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 4,
-  },
-  dot1: {
-    animationDelay: '0s',
-  },
-  dot2: {
-    animationDelay: '0.2s',
-  },
-  dot3: {
-    animationDelay: '0.4s',
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
-    letterSpacing: 1,
   },
   footer: {
     position: 'absolute',

@@ -193,12 +193,7 @@ const LeadsScreen = ({ navigation }) => {
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Modern Header */}
-        <LinearGradient
-          colors={['#667eea', '#764ba2', '#f093fb']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.modernHeader}
-        >
+        <View style={styles.modernHeader}>
           {/* Background Pattern */}
           <View style={styles.headerPattern}>
             <View style={styles.patternCircle1} />
@@ -220,7 +215,7 @@ const LeadsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Stats Overview */}
         <View style={styles.statsSection}>
@@ -347,6 +342,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
+    backgroundColor: '#16BCC0',
     paddingTop: 50,
     paddingBottom: 30,
     paddingHorizontal: 20,
