@@ -15,8 +15,6 @@ const api = axios.create({
   timeout: 15000, // Increased timeout for ngrok
   headers: {
     'Content-Type': 'application/json',
-    'x-platform': 'android',
-    'ngrok-skip-browser-warning': 'true' // Skip ngrok browser warning
   }
 });
 

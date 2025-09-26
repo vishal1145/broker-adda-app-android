@@ -91,8 +91,8 @@ const PhoneLoginScreen = ({ navigation }) => {
   }
 
   const handleOtpVerified = () => {
-    // Navigate to main tabs after successful login
-    navigation.navigate('MainTabs')
+    // Navigate to create profile screen after successful login
+    navigation.navigate('CreateProfile')
   }
 
   const handleResendOtp = async () => {

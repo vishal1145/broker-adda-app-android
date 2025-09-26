@@ -1,0 +1,900 @@
+import React, { useState } from 'react'
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  StatusBar, 
+  TextInput, 
+  TouchableOpacity, 
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Image,
+  Modal
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { MaterialIcons } from '@expo/vector-icons'
+
+const CreateProfileScreen = ({ navigation }) => {
+  const [currentStep, setCurrentStep] = useState(1)
+  const [formData, setFormData] = useState({
+    // Personal Info
+    fullName: '',
+    email: '',
+    phone: '',
+    gender: '',
+    firmName: '',
+    whatsappNumber: '',
+    
+    // Professional
+    licenseNumber: '',
+    address: '',
+    specializations: [],
+    
+    // Social Media
+    linkedin: '',
+    instagram: '',
+    website: '',
+    twitter: '',
+    facebook: '',
+    
+    // Regions
+    state: '',
+    city: '',
+    regions: '',
+    
+    // Documents
+    aadharCard: null,
+    panCard: null,
+    gstCertificate: null,
+    brokerLicense: null,
+    companyId: null
+  })
+
+  const [showGenderModal, setShowGenderModal] = useState(false)
+  const [showSpecializationModal, setShowSpecializationModal] = useState(false)
+  const [showStateModal, setShowStateModal] = useState(false)
+  const [showCityModal, setShowCityModal] = useState(false)
+  const [showRegionModal, setShowRegionModal] = useState(false)
+
+  const genderOptions = ['Male', 'Female', 'Other']
+  const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
+  const states = ['Uttar Pradesh', 'Maharashtra', 'Karnataka', 'Tamil Nadu', 'Gujarat']
+  const cities = ['Noida', 'Mumbai', 'Bangalore', 'Chennai', 'Ahmedabad']
+  const regions = ['Electronic City', 'Whitefield', 'Koramangala', 'Indiranagar', 'JP Nagar']
+
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const nextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const handleCompleteProfile = () => {
+    Alert.alert(
+      'Profile Created!',
+      'Your broker profile has been created successfully.',
+      [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('MainTabs')
+        }
+      ]
+    )
+  }
+
+  const renderStepIndicator = () => (
+    <View style={styles.stepIndicator}>
+      {[1, 2, 3, 4].map((step) => (
+        <View key={step} style={styles.stepContainer}>
+          <View style={[
+            styles.stepCircle,
+            currentStep === step ? styles.stepCircleActive : 
+            currentStep > step ? styles.stepCircleCompleted : styles.stepCircleInactive
+          ]}>
+            {currentStep > step ? (
+              <MaterialIcons name="check" size={16} color="#FFFFFF" />
+            ) : (
+              <Text style={[
+                styles.stepNumber,
+                currentStep === step ? styles.stepNumberActive : styles.stepNumberInactive
+              ]}>
+                {step}
+              </Text>
+            )}
+          </View>
+          <Text style={[
+            styles.stepLabel,
+            currentStep === step ? styles.stepLabelActive : 
+            currentStep > step ? styles.stepLabelCompleted : styles.stepLabelInactive
+          ]}>
+            {step === 1 ? 'Personal Info' : 
+             step === 2 ? 'Professional' : 
+             step === 3 ? 'Regions' : 'Documents'}
+          </Text>
+          {step < 4 && (
+            <View style={[
+              styles.stepLine,
+              currentStep > step ? styles.stepLineCompleted : styles.stepLineInactive
+            ]} />
+          )}
+        </View>
+      ))}
+    </View>
+  )
+
+  const renderPersonalInfo = () => (
+    <View style={styles.formContainer}>
+      <View style={styles.sectionHeader}>
+        <MaterialIcons name="person" size={20} color="#16BCC0" />
+        <Text style={styles.sectionTitle}>Personal Information</Text>
+      </View>
+      
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Full Name *</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.fullName}
+          onChangeText={(text) => updateFormData('fullName', text)}
+          placeholder="Enter your full name"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Gender *</Text>
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={() => setShowGenderModal(true)}
+        >
+          <Text style={[styles.inputText, !formData.gender && styles.placeholderText]}>
+            {formData.gender || 'Select gender'}
+          </Text>
+          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Email Address *</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.email}
+          onChangeText={(text) => updateFormData('email', text)}
+          placeholder="Enter your email"
+          placeholderTextColor="#8E8E93"
+          keyboardType="email-address"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Phone Number *</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.phone}
+          onChangeText={(text) => updateFormData('phone', text)}
+          placeholder="Enter your phone"
+          placeholderTextColor="#8E8E93"
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Firm Name</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.firmName}
+          onChangeText={(text) => updateFormData('firmName', text)}
+          placeholder="Enter firm name"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>WhatsApp Number</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.whatsappNumber}
+          onChangeText={(text) => updateFormData('whatsappNumber', text)}
+          placeholder="Enter WhatsApp number"
+          placeholderTextColor="#8E8E93"
+          keyboardType="numeric"
+        />
+      </View>
+    </View>
+  )
+
+  const renderProfessional = () => (
+    <View style={styles.formContainer}>
+      <View style={styles.sectionHeader}>
+        <MaterialIcons name="work" size={20} color="#16BCC0" />
+        <Text style={styles.sectionTitle}>Professional Information</Text>
+      </View>
+      
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>License Number *</Text>
+        <View style={styles.inputWithIcon}>
+          <MaterialIcons name="description" size={20} color="#8E8E93" style={styles.inputIcon} />
+          <TextInput
+            style={styles.inputText}
+            value={formData.licenseNumber}
+            onChangeText={(text) => updateFormData('licenseNumber', text)}
+            placeholder="BRE #01234567"
+            placeholderTextColor="#8E8E93"
+          />
+        </View>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.addressHeader}>
+          <Text style={styles.inputLabel}>Address *</Text>
+          <TouchableOpacity style={styles.locationButton}>
+            <MaterialIcons name="location-on" size={16} color="#16BCC0" />
+            <Text style={styles.locationButtonText}>Use Current Location</Text>
+          </TouchableOpacity>
+        </View>
+        <TextInput
+          style={styles.input}
+          value={formData.address}
+          onChangeText={(text) => updateFormData('address', text)}
+          placeholder="789 Grand Blvd, Suite 200, Metropolis, CA 90210"
+          placeholderTextColor="#8E8E93"
+          multiline
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Specializations</Text>
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={() => setShowSpecializationModal(true)}
+        >
+          <Text style={[styles.inputText, formData.specializations.length === 0 && styles.placeholderText]}>
+            {formData.specializations.length > 0 ? formData.specializations.join(', ') : 'Select specializations...'}
+          </Text>
+          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.sectionHeader}>
+        <MaterialIcons name="link" size={20} color="#16BCC0" />
+        <Text style={styles.sectionTitle}>Social Media & Online Presence</Text>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.socialLabel}>
+          <MaterialIcons name="linkedin" size={16} color="#0077B5" />
+          <Text style={styles.socialLabelText}>LinkedIn</Text>
+        </View>
+        <TextInput
+          style={styles.socialInput}
+          value={formData.linkedin}
+          onChangeText={(text) => updateFormData('linkedin', text)}
+          placeholder="https://linkedin.com/in/yourprofile"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.socialLabel}>
+          <MaterialIcons name="camera-alt" size={16} color="#E4405F" />
+          <Text style={styles.socialLabelText}>Instagram</Text>
+        </View>
+        <TextInput
+          style={styles.socialInput}
+          value={formData.instagram}
+          onChangeText={(text) => updateFormData('instagram', text)}
+          placeholder="https://instagram.com/yourprofile"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.socialLabel}>
+          <MaterialIcons name="language" size={16} color="#16BCC0" />
+          <Text style={styles.socialLabelText}>Website</Text>
+        </View>
+        <TextInput
+          style={styles.socialInput}
+          value={formData.website}
+          onChangeText={(text) => updateFormData('website', text)}
+          placeholder="https://yourwebsite.com"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.socialLabel}>
+          <MaterialIcons name="alternate-email" size={16} color="#1DA1F2" />
+          <Text style={styles.socialLabelText}>Twitter</Text>
+        </View>
+        <TextInput
+          style={styles.socialInput}
+          value={formData.twitter}
+          onChangeText={(text) => updateFormData('twitter', text)}
+          placeholder="https://twitter.com/yourprofile"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.socialLabel}>
+          <MaterialIcons name="facebook" size={16} color="#1877F2" />
+          <Text style={styles.socialLabelText}>Facebook</Text>
+        </View>
+        <TextInput
+          style={styles.socialInput}
+          value={formData.facebook}
+          onChangeText={(text) => updateFormData('facebook', text)}
+          placeholder="https://facebook.com/yourprofile"
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+    </View>
+  )
+
+  const renderRegions = () => (
+    <View style={styles.formContainer}>
+      <View style={styles.sectionHeader}>
+        <MaterialIcons name="location-on" size={20} color="#16BCC0" />
+        <Text style={styles.sectionTitle}>Preferred Regions *</Text>
+      </View>
+      <Text style={styles.sectionDescription}>
+        Select the regions where you provide real estate services
+      </Text>
+      
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>State *</Text>
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={() => setShowStateModal(true)}
+        >
+          <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
+            {formData.state || 'Select state'}
+          </Text>
+          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>City *</Text>
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={() => setShowCityModal(true)}
+        >
+          <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
+            {formData.city || 'Select city'}
+          </Text>
+          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Regions *</Text>
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={() => setShowRegionModal(true)}
+        >
+          <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
+            {formData.regions || 'Select regions'}
+          </Text>
+          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+
+  const renderDocuments = () => (
+    <View style={styles.formContainer}>
+      <View style={styles.sectionHeader}>
+        <MaterialIcons name="description" size={20} color="#16BCC0" />
+        <Text style={styles.sectionTitle}>Documents (Optional)</Text>
+      </View>
+      
+      <View style={styles.documentsGrid}>
+        {[
+          { key: 'aadharCard', title: 'Aadhar Card', uploaded: true },
+          { key: 'panCard', title: 'PAN Card', uploaded: true },
+          { key: 'gstCertificate', title: 'GST Certificate', uploaded: true },
+          { key: 'brokerLicense', title: 'Broker License', uploaded: false },
+          { key: 'companyId', title: 'Company Identification Details', uploaded: false }
+        ].map((doc, index) => (
+          <TouchableOpacity key={doc.key} style={styles.documentCard}>
+            <View style={styles.documentIcon}>
+              <MaterialIcons 
+                name={doc.uploaded ? "check-circle" : "cloud-upload"} 
+                size={32} 
+                color={doc.uploaded ? "#4CAF50" : "#16BCC0"} 
+              />
+            </View>
+            <Text style={styles.documentTitle}>{doc.title}</Text>
+            <Text style={styles.documentStatus}>
+              {doc.uploaded ? 'View uploaded file' : `Click to upload ${doc.title}`}
+            </Text>
+            <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )
+
+  const renderModal = (title, options, field, isVisible, onClose) => (
+    <Modal visible={isVisible} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <MaterialIcons name="close" size={24} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalList}>
+            {options.map((option, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.modalItem}
+                onPress={() => {
+                  updateFormData(field, option)
+                  onClose()
+                }}
+              >
+                <Text style={styles.modalItemText}>{option}</Text>
+                {formData[field] === option && (
+                  <MaterialIcons name="check" size={20} color="#16BCC0" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  )
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1: return renderPersonalInfo()
+      case 2: return renderProfessional()
+      case 3: return renderRegions()
+      case 4: return renderDocuments()
+      default: return renderPersonalInfo()
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Title */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Create Broker Profile</Text>
+          <Text style={styles.subtitle}>
+            Complete your profile to get started with connecting with potential clients
+          </Text>
+        </View>
+
+        {/* Step Indicator */}
+        {renderStepIndicator()}
+
+        {/* Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {renderCurrentStep()}
+        </ScrollView>
+
+        {/* Action Button */}
+        <View style={styles.actionButtonContainer}>
+          {currentStep < 4 ? (
+            <TouchableOpacity style={styles.actionButton} onPress={nextStep}>
+              <Text style={styles.actionButtonText}>
+                Continue to {currentStep === 1 ? 'Professional' : 
+                           currentStep === 2 ? 'Regions' : 'Documents'}
+              </Text>
+              <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.completeButton} onPress={handleCompleteProfile}>
+              <MaterialIcons name="check" size={20} color="#FFFFFF" />
+              <Text style={styles.completeButtonText}>Complete Profile</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Modals */}
+        {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
+        {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
+        {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
+        {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
+        {renderModal('Select Regions', regions, 'regions', showRegionModal, () => setShowRegionModal(false))}
+
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  titleContainer: {
+    paddingHorizontal: 30,
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  stepIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    marginBottom: 30,
+  },
+  stepContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  stepCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  stepCircleActive: {
+    backgroundColor: '#16BCC0',
+  },
+  stepCircleCompleted: {
+    backgroundColor: '#4CAF50',
+  },
+  stepCircleInactive: {
+    backgroundColor: '#E5E5EA',
+  },
+  stepNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  stepNumberActive: {
+    color: '#FFFFFF',
+  },
+  stepNumberInactive: {
+    color: '#8E8E93',
+  },
+  stepLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  stepLabelActive: {
+    color: '#16BCC0',
+  },
+  stepLabelCompleted: {
+    color: '#4CAF50',
+  },
+  stepLabelInactive: {
+    color: '#8E8E93',
+  },
+  stepLine: {
+    position: 'absolute',
+    top: 16,
+    left: '50%',
+    width: '100%',
+    height: 2,
+    zIndex: -1,
+  },
+  stepLineCompleted: {
+    backgroundColor: '#4CAF50',
+  },
+  stepLineInactive: {
+    backgroundColor: '#E5E5EA',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  formContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginLeft: 8,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  formRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  formColumn: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  inputText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+  },
+  placeholderText: {
+    color: '#8E8E93',
+  },
+  inputWithIcon: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F8F8',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  locationButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#16BCC0',
+    marginLeft: 4,
+  },
+  socialInputGroup: {
+    marginBottom: 16,
+  },
+  socialLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  socialLabelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    marginLeft: 6,
+  },
+  socialInput: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    fontSize: 16,
+    color: '#000000',
+  },
+  documentsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  documentCard: {
+    width: '48%',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    borderStyle: 'dashed',
+  },
+  documentIcon: {
+    marginBottom: 12,
+  },
+  documentTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  documentStatus: {
+    fontSize: 12,
+    color: '#16BCC0',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  documentFormat: {
+    fontSize: 10,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
+  actionButtonContainer: {
+    paddingHorizontal: 30,
+    paddingBottom: 20,
+    paddingTop: 10,
+  },
+  actionButton: {
+    backgroundColor: '#16BCC0',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#16BCC0',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  completeButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4CAF50',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  completeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '50%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  modalList: {
+    maxHeight: 300,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+})
+
+export default CreateProfileScreen

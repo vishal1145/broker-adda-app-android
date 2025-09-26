@@ -9,6 +9,7 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import SignupScreen from '../screens/SignupScreen';
+import CreateProfileScreen from '../screens/CreateProfileScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LeadsScreen from '../screens/LeadsScreen';
 import PropertiesScreen from '../screens/PropertiesScreen';
@@ -75,6 +76,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="PhoneLogin" component={PhoneLoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
         <Stack.Screen 
           name="Profile" 
