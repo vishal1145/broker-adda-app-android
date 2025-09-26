@@ -137,6 +137,24 @@ export const authAPI = {
       console.error('Complete profile error:', error);
       throw error;
     }
+  },
+
+  // Get broker profile
+  getProfile: async (brokerId, token) => {
+    try {
+      console.log('Getting profile for broker ID:', brokerId);
+      const response = await api.get(`/api/brokers/${brokerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Profile retrieved successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get profile error:', error);
+      throw error;
+    }
   }
 };
 

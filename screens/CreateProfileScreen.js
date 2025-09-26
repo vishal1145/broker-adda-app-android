@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
+import { storage } from '../services/storage'
 
 const CreateProfileScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -60,6 +61,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const [showCityModal, setShowCityModal] = useState(false)
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -70,6 +72,63 @@ const CreateProfileScreen = ({ navigation }) => {
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+
+  // Fetch existing profile data
+  const fetchProfileData = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Get token and broker ID from storage
+      const token = await storage.getToken()
+      const brokerId = await storage.getBrokerId()
+      
+      if (token && brokerId) {
+        const response = await authAPI.getProfile(brokerId, token)
+        
+        // Map API response to form data based on actual response structure
+        if (response && response.data && response.data.broker) {
+          const broker = response.data.broker
+          setFormData(prev => ({
+            ...prev,
+            // Personal Info
+            fullName: broker.name || broker.userId?.name || '',
+            email: broker.email || broker.userId?.email || '',
+            phone: broker.phone || broker.userId?.phone || '',
+            gender: broker.gender || '',
+            firmName: broker.firmName || '',
+            whatsappNumber: broker.whatsappNumber || '',
+            
+            // Professional
+            licenseNumber: broker.licenseNumber || '',
+            address: broker.address || '',
+            specializations: broker.specializations || [],
+            
+            // Social Media (these might not be in the response yet)
+            linkedin: broker.socialMedia?.linkedin || '',
+            instagram: broker.socialMedia?.instagram || '',
+            website: broker.website || '',
+            twitter: broker.socialMedia?.twitter || '',
+            facebook: broker.socialMedia?.facebook || '',
+            
+            // Regions
+            state: broker.state || '',
+            city: broker.city || '',
+            regions: broker.region?.[0]?.name || '', // Using first region name
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error)
+      // Don't show error to user as this is optional data loading
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Load profile data on component mount
+  useEffect(() => {
+    fetchProfileData()
+  }, [])
 
   const nextStep = () => {
     if (currentStep < 4) {
@@ -192,8 +251,13 @@ const CreateProfileScreen = ({ navigation }) => {
       // For now, we'll skip file uploads as they require actual file objects
       // You can implement file upload functionality later
       
-      // Get token from storage or context (you'll need to implement this)
-      const token = 'YOUR_JWT_TOKEN' // Replace with actual token retrieval
+      // Get token from storage
+      const token = await storage.getToken()
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found. Please login again.')
+        setIsSubmitting(false)
+        return
+      }
       
       // Call the API
       const response = await authAPI.completeProfile(profileData, token)
@@ -315,12 +379,12 @@ const CreateProfileScreen = ({ navigation }) => {
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Phone Number *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, styles.disabledInput]}
           value={formData.phone}
-          onChangeText={(text) => updateFormData('phone', text)}
           placeholder="Enter your phone"
           placeholderTextColor="#8E8E93"
           keyboardType="numeric"
+          editable={false}
         />
       </View>
 
@@ -684,7 +748,14 @@ const CreateProfileScreen = ({ navigation }) => {
 
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {renderCurrentStep()}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#16BCC0" />
+              <Text style={styles.loadingText}>Loading profile data...</Text>
+            </View>
+          ) : (
+            renderCurrentStep()
+          )}
         </ScrollView>
 
         {/* Action Button */}
@@ -912,6 +983,11 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#8E8E93',
   },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    color: '#8E8E93',
+    borderColor: '#E0E0E0',
+  },
   inputWithIcon: {
     backgroundColor: '#F8F9FA',
     paddingVertical: 12,
@@ -1113,6 +1189,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
   },
 })
 

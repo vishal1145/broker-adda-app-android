@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
+import { storage } from '../services/storage'
 
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -41,6 +42,15 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       
       // Call the OTP verification API
       const response = await authAPI.verifyOTP(formattedPhone, otpString)
+      
+      // Save token, phone, and broker ID from response
+      if (response && response.data) {
+        const { token, user } = response.data
+        if (token && user && user.id) {
+          await storage.saveAuthData(token, user.phone, user.id) // Using user.id as brokerId
+          console.log('Auth data saved:', { token, phone: user.phone, brokerId: user.id })
+        }
+      }
       
       setIsLoading(false)
       
