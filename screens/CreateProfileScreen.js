@@ -11,10 +11,12 @@ import {
   Platform,
   ScrollView,
   Image,
-  Modal
+  Modal,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
+import { authAPI } from '../services/api'
 
 const CreateProfileScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -57,6 +59,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const [showStateModal, setShowStateModal] = useState(false)
   const [showCityModal, setShowCityModal] = useState(false)
   const [showRegionModal, setShowRegionModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -80,23 +83,156 @@ const CreateProfileScreen = ({ navigation }) => {
     }
   }
 
-  const handleCompleteProfile = () => {
-    Alert.alert(
-      'Profile Created!',
-      'Your broker profile has been created successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('MainTabs')
-        }
-      ]
-    )
+  const handleCompleteProfile = async () => {
+    try {
+      setIsSubmitting(true)
+      
+      // Validate required fields
+      if (!formData.fullName.trim()) {
+        Alert.alert('Error', 'Please enter your full name')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.email.trim()) {
+        Alert.alert('Error', 'Please enter your email address')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.phone.trim()) {
+        Alert.alert('Error', 'Please enter your phone number')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.gender) {
+        Alert.alert('Error', 'Please select your gender')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.firmName.trim()) {
+        Alert.alert('Error', 'Please enter your firm name')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.licenseNumber.trim()) {
+        Alert.alert('Error', 'Please enter your license number')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.address.trim()) {
+        Alert.alert('Error', 'Please enter your address')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.state) {
+        Alert.alert('Error', 'Please select your state')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.city) {
+        Alert.alert('Error', 'Please select your city')
+        setIsSubmitting(false)
+        return
+      }
+      if (!formData.regions) {
+        Alert.alert('Error', 'Please select your regions')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Prepare form data for API
+      const profileData = new FormData()
+      
+      // Basic info
+      profileData.append('phone', formData.phone)
+      profileData.append('name', formData.fullName)
+      profileData.append('email', formData.email)
+      
+      // Broker details
+      profileData.append('brokerDetails[gender]', formData.gender.toLowerCase())
+      if (formData.firmName) {
+        profileData.append('brokerDetails[firmName]', formData.firmName)
+      }
+      profileData.append('brokerDetails[licenseNumber]', formData.licenseNumber)
+      profileData.append('brokerDetails[address]', formData.address)
+      profileData.append('brokerDetails[state]', formData.state)
+      profileData.append('brokerDetails[city]', formData.city)
+      if (formData.whatsappNumber) {
+        profileData.append('brokerDetails[whatsappNumber]', formData.whatsappNumber)
+      }
+      if (formData.website) {
+        profileData.append('brokerDetails[website]', formData.website)
+      }
+      
+      // Specializations
+      if (formData.specializations.length > 0) {
+        formData.specializations.forEach(spec => {
+          profileData.append('brokerDetails[specializations][]', spec)
+        })
+      }
+      
+      // Social media
+      if (formData.linkedin) {
+        profileData.append('brokerDetails[socialMedia][linkedin]', formData.linkedin)
+      }
+      if (formData.twitter) {
+        profileData.append('brokerDetails[socialMedia][twitter]', formData.twitter)
+      }
+      if (formData.instagram) {
+        profileData.append('brokerDetails[socialMedia][instagram]', formData.instagram)
+      }
+      if (formData.facebook) {
+        profileData.append('brokerDetails[socialMedia][facebook]', formData.facebook)
+      }
+      
+      // Regions (using a placeholder region ID - you may need to map this to actual region IDs)
+      if (formData.regions) {
+        profileData.append('brokerDetails[region][]', '68c7a35bf238b8913058a5d4') // Placeholder region ID
+      }
+      
+      // For now, we'll skip file uploads as they require actual file objects
+      // You can implement file upload functionality later
+      
+      // Get token from storage or context (you'll need to implement this)
+      const token = 'YOUR_JWT_TOKEN' // Replace with actual token retrieval
+      
+      // Call the API
+      const response = await authAPI.completeProfile(profileData, token)
+      
+      setIsSubmitting(false)
+      
+      Alert.alert(
+        'Profile Created!',
+        'Your broker profile has been created successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('MainTabs')
+          }
+        ]
+      )
+      
+    } catch (error) {
+      setIsSubmitting(false)
+      console.error('Profile completion error:', error)
+      Alert.alert('Error', 'Failed to create profile. Please try again.')
+    }
+  }
+
+  const handleStepClick = (step) => {
+    // Allow navigation to any step that has been completed or is the current step
+    // For now, allow navigation to any step - you can restrict this if needed
+    setCurrentStep(step)
   }
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
       {[1, 2, 3, 4].map((step) => (
-        <View key={step} style={styles.stepContainer}>
+        <TouchableOpacity 
+          key={step} 
+          style={styles.stepContainer}
+          onPress={() => handleStepClick(step)}
+          activeOpacity={0.7}
+        >
           <View style={[
             styles.stepCircle,
             currentStep === step ? styles.stepCircleActive : 
@@ -128,7 +264,7 @@ const CreateProfileScreen = ({ navigation }) => {
               currentStep > step ? styles.stepLineCompleted : styles.stepLineInactive
             ]} />
           )}
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   )
@@ -189,7 +325,7 @@ const CreateProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Firm Name</Text>
+        <Text style={styles.inputLabel}>Firm Name *</Text>
         <TextInput
           style={styles.input}
           value={formData.firmName}
@@ -246,7 +382,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.input}
           value={formData.address}
           onChangeText={(text) => updateFormData('address', text)}
-          placeholder="789 Grand Blvd, Suite 200, Metropolis, CA 90210"
+          placeholder="Enter your address"
           placeholderTextColor="#8E8E93"
           multiline
         />
@@ -258,8 +394,8 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.input}
           onPress={() => setShowSpecializationModal(true)}
         >
-          <Text style={[styles.inputText, formData.specializations.length === 0 && styles.placeholderText]}>
-            {formData.specializations.length > 0 ? formData.specializations.join(', ') : 'Select specializations...'}
+          <Text style={[styles.inputText, (formData.specializations || []).length === 0 && styles.placeholderText]}>
+            {(formData.specializations || []).length > 0 ? (formData.specializations || []).join(', ') : 'Select specializations...'}
           </Text>
           <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
         </TouchableOpacity>
@@ -427,37 +563,88 @@ const CreateProfileScreen = ({ navigation }) => {
     </View>
   )
 
-  const renderModal = (title, options, field, isVisible, onClose) => (
-    <Modal visible={isVisible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <MaterialIcons name="close" size={24} color="#8E8E93" />
-            </TouchableOpacity>
+  const renderModal = (title, options, field, isVisible, onClose) => {
+    // Special handling for specializations (multi-select)
+    if (field === 'specializations') {
+      return (
+        <Modal visible={isVisible} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>{title}</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <MaterialIcons name="close" size={24} color="#8E8E93" />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.modalList}>
+                {options.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.modalItem}
+                    onPress={() => {
+                      const currentSpecs = formData.specializations || []
+                      let newSpecs
+                      if (currentSpecs.includes(option)) {
+                        // Remove if already selected
+                        newSpecs = currentSpecs.filter(spec => spec !== option)
+                      } else {
+                        // Add if not selected
+                        newSpecs = [...currentSpecs, option]
+                      }
+                      updateFormData(field, newSpecs)
+                    }}
+                  >
+                    <Text style={styles.modalItemText}>{option}</Text>
+                    {(formData.specializations || []).includes(option) && (
+                      <MaterialIcons name="check" size={20} color="#16BCC0" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <View style={styles.modalFooter}>
+                <TouchableOpacity style={styles.modalDoneButton} onPress={onClose}>
+                  <Text style={styles.modalDoneButtonText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <ScrollView style={styles.modalList}>
-            {options.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.modalItem}
-                onPress={() => {
-                  updateFormData(field, option)
-                  onClose()
-                }}
-              >
-                <Text style={styles.modalItemText}>{option}</Text>
-                {formData[field] === option && (
-                  <MaterialIcons name="check" size={20} color="#16BCC0" />
-                )}
+        </Modal>
+      )
+    }
+
+    // Regular single-select modal
+    return (
+      <Modal visible={isVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{title}</Text>
+              <TouchableOpacity onPress={onClose}>
+                <MaterialIcons name="close" size={24} color="#8E8E93" />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+            <ScrollView style={styles.modalList}>
+              {options.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.modalItem}
+                  onPress={() => {
+                    updateFormData(field, option)
+                    onClose()
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{option}</Text>
+                  {formData[field] === option && (
+                    <MaterialIcons name="check" size={20} color="#16BCC0" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </Modal>
-  )
+      </Modal>
+    )
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -511,9 +698,24 @@ const CreateProfileScreen = ({ navigation }) => {
               <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.completeButton} onPress={handleCompleteProfile}>
-              <MaterialIcons name="check" size={20} color="#FFFFFF" />
-              <Text style={styles.completeButtonText}>Complete Profile</Text>
+            <TouchableOpacity 
+              style={styles.completeButton} 
+              onPress={handleCompleteProfile}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={[styles.completeButtonText, styles.loadingText]}>
+                    Creating Profile...
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <MaterialIcons name="check" size={20} color="#FFFFFF" />
+                  <Text style={styles.completeButtonText}>Complete Profile</Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -894,6 +1096,23 @@ const styles = StyleSheet.create({
   modalItemText: {
     fontSize: 16,
     color: '#000000',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  modalDoneButton: {
+    backgroundColor: '#16BCC0',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalDoneButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })
 

@@ -14,7 +14,7 @@ try {
 
 // Fallback configuration
 const config = {
-  API_BASE_URL: API_BASE_URL || 'https://broker-adda-be.algofolks.com/',
+  API_BASE_URL: API_BASE_URL || 'https://broker-adda-be.algofolks.com',
 };
 
 // Debug logging

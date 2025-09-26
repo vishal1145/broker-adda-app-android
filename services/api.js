@@ -119,6 +119,24 @@ export const authAPI = {
       console.error('Registration error:', error);
       throw error;
     }
+  },
+
+  // Complete profile
+  completeProfile: async (profileData, token) => {
+    try {
+      console.log('Completing profile:', profileData);
+      const response = await api.post('/api/auth/complete-profile', profileData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      console.log('Profile completed successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Complete profile error:', error);
+      throw error;
+    }
   }
 };
 
