@@ -28,8 +28,8 @@ const OnboardingScreen = ({ navigation }) => {
   }
 
   const handleGetStarted = () => {
-    // Navigate to login screen after onboarding completion
-    navigation.navigate('Login')
+    // Navigate to phone login screen after onboarding completion
+    navigation.navigate('PhoneLogin')
   }
 
   const toggleCheckbox = (checkboxKey) => {

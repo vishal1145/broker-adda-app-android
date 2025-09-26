@@ -105,6 +105,22 @@ export const authAPI = {
       console.error('Resend OTP error:', error);
       throw error;
     }
+  },
+
+  // Register with phone and role
+  signup: async (phone) => {
+    try {
+      console.log('Registering user:', { phone, role: 'broker' });
+      const response = await api.post('/api/auth/register', {
+        phone: phone,
+        role: 'broker'
+      });
+      console.log('Registration successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   }
 };
 

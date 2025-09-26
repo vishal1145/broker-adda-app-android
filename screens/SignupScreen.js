@@ -16,7 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import OtpScreen from './OtpScreen'
 import { authAPI } from '../services/api'
 
-const PhoneLoginScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isOtpSent, setIsOtpSent] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -31,7 +31,7 @@ const PhoneLoginScreen = ({ navigation }) => {
     { code: '+86', country: 'China' }
   ]
 
-  const handleSendOtp = async () => {
+  const handleSignup = async () => {
     if (!phoneNumber.trim()) {
       Alert.alert('Error', 'Please enter your phone number')
       return
@@ -48,20 +48,20 @@ const PhoneLoginScreen = ({ navigation }) => {
       // Format phone number with selected country code
       const formattedPhone = `${selectedCountryCode}${phoneNumber}`
       
-      // Call the API
-      const response = await authAPI.sendOTP(formattedPhone)
+      // Call the signup API
+      const response = await authAPI.signup(formattedPhone)
       
       setIsLoading(false)
       setIsOtpSent(true)
       
       // Navigate to OTP screen directly
-      console.log('OTP sent successfully, navigating to OTP screen...')
+      console.log('Signup OTP sent successfully, navigating to OTP screen...')
       console.log('API Response:', response)
     } catch (error) {
       setIsLoading(false)
       
       // Handle different types of errors
-      let errorMessage = 'Failed to send OTP. Please try again.'
+      let errorMessage = 'Failed to create account. Please try again.'
       
       if (error.response) {
         // Server responded with error status
@@ -70,6 +70,8 @@ const PhoneLoginScreen = ({ navigation }) => {
         
         if (status === 400) {
           errorMessage = data.message || 'Invalid phone number format'
+        } else if (status === 409) {
+          errorMessage = 'Phone number already exists. Please login instead.'
         } else if (status === 429) {
           errorMessage = 'Too many requests. Please wait before trying again.'
         } else if (status >= 500) {
@@ -91,14 +93,14 @@ const PhoneLoginScreen = ({ navigation }) => {
   }
 
   const handleOtpVerified = () => {
-    // Navigate to main tabs after successful login
+    // Navigate to main tabs after successful signup
     navigation.navigate('MainTabs')
   }
 
   const handleResendOtp = async () => {
     try {
       const formattedPhone = `${selectedCountryCode}${phoneNumber}`
-      await authAPI.sendOTP(formattedPhone)
+      await authAPI.signup(formattedPhone)
       console.log('OTP resent successfully')
     } catch (error) {
       console.error('Resend OTP Error:', error)
@@ -130,7 +132,6 @@ const PhoneLoginScreen = ({ navigation }) => {
   }
 
 
-
   // Show OTP screen when OTP is sent
   if (isOtpSent) {
     return (
@@ -156,8 +157,6 @@ const PhoneLoginScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
           </TouchableOpacity>
-          {/* <Text style={styles.headerTitle}>Phone Verification</Text>
-          <View style={styles.headerBorder} /> */}
         </View>
 
         {/* Content */}
@@ -165,10 +164,10 @@ const PhoneLoginScreen = ({ navigation }) => {
           {/* Header Section */}
           <View style={styles.headerSection}>
             <Text style={styles.illustrationTitle}>
-              Login with Phone Number
+              Create Account
             </Text>
             <Text style={styles.illustrationSubtitle}>
-              Please enter your phone number correctly
+              Please enter your phone number to create an account
             </Text>
           </View>
 
@@ -221,7 +220,6 @@ const PhoneLoginScreen = ({ navigation }) => {
               )}
             </View>
           </View>
-
         </View>
 
         {/* Action Button - Above dialpad */}
@@ -231,7 +229,7 @@ const PhoneLoginScreen = ({ navigation }) => {
               styles.actionButton, 
               phoneNumber.length < 10 ? styles.actionButtonDisabled : null
             ]} 
-            onPress={handleSendOtp}
+            onPress={handleSignup}
             disabled={isLoading || phoneNumber.length < 10}
           >
             {isLoading ? (
@@ -242,19 +240,19 @@ const PhoneLoginScreen = ({ navigation }) => {
                 </Text>
               </View>
             ) : (
-              <Text style={styles.actionButtonText}>Login</Text>
+              <Text style={styles.actionButtonText}>Sign Up</Text>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Signup Link */}
+        {/* Login Link */}
         <View style={styles.toggleContainer}>
           <Text style={styles.toggleText}>
-            Don't have an account?
+            Already have an account?
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => navigation.navigate('PhoneLogin')} activeOpacity={0.7}>
             <Text style={styles.toggleButton}>
-              Sign Up
+              Login
             </Text>
           </TouchableOpacity>
         </View>
@@ -289,18 +287,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  headerBorder: {
-    height: 1,
-    backgroundColor: '#E5E5EA',
-    width: '100%',
-  },
   content: {
     flex: 0.5,
     paddingHorizontal: 30,
@@ -310,14 +296,6 @@ const styles = StyleSheet.create({
   headerSection: {
     alignItems: 'flex-start',
     marginBottom: 25,
-  },
-  illustrationContainer: {
-    alignItems: 'center',
-    marginBottom: 50,
-  },
-  phoneIcon: {
-    fontSize: 80,
-    marginBottom: 20,
   },
   illustrationTitle: {
     fontSize: 28,
@@ -340,19 +318,6 @@ const styles = StyleSheet.create({
   },
   phoneInputContainer: {
     marginBottom: 0,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
-  },
-  inputHelper: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    marginTop: 8,
-    textAlign: 'center',
   },
   inputRow: {
     flexDirection: 'row',
@@ -465,7 +430,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionButtonContainer: {
-    paddingHorizontal:30,
+    paddingHorizontal: 30,
     paddingBottom: 15,
     paddingTop: 10,
   },
@@ -520,17 +485,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#16BCC0',
   },
-  termsContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  termsText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
 })
 
-export default PhoneLoginScreen
+export default SignupScreen

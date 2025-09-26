@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
   View, 
   StatusBar, 
+  TextInput,
   TouchableOpacity, 
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Animated,
   ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -16,18 +16,19 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
 
 const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
-  const [otp, setOtp] = useState('')
+  const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
-  const [showOtpDialpad, setShowOtpDialpad] = useState(true)
-  const [otpDialpadAnimation] = useState(new Animated.Value(1))
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const inputRefs = useRef([])
 
   const handleVerifyOtp = async () => {
-    if (!otp.trim()) {
+    const otpString = otp.join('')
+    if (!otpString.trim()) {
       Alert.alert('Error', 'Please enter the OTP')
       return
     }
 
-    if (otp.length !== 6) {
+    if (otpString.length !== 6) {
       Alert.alert('Error', 'Please enter a valid 6-digit OTP')
       return
     }
@@ -39,7 +40,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       const formattedPhone = `+91${phoneNumber}`
       
       // Call the OTP verification API
-      const response = await authAPI.verifyOTP(formattedPhone, otp)
+      const response = await authAPI.verifyOTP(formattedPhone, otpString)
       
       setIsLoading(false)
       
@@ -88,6 +89,16 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       const formattedPhone = `+91${phoneNumber}`
       await authAPI.resendOTP(formattedPhone)
       console.log('OTP resent successfully')
+      
+      // Clear the OTP input fields
+      setOtp(['', '', '', '', '', ''])
+      setFocusedIndex(0)
+      
+      // Focus on the first input
+      setTimeout(() => {
+        inputRefs.current[0]?.focus()
+      }, 100)
+      
       if (onResendOtp) {
         onResendOtp()
       }
@@ -98,67 +109,37 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   }
 
 
-  const handleOtpDialpadPress = (number) => {
-    if (otp.length < 6) {
-      setOtp(prev => prev + number)
+  const handleOtpChange = (text, index) => {
+    // Only allow single digit
+    const digit = text.replace(/\D/g, '').slice(0, 1)
+    
+    const newOtp = [...otp]
+    newOtp[index] = digit
+    setOtp(newOtp)
+    
+    // Auto-focus next input if digit entered
+    if (digit && index < 5) {
+      setFocusedIndex(index + 1)
+      // Focus the next input after a small delay
+      setTimeout(() => {
+        inputRefs.current[index + 1]?.focus()
+      }, 50)
     }
   }
 
-  const handleOtpZeroPress = () => {
-    if (otp.length < 6) {
-      setOtp(prev => prev + '0')
+  const handleKeyPress = (key, index) => {
+    if (key === 'Backspace') {
+      // If current box is empty, go to previous box
+      if (!otp[index] && index > 0) {
+        setFocusedIndex(index - 1)
+        inputRefs.current[index - 1]?.focus()
+      } else {
+        // Clear current box
+        const newOtp = [...otp]
+        newOtp[index] = ''
+        setOtp(newOtp)
+      }
     }
-  }
-
-  const handleOtpBackspace = () => {
-    setOtp(prev => prev.slice(0, -1))
-  }
-
-  const renderOtpDialpad = () => {
-    const dialpadNumbers = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9']
-    ]
-
-    return (
-      <View style={styles.dialpadContainer}>
-        {dialpadNumbers.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.dialpadRow}>
-            {row.map((number, colIndex) => (
-              <TouchableOpacity
-                key={`${rowIndex}-${colIndex}`}
-                style={styles.dialpadButton}
-                onPress={() => handleOtpDialpadPress(number)}
-              >
-                <Text style={styles.dialpadNumber}>{number}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-        
-        {/* Bottom row with 0 and backspace - aligned with grid */}
-        <View style={styles.dialpadRow}>
-          <TouchableOpacity style={[styles.dialpadButton, styles.emptyButton]} disabled>
-            <Text style={styles.dialpadNumber}></Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.dialpadButton, styles.zeroButton]} 
-            onPress={handleOtpZeroPress}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.dialpadNumber}>0</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.dialpadButton, styles.backspaceButton]} 
-            onPress={handleOtpBackspace}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backspaceIcon}>⌫</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    )
   }
 
   return (
@@ -195,27 +176,33 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
             <View style={styles.otpContainer}>
               <View style={styles.otpBoxesContainer}>
                 {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <View
+                  <TextInput
                     key={index}
+                    ref={(ref) => (inputRefs.current[index] = ref)}
                     style={[
                       styles.otpBox,
-                      { borderColor: otp.length > index ? '#16BCC0' : '#E5E5EA' }
+                      { 
+                        borderColor: otp[index] ? '#16BCC0' : (focusedIndex === index ? '#16BCC0' : '#E5E5EA'),
+                        backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
+                      }
                     ]}
-                  >
-                    <Text style={[
-                      styles.otpBoxText,
-                      { color: otp[index] ? '#000000' : '#8E8E93' }
-                    ]}>
-                      {otp[index] || '0'}
-                    </Text>
-                  </View>
+                    value={otp[index]}
+                    onChangeText={(text) => handleOtpChange(text, index)}
+                    onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+                    onFocus={() => setFocusedIndex(index)}
+                    placeholder="0"
+                    placeholderTextColor="#8E8E93"
+                    keyboardType="numeric"
+                    maxLength={1}
+                    textAlign="center"
+                    autoFocus={index === 0}
+                  />
                 ))}
               </View>
               <TouchableOpacity onPress={handleResendOtp} style={styles.resendButton}>
                 <Text style={styles.resendButtonText}>Resend OTP</Text>
               </TouchableOpacity>
             </View>
-
           </View>
 
         </View>
@@ -225,10 +212,10 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
           <TouchableOpacity 
             style={[
               styles.actionButton, 
-              otp.length < 6 ? styles.actionButtonDisabled : null
+              otp.join('').length < 6 ? styles.actionButtonDisabled : null
             ]} 
             onPress={handleVerifyOtp}
-            disabled={isLoading || otp.length < 6}
+            disabled={isLoading || otp.join('').length < 6}
           >
             {isLoading ? (
               <View style={styles.loadingContainer}>
@@ -243,23 +230,6 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
           </TouchableOpacity>
         </View>
 
-        {/* OTP Dialpad */}
-        <Animated.View 
-          style={[
-            styles.dialpadSection,
-            {
-              opacity: otpDialpadAnimation,
-              transform: [{
-                translateY: otpDialpadAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [300, 0],
-                })
-              }]
-            }
-          ]}
-        >
-          {renderOtpDialpad()}
-        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
@@ -351,6 +321,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#000000',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -359,11 +332,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
-  },
-  otpBoxText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#8E8E93',
   },
   resendButton: {
     paddingVertical: 10,
@@ -411,96 +379,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: 8,
-  },
-  dialpadSection: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 350,
-    backgroundColor: '#F2F2F7',
-    paddingTop: 10,
-    paddingBottom: 10,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  dialpadContainer: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    paddingHorizontal: 10,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  dialpadRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingHorizontal: 0,
-    minHeight: 60,
-  },
-  dialpadButton: {
-    flex: 1,
-    height: 60,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 0,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  emptyButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  backspaceButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E0E0E0',
-    borderWidth: 0,
-  },
-  zeroButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E0E0E0',
-    borderWidth: 0,
-  },
-  dialpadNumber: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 2,
-  },
-  backspaceIcon: {
-    fontSize: 20,
-    color: '#000000',
-    fontWeight: '700',
-  },
-  homeIndicator: {
-    position: 'absolute',
-    bottom: 8,
-    left: '50%',
-    marginLeft: -67,
-    width: 134,
-    height: 5,
-    backgroundColor: '#000000',
-    borderRadius: 3,
   },
 })
 
