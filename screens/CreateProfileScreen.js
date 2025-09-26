@@ -282,8 +282,72 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   const nextStep = () => {
+    // Validate current step before proceeding
+    if (!validateCurrentStep()) {
+      return
+    }
+    
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 1: // Personal Info
+        if (!formData.fullName.trim()) {
+          Alert.alert('Required Field', 'Please enter your full name')
+          return false
+        }
+        if (!formData.gender) {
+          Alert.alert('Required Field', 'Please select your gender')
+          return false
+        }
+        if (!formData.email.trim()) {
+          Alert.alert('Required Field', 'Please enter your email address')
+          return false
+        }
+        if (!formData.phone.trim()) {
+          Alert.alert('Required Field', 'Please enter your phone number')
+          return false
+        }
+        if (!formData.firmName.trim()) {
+          Alert.alert('Required Field', 'Please enter your firm name')
+          return false
+        }
+        return true
+
+      case 2: // Professional
+        if (!formData.licenseNumber.trim()) {
+          Alert.alert('Required Field', 'Please enter your license number')
+          return false
+        }
+        if (!formData.address.trim()) {
+          Alert.alert('Required Field', 'Please enter your address')
+          return false
+        }
+        return true
+
+      case 3: // Regions
+        if (!formData.state) {
+          Alert.alert('Required Field', 'Please select your state')
+          return false
+        }
+        if (!formData.city) {
+          Alert.alert('Required Field', 'Please select your city')
+          return false
+        }
+        if (!formData.regions) {
+          Alert.alert('Required Field', 'Please select your regions')
+          return false
+        }
+        return true
+
+      case 4: // Documents (optional)
+        return true
+
+      default:
+        return true
     }
   }
 
@@ -427,53 +491,82 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   const handleStepClick = (step) => {
-    // Allow navigation to any step that has been completed or is the current step
-    // For now, allow navigation to any step - you can restrict this if needed
+    // Only allow navigation to previous steps or current step
+    // For forward navigation, validate current step first
+    if (step > currentStep) {
+      if (!validateCurrentStep()) {
+        return
+      }
+    }
+    
+    // Allow navigation to any step (previous, current, or validated next)
     setCurrentStep(step)
+  }
+
+  const isStepCompleted = (step) => {
+    switch (step) {
+      case 1:
+        return formData.fullName.trim() && formData.gender && formData.email.trim() && 
+               formData.phone.trim() && formData.firmName.trim()
+      case 2:
+        return formData.licenseNumber.trim() && formData.address.trim()
+      case 3:
+        return formData.state && formData.city && formData.regions
+      case 4:
+        return true // Documents are optional
+      default:
+        return false
+    }
   }
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
-      {[1, 2, 3, 4].map((step) => (
-        <TouchableOpacity 
-          key={step} 
-          style={styles.stepContainer}
-          onPress={() => handleStepClick(step)}
-          activeOpacity={0.7}
-        >
-          <View style={[
-            styles.stepCircle,
-            currentStep === step ? styles.stepCircleActive : 
-            currentStep > step ? styles.stepCircleCompleted : styles.stepCircleInactive
-          ]}>
-            {currentStep > step ? (
-              <MaterialIcons name="check" size={16} color="#FFFFFF" />
-            ) : (
-              <Text style={[
-                styles.stepNumber,
-                currentStep === step ? styles.stepNumberActive : styles.stepNumberInactive
-              ]}>
-                {step}
-              </Text>
-            )}
-          </View>
-          <Text style={[
-            styles.stepLabel,
-            currentStep === step ? styles.stepLabelActive : 
-            currentStep > step ? styles.stepLabelCompleted : styles.stepLabelInactive
-          ]}>
-            {step === 1 ? 'Personal Info' : 
-             step === 2 ? 'Professional' : 
-             step === 3 ? 'Regions' : 'Documents'}
-          </Text>
-          {step < 4 && (
+      {[1, 2, 3, 4].map((step) => {
+        const isCompleted = isStepCompleted(step)
+        const isCurrent = currentStep === step
+        const canNavigate = step <= currentStep || (step === currentStep + 1 && isStepCompleted(currentStep))
+        
+        return (
+          <TouchableOpacity 
+            key={step} 
+            style={styles.stepContainer}
+            onPress={() => canNavigate ? handleStepClick(step) : null}
+            activeOpacity={canNavigate ? 0.7 : 1}
+          >
             <View style={[
-              styles.stepLine,
-              currentStep > step ? styles.stepLineCompleted : styles.stepLineInactive
-            ]} />
-          )}
-        </TouchableOpacity>
-      ))}
+              styles.stepCircle,
+              isCurrent ? styles.stepCircleActive : 
+              isCompleted ? styles.stepCircleCompleted : styles.stepCircleInactive
+            ]}>
+              {isCompleted ? (
+                <MaterialIcons name="check" size={16} color="#FFFFFF" />
+              ) : (
+                <Text style={[
+                  styles.stepNumber,
+                  isCurrent ? styles.stepNumberActive : styles.stepNumberInactive
+                ]}>
+                  {step}
+                </Text>
+              )}
+            </View>
+            <Text style={[
+              styles.stepLabel,
+              isCurrent ? styles.stepLabelActive : 
+              isCompleted ? styles.stepLabelCompleted : styles.stepLabelInactive
+            ]}>
+              {step === 1 ? 'Personal Info' : 
+               step === 2 ? 'Professional' : 
+               step === 3 ? 'Regions' : 'Documents'}
+            </Text>
+            {step < 4 && (
+              <View style={[
+                styles.stepLine,
+                isCompleted ? styles.stepLineCompleted : styles.stepLineInactive
+              ]} />
+            )}
+          </TouchableOpacity>
+        )
+      })}
     </View>
   )
 
@@ -921,12 +1014,26 @@ const CreateProfileScreen = ({ navigation }) => {
         {/* Action Button */}
         <View style={styles.actionButtonContainer}>
           {currentStep < 4 ? (
-            <TouchableOpacity style={styles.actionButton} onPress={nextStep}>
-              <Text style={styles.actionButtonText}>
+            <TouchableOpacity 
+              style={[
+                styles.actionButton,
+                !isStepCompleted(currentStep) && styles.actionButtonDisabled
+              ]} 
+              onPress={nextStep}
+              disabled={!isStepCompleted(currentStep)}
+            >
+              <Text style={[
+                styles.actionButtonText,
+                !isStepCompleted(currentStep) && styles.actionButtonTextDisabled
+              ]}>
                 Continue to {currentStep === 1 ? 'Professional' : 
                            currentStep === 2 ? 'Regions' : 'Documents'}
               </Text>
-              <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+              <MaterialIcons 
+                name="arrow-forward" 
+                size={20} 
+                color={isStepCompleted(currentStep) ? "#FFFFFF" : "#8E8E93"} 
+              />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
@@ -1279,6 +1386,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
+  },
+  actionButtonDisabled: {
+    backgroundColor: '#E5E5EA',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  actionButtonTextDisabled: {
+    color: '#8E8E93',
   },
   completeButton: {
     backgroundColor: '#4CAF50',

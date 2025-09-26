@@ -8,11 +8,14 @@ import {
   ScrollView,
   Image,
   Dimensions,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
+import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import { authAPI } from '../services/api'
+import { storage } from '../services/storage'
 
 const { width, height } = Dimensions.get('window')
 
@@ -24,70 +27,154 @@ const ProfileScreen = ({ navigation }) => {
     console.log('Can go back:', navigation.canGoBack());
   }, []);
 
-  const [profileData] = useState({
-    name: 'Ethan Smith',
-    brokerId: 'BRK-23579',
+  const [profileData, setProfileData] = useState({
+    name: '',
+    brokerId: '',
     role: 'Senior Broker',
-    mobileNumber: '9876543456',
-    whatsappNumber: '9876543456',
-    email: 'agrabroker@gmail.com',
-    officeAddress: 'Noida International University, Yamuna Expressway, Sector 17A, Uttar Pradesh, India',
+    mobileNumber: '',
+    whatsappNumber: '',
+    email: '',
+    officeAddress: '',
     website: '-',
-    firm: 'Algofolks Private Limited',
-    gender: 'Male',
+    firm: '',
+    gender: '',
     status: 'Unblock',
-    joinedDate: '19 Sept 2025',
-    licenseNumber: '132456789',
-    specializations: ['Residential Sales', 'Rental Properties', 'Property Management'],
-    regions: ['North America', 'Europe', 'Asia Pacific'],
+    joinedDate: '',
+    licenseNumber: '',
+    specializations: [],
+    regions: [],
     yearsExperience: '8 Years',
     totalClients: '245',
     activeDeals: '12',
     commissionEarned: '$1.2M',
     rating: 4.8,
-    documents: [
-      {
-        id: 1,
-        name: 'Aadhar Card',
-        fileType: 'JPEG',
-        hasFile: true,
-        uploadDate: '2024-01-15'
-      },
-      {
-        id: 2,
-        name: 'PAN Card',
-        fileType: 'JPEG',
-        hasFile: true,
-        uploadDate: '2024-01-15'
-      },
-      {
-        id: 3,
-        name: 'GST Certificate',
-        fileType: 'JPEG',
-        hasFile: true,
-        uploadDate: '2024-01-20'
-      },
-      {
-        id: 4,
-        name: 'Broker License',
-        fileType: 'PDF',
-        hasFile: true,
-        uploadDate: '2024-02-01'
-      },
-      {
-        id: 5,
-        name: 'Company ID',
-        fileType: 'JPEG',
-        hasFile: true,
-        uploadDate: '2024-01-10'
-      }
-    ]
+    socialMedia: {},
+    documents: []
   })
+  
+  const [isLoading, setIsLoading] = useState(true)
+  const [profileImage, setProfileImage] = useState(null)
 
+  // Fetch user profile data
+  const fetchProfileData = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Get token and broker ID from storage
+      const token = await storage.getToken()
+      const brokerId = await storage.getBrokerId()
+      
+      if (token && brokerId) {
+        const response = await authAPI.getProfile(brokerId, token)
+        
+        if (response && response.data && response.data.broker) {
+          const broker = response.data.broker
+          
+          // Map API data to profile data
+          const mappedData = {
+            name: broker.name || broker.userId?.name || 'User',
+            brokerId: broker._id || '',
+            role: 'Senior Broker', // Default role
+            mobileNumber: broker.phone || broker.userId?.phone || '',
+            whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || '',
+            email: broker.email || broker.userId?.email || '',
+            officeAddress: broker.address || '',
+            website: broker.website || '-',
+            firm: broker.firmName || '',
+            gender: broker.gender || '',
+            status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
+            joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            }) : '',
+            licenseNumber: broker.licenseNumber || '',
+            specializations: broker.specializations || [],
+            regions: broker.region ? broker.region.map(r => r.name) : [],
+            yearsExperience: '8 Years', // Default
+            totalClients: '245', // Default
+            activeDeals: '12', // Default
+            commissionEarned: '$1.2M', // Default
+            rating: 4.8, // Default
+            socialMedia: broker.socialMedia || {},
+            documents: [
+              {
+                id: 1,
+                name: 'Aadhar Card',
+                fileType: broker.kycDocs?.aadhar ? 'JPEG' : 'JPEG',
+                hasFile: !!broker.kycDocs?.aadhar,
+                uploadDate: '2024-01-15',
+                url: broker.kycDocs?.aadhar || ''
+              },
+              {
+                id: 2,
+                name: 'PAN Card',
+                fileType: broker.kycDocs?.pan ? 'JPEG' : 'JPEG',
+                hasFile: !!broker.kycDocs?.pan,
+                uploadDate: '2024-01-15',
+                url: broker.kycDocs?.pan || ''
+              },
+              {
+                id: 3,
+                name: 'GST Certificate',
+                fileType: broker.kycDocs?.gst ? 'JPEG' : 'JPEG',
+                hasFile: !!broker.kycDocs?.gst,
+                uploadDate: '2024-01-20',
+                url: broker.kycDocs?.gst || ''
+              },
+              {
+                id: 4,
+                name: 'Broker License',
+                fileType: 'PDF',
+                hasFile: false,
+                uploadDate: '2024-02-01',
+                url: ''
+              },
+              {
+                id: 5,
+                name: 'Company ID',
+                fileType: 'JPEG',
+                hasFile: false,
+                uploadDate: '2024-01-10',
+                url: ''
+              }
+            ]
+          }
+          
+          setProfileData(mappedData)
+          
+          // Set profile image if available
+          if (broker.brokerImage) {
+            setProfileImage(broker.brokerImage)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error)
+      // Keep default values if API fails
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const handleLogout = () => {
-    // Navigate back to login screen
-    navigation.navigate('Login')
+  // Load profile data on component mount
+  useEffect(() => {
+    fetchProfileData()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      // Clear all stored data from localStorage
+      await storage.clearAuthData()
+      console.log('All auth data cleared successfully')
+      
+      // Navigate to phone login screen
+      navigation.navigate('PhoneLogin')
+    } catch (error) {
+      console.error('Error clearing auth data:', error)
+      // Still navigate to phone login even if clearing fails
+      navigation.navigate('PhoneLogin')
+    }
   }
 
   const handlePreviewDocument = (documentId) => {
@@ -101,8 +188,9 @@ const ProfileScreen = ({ navigation }) => {
   }
 
   const handleEditProfile = () => {
-    // Handle edit profile
-    console.log('Edit profile')
+    // Navigate to CreateProfile screen for editing
+    console.log('Navigating to CreateProfile screen')
+    navigation.navigate('CreateProfile')
   }
 
   const StatCard = ({ icon, title, value, color, bgColor }) => (
@@ -181,10 +269,19 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.modernProfileSection}>
                 <View style={styles.modernProfileImageContainer}>
                   <View style={styles.profileImageWrapper}>
-                    <Image 
-                      source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }}
-                      style={styles.modernProfileImage}
-                    />
+                    {profileImage ? (
+                      <Image 
+                        source={{ uri: profileImage }}
+                        style={styles.modernProfileImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.modernProfileImage, styles.profileImagePlaceholder]}>
+                        <Text style={styles.profileImagePlaceholderText}>
+                          {isLoading ? '?' : (profileData.name[0] || 'U').toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
                     <View style={styles.profileImageOverlay} />
                   </View>
                   <View style={styles.modernStatusIndicator}>
@@ -197,11 +294,14 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
                 
                 <View style={styles.profileInfoContainer}>
-                  <Text style={styles.modernProfileName}>{profileData.name}</Text>
-                  <View style={styles.roleContainer}>
-                    <MaterialIcons name="work" size={16} color="#FFFFFF" />
-                    <Text style={styles.modernProfileRole}>{profileData.role}</Text>
-                  </View>
+                  {isLoading ? (
+                    <View style={styles.nameLoadingContainer}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={styles.modernProfileName}>Loading...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.modernProfileName}>{profileData.name}</Text>
+                  )}
                   <View style={styles.companyContainer}>
                     <MaterialIcons name="business" size={16} color="#FFFFFF" />
                     <Text style={styles.modernFirmName}>{profileData.firm}</Text>
@@ -457,25 +557,33 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Specializations</Text>
           <View style={styles.tagsContainer}>
-                {profileData.specializations.map((spec, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{spec}</Text>
-                  </View>
-                ))}
-            </View>
+            {profileData.specializations && profileData.specializations.length > 0 ? (
+              profileData.specializations.map((spec, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>{spec}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.emptyStateText}>No specializations added yet</Text>
+            )}
           </View>
+        </View>
 
         {/* Regions Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Regions</Text>
           <View style={styles.tagsContainer}>
-                {profileData.regions.map((region, index) => (
-              <View key={index} style={[styles.tag, styles.regionTag]}>
-                <Text style={[styles.tagText, styles.regionTagText]}>{region}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            {profileData.regions && profileData.regions.length > 0 ? (
+              profileData.regions.map((region, index) => (
+                <View key={index} style={[styles.tag, styles.regionTag]}>
+                  <Text style={[styles.tagText, styles.regionTagText]}>{region}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.emptyStateText}>No regions added yet</Text>
+            )}
+          </View>
+        </View>
 
         {/* Contact Information - Floating Design */}
         <View style={styles.section}>
@@ -552,6 +660,47 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
               </View>
             </View>
+          </View>
+        </View>
+
+        {/* Social Media Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Social Media</Text>
+          <View style={styles.socialMediaContainer}>
+            {profileData.socialMedia && Object.keys(profileData.socialMedia).length > 0 ? (
+              Object.entries(profileData.socialMedia).map(([platform, url]) => {
+                const getSocialIcon = (platform) => {
+                  switch (platform) {
+                    case 'linkedin':
+                      return <FontAwesome name="linkedin" size={24} color="#0077B5" />
+                    case 'twitter':
+                      return <FontAwesome name="twitter" size={24} color="#1DA1F2" />
+                    case 'instagram':
+                      return <FontAwesome name="instagram" size={24} color="#E4405F" />
+                    case 'facebook':
+                      return <FontAwesome name="facebook" size={24} color="#1877F2" />
+                    default:
+                      return <MaterialIcons name="link" size={24} color="#16BCC0" />
+                  }
+                }
+
+                return (
+                  <View key={platform} style={styles.socialMediaItem}>
+                    <View style={styles.socialMediaIcon}>
+                      {getSocialIcon(platform)}
+                    </View>
+                    <View style={styles.socialMediaContent}>
+                      <Text style={styles.socialMediaPlatform}>
+                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                      </Text>
+                      <Text style={styles.socialMediaUrl}>{url}</Text>
+                    </View>
+                  </View>
+                )
+              })
+            ) : (
+              <Text style={styles.emptyStateText}>No social media links added yet</Text>
+            )}
           </View>
         </View>
 
@@ -793,6 +942,22 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
+  },
+  nameLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  profileImagePlaceholder: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileImagePlaceholderText: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: '#FFFFFF',
   },
   roleContainer: {
     flexDirection: 'row',
@@ -1375,6 +1540,58 @@ const styles = StyleSheet.create({
   },
   regionTagText: {
     color: '#2563EB',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+
+  // Social Media Styles
+  socialMediaContainer: {
+    gap: 16,
+  },
+  socialMediaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  socialMediaIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  socialMediaContent: {
+    flex: 1,
+  },
+  socialMediaPlatform: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  socialMediaUrl: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#6B7280',
   },
 
   // Documents
