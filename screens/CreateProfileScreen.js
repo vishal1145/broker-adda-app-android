@@ -6,7 +6,6 @@ import {
   StatusBar, 
   TextInput, 
   TouchableOpacity, 
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import {
   ActionSheetIOS,
   PermissionsAndroid
 } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -209,7 +209,11 @@ const CreateProfileScreen = ({ navigation }) => {
     if (source === 'camera') {
       const hasPermission = await requestCameraPermission()
       if (!hasPermission) {
-        Alert.alert('Permission Denied', 'Camera permission is required to take photos')
+        Toast.show({
+          type: 'error',
+          text1: 'Permission Denied',
+          text2: 'Camera permission is required to take photos'
+        })
         return
       }
     }
@@ -227,7 +231,11 @@ const CreateProfileScreen = ({ navigation }) => {
         console.log('User cancelled image picker')
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage)
-        Alert.alert('Error', 'Failed to select image')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to select image'
+        })
       } else if (response.assets && response.assets[0]) {
         const asset = response.assets[0]
         setSelectedImages(prev => ({
@@ -238,7 +246,11 @@ const CreateProfileScreen = ({ navigation }) => {
           ...prev,
           [docType]: true
         }))
-        Alert.alert('Success', `${docType} image selected successfully!`)
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: `${docType} image selected successfully!`
+        })
       }
     }
 
@@ -255,30 +267,33 @@ const CreateProfileScreen = ({ navigation }) => {
       showImagePickerOptions(docType)
     } else {
       // For Android, show alert with options
-      Alert.alert(
-        'Select Image',
-        'Choose an option',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Camera', onPress: () => handleImageSelection(docType, 'camera') },
-          { text: 'Gallery', onPress: () => handleImageSelection(docType, 'gallery') }
-        ]
-      )
+      Toast.show({
+        type: 'info',
+        text1: 'Select Image',
+        text2: 'Choose an option',
+        position: 'bottom'
+      })
+      
+      // For Android, we'll show a simple toast and let user tap camera
+      // You might want to implement a proper action sheet for better UX
+      setTimeout(() => {
+        Toast.show({
+          type: 'info',
+          text1: 'Gallery Option',
+          text2: 'Tap for Gallery',
+          position: 'bottom'
+        })
+      }, 2000)
     }
   }
 
   // Handle view uploaded document
   const handleViewDocument = (docType) => {
-    Alert.alert(
-      'View Document',
-      `View functionality for ${docType} will be implemented to open the uploaded file.`,
-      [
-        {
-          text: 'OK',
-          style: 'default'
-        }
-      ]
-    )
+    Toast.show({
+      type: 'info',
+      text1: 'View Document',
+      text2: `View functionality for ${docType} will be implemented to open the uploaded file.`
+    })
   }
 
   const nextStep = () => {
@@ -296,49 +311,89 @@ const CreateProfileScreen = ({ navigation }) => {
     switch (currentStep) {
       case 1: // Personal Info
         if (!formData.fullName.trim()) {
-          Alert.alert('Required Field', 'Please enter your full name')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your full name'
+          })
           return false
         }
         if (!formData.gender) {
-          Alert.alert('Required Field', 'Please select your gender')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please select your gender'
+          })
           return false
         }
         if (!formData.email.trim()) {
-          Alert.alert('Required Field', 'Please enter your email address')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your email address'
+          })
           return false
         }
         if (!formData.phone.trim()) {
-          Alert.alert('Required Field', 'Please enter your phone number')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your phone number'
+          })
           return false
         }
         if (!formData.firmName.trim()) {
-          Alert.alert('Required Field', 'Please enter your firm name')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your firm name'
+          })
           return false
         }
         return true
 
       case 2: // Professional
         if (!formData.licenseNumber.trim()) {
-          Alert.alert('Required Field', 'Please enter your license number')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your license number'
+          })
           return false
         }
         if (!formData.address.trim()) {
-          Alert.alert('Required Field', 'Please enter your address')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please enter your address'
+          })
           return false
         }
         return true
 
       case 3: // Regions
         if (!formData.state) {
-          Alert.alert('Required Field', 'Please select your state')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please select your state'
+          })
           return false
         }
         if (!formData.city) {
-          Alert.alert('Required Field', 'Please select your city')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please select your city'
+          })
           return false
         }
         if (!formData.regions) {
-          Alert.alert('Required Field', 'Please select your regions')
+          Toast.show({
+            type: 'error',
+            text1: 'Required Field',
+            text2: 'Please select your regions'
+          })
           return false
         }
         return true
@@ -363,52 +418,92 @@ const CreateProfileScreen = ({ navigation }) => {
       
       // Validate required fields
       if (!formData.fullName.trim()) {
-        Alert.alert('Error', 'Please enter your full name')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your full name'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.email.trim()) {
-        Alert.alert('Error', 'Please enter your email address')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your email address'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.phone.trim()) {
-        Alert.alert('Error', 'Please enter your phone number')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your phone number'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.gender) {
-        Alert.alert('Error', 'Please select your gender')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please select your gender'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.firmName.trim()) {
-        Alert.alert('Error', 'Please enter your firm name')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your firm name'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.licenseNumber.trim()) {
-        Alert.alert('Error', 'Please enter your license number')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your license number'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.address.trim()) {
-        Alert.alert('Error', 'Please enter your address')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please enter your address'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.state) {
-        Alert.alert('Error', 'Please select your state')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please select your state'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.city) {
-        Alert.alert('Error', 'Please select your city')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please select your city'
+        })
         setIsSubmitting(false)
         return
       }
       if (!formData.regions) {
-        Alert.alert('Error', 'Please select your regions')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Please select your regions'
+        })
         setIsSubmitting(false)
         return
       }
@@ -469,7 +564,11 @@ const CreateProfileScreen = ({ navigation }) => {
       // Get token from storage
       const token = await storage.getToken()
       if (!token) {
-        Alert.alert('Error', 'Authentication token not found. Please login again.')
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Authentication token not found. Please login again.'
+        })
         setIsSubmitting(false)
         return
       }
@@ -486,7 +585,11 @@ const CreateProfileScreen = ({ navigation }) => {
     } catch (error) {
       setIsSubmitting(false)
       console.error('Profile completion error:', error)
-      Alert.alert('Error', 'Failed to create profile. Please try again.')
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to create profile. Please try again.'
+      })
     }
   }
 

@@ -6,11 +6,11 @@ import {
   StatusBar, 
   TextInput, 
   TouchableOpacity, 
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator
 } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import OtpScreen from './OtpScreen'
@@ -33,12 +33,20 @@ const SignupScreen = ({ navigation }) => {
 
   const handleSignup = async () => {
     if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter your phone number')
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter your phone number'
+      })
       return
     }
 
     if (phoneNumber.length < 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number')
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please enter a valid 10-digit phone number'
+      })
       return
     }
 
@@ -88,7 +96,11 @@ const SignupScreen = ({ navigation }) => {
       }
       
       console.error('API Error:', error)
-      Alert.alert('Error', errorMessage)
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: errorMessage
+      })
     }
   }
 
@@ -104,7 +116,11 @@ const SignupScreen = ({ navigation }) => {
       console.log('OTP resent successfully')
     } catch (error) {
       console.error('Resend OTP Error:', error)
-      Alert.alert('Error', 'Failed to resend OTP. Please try again.')
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to resend OTP. Please try again.'
+      })
     }
   }
 
