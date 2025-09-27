@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native'
-import Toast from 'react-native-toast-message'
+import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import OtpScreen from './OtpScreen'
@@ -33,20 +33,12 @@ const PhoneLoginScreen = ({ navigation }) => {
 
   const handleSendOtp = async () => {
     if (!phoneNumber.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Please enter your phone number'
-      })
+      Snackbar.showValidationError('Please enter your phone number')
       return
     }
 
     if (phoneNumber.length < 10) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Please enter a valid 10-digit phone number'
-      })
+      Snackbar.showValidationError('Please enter a valid 10-digit phone number')
       return
     }
 
@@ -94,11 +86,7 @@ const PhoneLoginScreen = ({ navigation }) => {
       }
       
       console.error('API Error:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: errorMessage
-      })
+      Snackbar.showApiError(errorMessage)
     }
   }
 
@@ -114,11 +102,7 @@ const PhoneLoginScreen = ({ navigation }) => {
       console.log('OTP resent successfully')
     } catch (error) {
       console.error('Resend OTP Error:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to resend OTP. Please try again.'
-      })
+      Snackbar.showApiError('Failed to resend OTP. Please try again.')
     }
   }
 

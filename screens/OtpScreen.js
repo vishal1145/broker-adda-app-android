@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native'
-import Toast from 'react-native-toast-message'
+import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
@@ -25,20 +25,12 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const handleVerifyOtp = async () => {
     const otpString = otp.join('')
     if (!otpString.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Please enter the OTP'
-      })
+      Snackbar.showValidationError('Please enter the OTP')
       return
     }
 
     if (otpString.length !== 6) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Please enter a valid 6-digit OTP'
-      })
+      Snackbar.showValidationError('Please enter a valid 6-digit OTP')
       return
     }
 
@@ -98,11 +90,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       }
       
       console.error('OTP Verification Error:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: errorMessage
-      })
+      Snackbar.showApiError(errorMessage)
     }
   }
 
@@ -126,11 +114,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       }
     } catch (error) {
       console.error('Resend OTP Error:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to resend OTP. Please try again.'
-      })
+      Snackbar.showApiError('Failed to resend OTP. Please try again.')
     }
   }
 

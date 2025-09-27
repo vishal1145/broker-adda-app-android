@@ -15,7 +15,7 @@ import {
   ActionSheetIOS,
   PermissionsAndroid
 } from 'react-native'
-import Toast from 'react-native-toast-message'
+import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -209,11 +209,7 @@ const CreateProfileScreen = ({ navigation }) => {
     if (source === 'camera') {
       const hasPermission = await requestCameraPermission()
       if (!hasPermission) {
-        Toast.show({
-          type: 'error',
-          text1: 'Permission Denied',
-          text2: 'Camera permission is required to take photos'
-        })
+        Snackbar.showError('Permission Denied', 'Camera permission is required to take photos')
         return
       }
     }
@@ -231,11 +227,7 @@ const CreateProfileScreen = ({ navigation }) => {
         console.log('User cancelled image picker')
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage)
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to select image'
-        })
+        Snackbar.showError('Error', 'Failed to select image')
       } else if (response.assets && response.assets[0]) {
         const asset = response.assets[0]
         setSelectedImages(prev => ({
@@ -246,11 +238,7 @@ const CreateProfileScreen = ({ navigation }) => {
           ...prev,
           [docType]: true
         }))
-        Toast.show({
-          type: 'success',
-          text1: 'Success',
-          text2: `${docType} image selected successfully!`
-        })
+        Snackbar.showSuccess('Success', `${docType} image selected successfully!`)
       }
     }
 
@@ -267,33 +255,19 @@ const CreateProfileScreen = ({ navigation }) => {
       showImagePickerOptions(docType)
     } else {
       // For Android, show alert with options
-      Toast.show({
-        type: 'info',
-        text1: 'Select Image',
-        text2: 'Choose an option',
-        position: 'bottom'
-      })
+      Snackbar.showInfo('Select Image', 'Choose an option')
       
       // For Android, we'll show a simple toast and let user tap camera
       // You might want to implement a proper action sheet for better UX
       setTimeout(() => {
-        Toast.show({
-          type: 'info',
-          text1: 'Gallery Option',
-          text2: 'Tap for Gallery',
-          position: 'bottom'
-        })
+        Snackbar.showInfo('Gallery Option', 'Tap for Gallery')
       }, 2000)
     }
   }
 
   // Handle view uploaded document
   const handleViewDocument = (docType) => {
-    Toast.show({
-      type: 'info',
-      text1: 'View Document',
-      text2: `View functionality for ${docType} will be implemented to open the uploaded file.`
-    })
+    Snackbar.showInfo('View Document', `View functionality for ${docType} will be implemented to open the uploaded file.`)
   }
 
   const nextStep = () => {
@@ -311,89 +285,49 @@ const CreateProfileScreen = ({ navigation }) => {
     switch (currentStep) {
       case 1: // Personal Info
         if (!formData.fullName.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your full name'
-          })
+          Snackbar.showValidationError('Please enter your full name')
           return false
         }
         if (!formData.gender) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please select your gender'
-          })
+          Snackbar.showValidationError('Please select your gender')
           return false
         }
         if (!formData.email.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your email address'
-          })
+          Snackbar.showValidationError('Please enter your email address')
           return false
         }
         if (!formData.phone.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your phone number'
-          })
+          Snackbar.showValidationError('Please enter your phone number')
           return false
         }
         if (!formData.firmName.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your firm name'
-          })
+          Snackbar.showValidationError('Please enter your firm name')
           return false
         }
         return true
 
       case 2: // Professional
         if (!formData.licenseNumber.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your license number'
-          })
+          Snackbar.showValidationError('Please enter your license number')
           return false
         }
         if (!formData.address.trim()) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please enter your address'
-          })
+          Snackbar.showValidationError('Please enter your address')
           return false
         }
         return true
 
       case 3: // Regions
         if (!formData.state) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please select your state'
-          })
+          Snackbar.showValidationError('Please select your state')
           return false
         }
         if (!formData.city) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please select your city'
-          })
+          Snackbar.showValidationError('Please select your city')
           return false
         }
         if (!formData.regions) {
-          Toast.show({
-            type: 'error',
-            text1: 'Required Field',
-            text2: 'Please select your regions'
-          })
+          Snackbar.showValidationError('Please select your regions')
           return false
         }
         return true
@@ -418,92 +352,52 @@ const CreateProfileScreen = ({ navigation }) => {
       
       // Validate required fields
       if (!formData.fullName.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your full name'
-        })
+        Snackbar.showApiError('Please enter your full name')
         setIsSubmitting(false)
         return
       }
       if (!formData.email.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your email address'
-        })
+        Snackbar.showApiError('Please enter your email address')
         setIsSubmitting(false)
         return
       }
       if (!formData.phone.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your phone number'
-        })
+        Snackbar.showApiError('Please enter your phone number')
         setIsSubmitting(false)
         return
       }
       if (!formData.gender) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please select your gender'
-        })
+        Snackbar.showApiError('Please select your gender')
         setIsSubmitting(false)
         return
       }
       if (!formData.firmName.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your firm name'
-        })
+        Snackbar.showApiError('Please enter your firm name')
         setIsSubmitting(false)
         return
       }
       if (!formData.licenseNumber.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your license number'
-        })
+        Snackbar.showApiError('Please enter your license number')
         setIsSubmitting(false)
         return
       }
       if (!formData.address.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please enter your address'
-        })
+        Snackbar.showApiError('Please enter your address')
         setIsSubmitting(false)
         return
       }
       if (!formData.state) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please select your state'
-        })
+        Snackbar.showApiError('Please select your state')
         setIsSubmitting(false)
         return
       }
       if (!formData.city) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please select your city'
-        })
+        Snackbar.showApiError('Please select your city')
         setIsSubmitting(false)
         return
       }
       if (!formData.regions) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Please select your regions'
-        })
+        Snackbar.showApiError('Please select your regions')
         setIsSubmitting(false)
         return
       }
@@ -564,11 +458,7 @@ const CreateProfileScreen = ({ navigation }) => {
       // Get token from storage
       const token = await storage.getToken()
       if (!token) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Authentication token not found. Please login again.'
-        })
+        Snackbar.showApiError('Authentication token not found. Please login again.')
         setIsSubmitting(false)
         return
       }
@@ -585,11 +475,7 @@ const CreateProfileScreen = ({ navigation }) => {
     } catch (error) {
       setIsSubmitting(false)
       console.error('Profile completion error:', error)
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to create profile. Please try again.'
-      })
+      Snackbar.showApiError('Failed to create profile. Please try again.')
     }
   }
 
