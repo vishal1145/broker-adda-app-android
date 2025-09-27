@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
-import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity } from 'react-native'
+import React, { useState, useRef } from 'react'
+import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { PanGestureHandler, State } from 'react-native-gesture-handler'
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -10,26 +11,107 @@ const OnboardingScreen = ({ navigation }) => {
     networkingEvents: true,
     trackConnections: true
   })
+  
+  const screenWidth = Dimensions.get('window').width
+  const translateX = useRef(new Animated.Value(0)).current
+  const panRef = useRef()
 
-  const handleNext = () => {
-    if (currentStep === 1) {
-      setCurrentStep(2)
-    } else if (currentStep === 2) {
-      setCurrentStep(3)
+  const handleSwipe = (direction) => {
+    if (direction === 'left') {
+      // Swipe left to go to next step (only if not on final step)
+      if (currentStep < 3) {
+        const newStep = currentStep + 1
+        setCurrentStep(newStep)
+        Animated.timing(translateX, {
+          toValue: -screenWidth * (newStep - 1),
+          duration: 300,
+          useNativeDriver: true,
+        }).start()
+      }
+      // On final step, swipe left does nothing (stays on step 3)
+    } else if (direction === 'right') {
+      // Swipe right to go to previous step
+      if (currentStep > 1) {
+        const newStep = currentStep - 1
+        setCurrentStep(newStep)
+        Animated.timing(translateX, {
+          toValue: -screenWidth * (newStep - 1),
+          duration: 300,
+          useNativeDriver: true,
+        }).start()
+      } else if (currentStep === 3) {
+        // On final step, swipe right goes to step 2
+        setCurrentStep(2)
+        Animated.timing(translateX, {
+          toValue: -screenWidth,
+          duration: 300,
+          useNativeDriver: true,
+        }).start()
+      }
     }
   }
 
-  const handleBack = () => {
-    if (currentStep === 2) {
-      setCurrentStep(1)
-    } else if (currentStep === 3) {
-      setCurrentStep(2)
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
+  )
+
+  const onHandlerStateChange = (event) => {
+    if (event.nativeEvent.state === State.END) {
+      const { translationX, velocityX } = event.nativeEvent
+      
+      // Determine swipe direction based on translation and velocity
+      if (translationX > 30 || velocityX > 300) {
+        // Swipe right - go to previous step (allowed on all steps except first)
+        if (currentStep > 1) {
+          handleSwipe('right')
+        } else {
+          // Snap back to current position if on first step
+          Animated.spring(translateX, {
+            toValue: -screenWidth * (currentStep - 1),
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start()
+        }
+      } else if (translationX < -30 || velocityX < -300) {
+        // Swipe left - go to next step (only if not on final step)
+        if (currentStep < 3) {
+          handleSwipe('left')
+        } else {
+          // Snap back to current position if on final step
+          Animated.spring(translateX, {
+            toValue: -screenWidth * (currentStep - 1),
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start()
+        }
+      } else {
+        // Snap back to current position
+        Animated.spring(translateX, {
+          toValue: -screenWidth * (currentStep - 1),
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }).start()
+      }
     }
   }
 
   const handleGetStarted = () => {
     // Navigate to phone login screen after onboarding completion
     navigation.navigate('PhoneLogin')
+  }
+
+  const handleSkip = () => {
+    // Skip to final step (step 3)
+    setCurrentStep(3)
+    Animated.timing(translateX, {
+      toValue: -screenWidth * 2, // Move to step 3 (index 2)
+      duration: 300,
+      useNativeDriver: true,
+    }).start()
   }
 
   const toggleCheckbox = (checkboxKey) => {
@@ -55,8 +137,8 @@ const OnboardingScreen = ({ navigation }) => {
     )
   }
 
-  const getStepData = () => {
-    switch (currentStep) {
+  const getStepData = (step) => {
+    switch (step) {
       case 1:
         return {
           headerTitle: 'Welcome to BrokerLink',
@@ -64,10 +146,7 @@ const OnboardingScreen = ({ navigation }) => {
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
-          buttons: [
-            { text: 'Next', style: 'next', onPress: handleNext },
-            { text: 'Skip', style: 'skip', onPress: handleNext }
-          ]
+          showFeatures: false
         }
       case 2:
         return {
@@ -76,10 +155,7 @@ const OnboardingScreen = ({ navigation }) => {
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
-          buttons: [
-            { text: 'Next', style: 'next', onPress: handleNext },
-            { text: 'Back', style: 'back', onPress: handleBack }
-          ]
+          showFeatures: false
         }
       case 3:
         return {
@@ -88,25 +164,19 @@ const OnboardingScreen = ({ navigation }) => {
           mainHeading: 'Unlock Your BrokerLink Potential',
           description: 'Access powerful features designed to expand your network and grow your business today.',
           showProgressBar: false,
-          showFeatures: true,
-          buttons: [
-            { text: 'Get Started', style: 'getStarted', onPress: handleGetStarted }
-          ]
+          showFeatures: true
         }
       default:
         return null
     }
   }
 
-  const stepData = getStepData()
-  if (!stepData) return null
+  const renderStep = (step) => {
+    const stepData = getStepData(step)
+    if (!stepData) return null
 
-  return (
-    <SafeAreaView style={styles.onboardingContainer} edges={[]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Main Content Container - Centered */}
-      <View style={styles.mainContentContainer}>
+    return (
+      <View key={step} style={styles.stepContainer}>
         {/* Central Image */}
         <View style={styles.imageContainer}>
           <Image 
@@ -176,27 +246,56 @@ const OnboardingScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Step Indicator for all steps */}
-        {!stepData.showProgressBar && (
-          <View style={styles.stepIndicator}>
-            <DottedLineIndicator activeStep={currentStep} />
-          </View>
-        )}
       </View>
+    )
+  }
 
-      {/* Bottom Action Buttons */}
-      <View style={styles.buttonContainer}>
-        {stepData.buttons.map((button, index) => (
+  return (
+    <SafeAreaView style={styles.onboardingContainer} edges={[]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* Skip Button - Only on steps 1 and 2 */}
+      {(currentStep === 1 || currentStep === 2) && (
+        <View style={styles.skipButtonContainer}>
           <TouchableOpacity 
-            key={index}
-            style={styles[`${button.style}Button`]} 
-            onPress={button.onPress}
+            style={styles.skipButton} 
+            onPress={handleSkip}
+            activeOpacity={0.7}
           >
-            <Text style={styles[`${button.style}ButtonText`]}>{button.text}</Text>
+            <Text style={styles.skipButtonText}>Skip</Text>
           </TouchableOpacity>
-        ))}
+        </View>
+      )}
+      
+      <PanGestureHandler
+        ref={panRef}
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
+        minDist={10}
+      >
+        <Animated.View style={[styles.sliderContainer, { transform: [{ translateX }] }]}>
+          {renderStep(1)}
+          {renderStep(2)}
+          {renderStep(3)}
+        </Animated.View>
+      </PanGestureHandler>
+
+      {/* Step Indicator */}
+      <View style={styles.stepIndicator}>
+        <DottedLineIndicator activeStep={currentStep} />
       </View>
+
+      {/* Get Started Button - Only on final step */}
+      {currentStep === 3 && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.getStartedButton} 
+            onPress={handleGetStarted}
+          >
+            <Text style={styles.getStartedButtonText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   )
 }
@@ -205,6 +304,17 @@ const styles = StyleSheet.create({
   onboardingContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  sliderContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    width: '300%', // 3 steps * 100%
+  },
+  stepContainer: {
+    width: '33.333%', // 100% / 3 steps
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   mainContentContainer: {
     flex: 1,
@@ -280,7 +390,8 @@ const styles = StyleSheet.create({
   },
   stepIndicator: {
     alignItems: 'center',
-    paddingBottom: 30,
+    paddingBottom: 20,
+    paddingTop: 20,
   },
   stepText: {
     fontSize: 14,
@@ -351,48 +462,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     paddingHorizontal: 30,
     paddingBottom: 40,
-    paddingTop: 20,
-    gap: 15,
-  },
-  nextButton: {
-    backgroundColor: '#16BCC0',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 50,
-    alignItems: 'center',
-  },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  skipButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 50,
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    color: '#16BCC0',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  backButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 50,
-    alignItems: 'center',
-  },
-  backButtonText: {
-    color: '#16BCC0',
-    fontSize: 16,
-    fontWeight: '600',
+    paddingTop: 10,
   },
   getStartedButton: {
     backgroundColor: '#16BCC0',
@@ -406,6 +476,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  skipButtonContainer: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+  },
+  skipButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  skipButtonText: {
+    color: '#8E8E93',
+    fontSize: 16,
+    fontWeight: '500',
   },
 })
 
