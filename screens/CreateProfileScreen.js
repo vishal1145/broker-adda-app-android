@@ -458,6 +458,20 @@ const CreateProfileScreen = ({ navigation }) => {
         return true
   }
 
+  // Check if all mandatory fields are filled
+  const isFormValid = () => {
+    return formData.fullName.trim() && 
+           formData.gender && 
+           formData.email.trim() && 
+           formData.phone.trim() && 
+           formData.firmName.trim() && 
+           formData.licenseNumber.trim() && 
+           formData.address.trim() && 
+           formData.state && 
+           formData.city && 
+           formData.regions
+  }
+
   const handleCompleteProfile = async () => {
     try {
       setIsSubmitting(true)
@@ -610,7 +624,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
 
   const renderPersonalInfo = () => (
-    <View style={styles.formContainer}>
+    <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <MaterialIcons name="person" size={20} color="#16BCC0" />
         <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -690,7 +704,7 @@ const CreateProfileScreen = ({ navigation }) => {
   )
 
   const renderProfessional = () => (
-    <View style={styles.formContainer}>
+    <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <MaterialIcons name="work" size={20} color="#16BCC0" />
         <Text style={styles.sectionTitle}>Professional Information</Text>
@@ -819,7 +833,7 @@ const CreateProfileScreen = ({ navigation }) => {
   )
 
   const renderRegions = () => (
-    <View style={styles.formContainer}>
+    <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <MaterialIcons name="location-on" size={20} color="#16BCC0" />
         <Text style={styles.sectionTitle}>Preferred Regions *</Text>
@@ -870,7 +884,7 @@ const CreateProfileScreen = ({ navigation }) => {
   )
 
   const renderDocuments = () => (
-    <View style={styles.formContainer}>
+    <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
         <MaterialIcons name="description" size={20} color="#16BCC0" />
         <Text style={styles.sectionTitle}>Documents (Optional)</Text>
@@ -1079,22 +1093,22 @@ const CreateProfileScreen = ({ navigation }) => {
               {/* Action Button */}
               <View style={styles.actionButtonContainer}>
             <TouchableOpacity 
-              style={styles.completeButton} 
+              style={[
+                styles.actionButton, 
+                (!isFormValid() || isSubmitting) ? styles.actionButtonDisabled : null
+              ]} 
               onPress={handleCompleteProfile}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isFormValid()}
             >
               {isSubmitting ? (
-                <View style={styles.buttonLoadingContainer}>
+                <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={[styles.completeButtonText, styles.buttonLoadingText]}>
+                  <Text style={[styles.actionButtonText, styles.loadingText]}>
                     Creating Profile...
                   </Text>
                 </View>
               ) : (
-                <>
-                  <MaterialIcons name="check" size={20} color="#FFFFFF" />
-                  <Text style={styles.completeButtonText}>Complete Profile</Text>
-                </>
+                <Text style={styles.actionButtonText}>Complete Profile</Text>
               )}
             </TouchableOpacity>
         </View>
@@ -1152,7 +1166,7 @@ const styles = StyleSheet.create({
   profileImageContainer: {
     alignItems: 'center',
     paddingVertical: 20,
-    marginBottom: 16,
+    marginBottom: 32,
   },
   profileImageButton: {
     width: 120,
@@ -1221,25 +1235,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   singlePageForm: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     paddingBottom: 20,
   },
   content: {
     flex: 1,
   },
-  formContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  sectionContainer: {
+    marginBottom: 32,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1357,20 +1360,17 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   documentsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
   },
   documentCard: {
-    width: '48%',
+    width: '100%',
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#E5E5EA',
-    borderStyle: 'dashed',
   },
   documentIcon: {
     marginBottom: 12,
@@ -1404,19 +1404,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actionButtonContainer: {
-    paddingHorizontal: 20,
     paddingBottom: 20,
-    paddingTop: 10,
+    paddingTop: 20,
     marginTop: 20,
   },
   actionButton: {
     backgroundColor: '#16BCC0',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    flexDirection: 'row',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderRadius: 50,
     alignItems: 'center',
-    justifyContent: 'center',
     shadowColor: '#16BCC0',
     shadowOffset: {
       width: 0,
@@ -1426,42 +1423,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
   actionButtonDisabled: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: '#C7C7CC',
     shadowOpacity: 0,
     elevation: 0,
   },
-  actionButtonTextDisabled: {
-    color: '#8E8E93',
-  },
-  completeButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4CAF50',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  completeButtonText: {
+  actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -1532,15 +1502,13 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
   },
-  buttonLoadingContainer: {
+  loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonLoadingText: {
+  loadingText: {
     marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
   },
 })
 
