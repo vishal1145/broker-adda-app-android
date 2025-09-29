@@ -142,7 +142,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 1:
         return {
           headerTitle: 'Welcome to BrokerLink',
-          image: 'https://img.freepik.com/free-vector/real-estate-searching_52683-46407.jpg',
+          image: require('../assets/onbording1.avif'),
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
@@ -151,7 +151,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 2:
         return {
           headerTitle: 'Onboarding',
-          image: 'https://img.freepik.com/free-vector/flat-design-illustration-real-estate-searching_23-2148650470.jpg?semt=ais_hybrid&w=740',
+          image: require('../assets/onbording2.avif'),
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
@@ -160,7 +160,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 3:
         return {
           headerTitle: 'Final Step',
-          image: 'https://img.freepik.com/free-vector/real-estate-searching-illustration_23-2148649592.jpg',
+          image: require('../assets/onbording3.png'),
           mainHeading: 'Unlock Your BrokerLink Potential',
           description: 'Access powerful features designed to expand your network and grow your business today.',
           showProgressBar: false,
@@ -180,7 +180,7 @@ const OnboardingScreen = ({ navigation }) => {
         {/* Central Image */}
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: stepData.image }}
+            source={typeof stepData.image === 'string' ? { uri: stepData.image } : stepData.image}
             style={styles.centralImage}
             resizeMode="cover"
             onError={(error) => console.log('Image load error:', error)}
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   skipButtonContainer: {
     position: 'absolute',
-    top: 50,
+    top: 20,
     right: 20,
     zIndex: 10,
   },
