@@ -151,6 +151,7 @@ const SignupScreen = ({ navigation }) => {
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -318,6 +319,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     justifyContent: 'flex-start',
     minHeight: 200,
+    maxHeight: 350,
   },
   bottomSection: {
     flexShrink: 0,
@@ -356,6 +358,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    minHeight: 50,
   },
   countryCode: {
     backgroundColor: '#F8F9FA',
@@ -453,6 +456,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
     color: '#000000',
+    minHeight: 50,
+    textAlignVertical: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -464,8 +469,9 @@ const styles = StyleSheet.create({
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
-    paddingBottom: 15,
+    paddingBottom: 10,
     paddingTop: 20,
+    marginBottom: 5,
   },
   actionButton: {
     backgroundColor: '#16BCC0',
@@ -505,8 +511,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 15,
-    paddingTop: 10,
+    paddingBottom: 10,
+    paddingTop: 5,
     gap: 5,
     flexWrap: 'wrap',
   },
