@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#E5E5EA',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '500',
     color: '#000000',
     minHeight: 50,

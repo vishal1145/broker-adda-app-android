@@ -13,17 +13,17 @@ import {
   Modal,
   ActivityIndicator,
   ActionSheetIOS,
-  PermissionsAndroid
+  PermissionsAndroid,
+  Alert
 } from 'react-native'
 import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { MaterialIcons } from '@expo/vector-icons'
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 const CreateProfileScreen = ({ navigation }) => {
-  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     // Personal Info
     fullName: '',
@@ -79,6 +79,15 @@ const CreateProfileScreen = ({ navigation }) => {
     brokerLicense: null,
     companyId: null
   })
+  const [existingDocs, setExistingDocs] = useState({
+    aadharCard: null,
+    panCard: null,
+    gstCertificate: null,
+    brokerLicense: null,
+    companyId: null
+  })
+  const [profileImage, setProfileImage] = useState(null)
+  const [profileImageLoading, setProfileImageLoading] = useState(false)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -133,14 +142,32 @@ const CreateProfileScreen = ({ navigation }) => {
             regions: broker.region?.[0]?.name || '', // Using first region name
           }))
           
+          // Set existing profile image if available
+          if (broker.brokerImage) {
+            setProfileImage({
+              uri: broker.brokerImage,
+              type: 'image/jpeg',
+              fileName: 'profile.jpg'
+            })
+          }
+          
           // Check for uploaded documents
           if (broker.kycDocs) {
             setUploadedDocs({
               aadharCard: !!broker.kycDocs.aadhar,
               panCard: !!broker.kycDocs.pan,
               gstCertificate: !!broker.kycDocs.gst,
-              brokerLicense: !!broker.brokerLicense,
-              companyId: !!broker.companyId
+              brokerLicense: !!broker.kycDocs.brokerLicense,
+              companyId: !!broker.kycDocs.companyId
+            })
+            
+            // Set existing document URLs for display
+            setExistingDocs({
+              aadharCard: broker.kycDocs.aadhar || null,
+              panCard: broker.kycDocs.pan || null,
+              gstCertificate: broker.kycDocs.gst || null,
+              brokerLicense: broker.kycDocs.brokerLicense || null,
+              companyId: broker.kycDocs.companyId || null
             })
           }
         }
@@ -183,6 +210,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Show image picker options
   const showImagePickerOptions = (docType) => {
+    if (Platform.OS === 'ios') {
     const options = ['Camera', 'Gallery', 'Cancel']
     const cancelButtonIndex = 2
 
@@ -202,6 +230,27 @@ const CreateProfileScreen = ({ navigation }) => {
         }
       }
     )
+    } else {
+      // For Android, show action sheet using Alert
+      Alert.alert(
+        `Select ${docType} Image`,
+        'Choose an option',
+        [
+          {
+            text: 'Camera',
+            onPress: () => handleImageSelection(docType, 'camera')
+          },
+          {
+            text: 'Gallery',
+            onPress: () => handleImageSelection(docType, 'gallery')
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      )
+    }
   }
 
   // Handle image selection
@@ -230,9 +279,19 @@ const CreateProfileScreen = ({ navigation }) => {
         Snackbar.showError('Error', 'Failed to select image')
       } else if (response.assets && response.assets[0]) {
         const asset = response.assets[0]
+        console.log('Selected asset for', docType, ':', asset)
+        
+        // Ensure the asset has the correct structure for FormData
+        const formattedAsset = {
+          uri: asset.uri,
+          type: asset.type || 'image/jpeg',
+          fileName: asset.fileName || asset.name || `${docType}.jpg`,
+          name: asset.fileName || asset.name || `${docType}.jpg`
+        }
+        
         setSelectedImages(prev => ({
           ...prev,
-          [docType]: asset
+          [docType]: formattedAsset
         }))
         setUploadedDocs(prev => ({
           ...prev,
@@ -251,18 +310,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Handle document upload
   const handleDocumentUpload = (docType) => {
-    if (Platform.OS === 'ios') {
       showImagePickerOptions(docType)
-    } else {
-      // For Android, show alert with options
-      Snackbar.showInfo('Select Image', 'Choose an option')
-      
-      // For Android, we'll show a simple toast and let user tap camera
-      // You might want to implement a proper action sheet for better UX
-      setTimeout(() => {
-        Snackbar.showInfo('Gallery Option', 'Tap for Gallery')
-      }, 2000)
-    }
   }
 
   // Handle view uploaded document
@@ -270,20 +318,98 @@ const CreateProfileScreen = ({ navigation }) => {
     Snackbar.showInfo('View Document', `View functionality for ${docType} will be implemented to open the uploaded file.`)
   }
 
-  const nextStep = () => {
-    // Validate current step before proceeding
-    if (!validateCurrentStep()) {
-      return
-    }
-    
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1)
+  // Handle profile image upload
+  const handleProfileImageUpload = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Camera', 'Photo Library', 'Cancel'],
+          cancelButtonIndex: 2,
+          title: 'Select Profile Image'
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 0) {
+            // Camera
+            handleProfileImageSelection('camera')
+          } else if (buttonIndex === 1) {
+            // Gallery
+            handleProfileImageSelection('gallery')
+          }
+        }
+      )
+    } else {
+      // For Android, show action sheet using Alert
+      Alert.alert(
+        'Select Profile Image',
+        'Choose an option',
+        [
+          {
+            text: 'Camera',
+            onPress: () => handleProfileImageSelection('camera')
+          },
+          {
+            text: 'Gallery',
+            onPress: () => handleProfileImageSelection('gallery')
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      )
     }
   }
 
-  const validateCurrentStep = () => {
-    switch (currentStep) {
-      case 1: // Personal Info
+  // Handle profile image selection
+  const handleProfileImageSelection = async (source) => {
+    if (source === 'camera') {
+      const hasPermission = await requestCameraPermission()
+      if (!hasPermission) {
+        Snackbar.showError('Camera permission is required to take photos')
+      return
+      }
+    }
+
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      includeBase64: false,
+    }
+
+    const callback = (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker')
+      } else if (response.errorMessage) {
+        console.log('ImagePicker Error: ', response.errorMessage)
+        Snackbar.showError('Error', 'Failed to select image')
+      } else if (response.assets && response.assets[0]) {
+        const asset = response.assets[0]
+        console.log('Selected profile image asset:', asset)
+        
+        // Ensure the asset has the correct structure for FormData
+        const formattedAsset = {
+          uri: asset.uri,
+          type: asset.type || 'image/jpeg',
+          fileName: asset.fileName || asset.name || 'profile.jpg',
+          name: asset.fileName || asset.name || 'profile.jpg'
+        }
+        
+        setProfileImage(formattedAsset)
+        Snackbar.showSuccess('Profile image selected successfully')
+      }
+    }
+
+    if (source === 'camera') {
+      launchCamera(options, callback)
+    } else {
+      launchImageLibrary(options, callback)
+    }
+  }
+
+  const validateForm = () => {
+    // Personal Info validation
         if (!formData.fullName.trim()) {
           Snackbar.showValidationError('Please enter your full name')
           return false
@@ -304,9 +430,8 @@ const CreateProfileScreen = ({ navigation }) => {
           Snackbar.showValidationError('Please enter your firm name')
           return false
         }
-        return true
 
-      case 2: // Professional
+    // Professional validation
         if (!formData.licenseNumber.trim()) {
           Snackbar.showValidationError('Please enter your license number')
           return false
@@ -315,9 +440,8 @@ const CreateProfileScreen = ({ navigation }) => {
           Snackbar.showValidationError('Please enter your address')
           return false
         }
-        return true
 
-      case 3: // Regions
+    // Regions validation
         if (!formData.state) {
           Snackbar.showValidationError('Please select your state')
           return false
@@ -330,74 +454,16 @@ const CreateProfileScreen = ({ navigation }) => {
           Snackbar.showValidationError('Please select your regions')
           return false
         }
-        return true
 
-      case 4: // Documents (optional)
         return true
-
-      default:
-        return true
-    }
-  }
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
   }
 
   const handleCompleteProfile = async () => {
     try {
       setIsSubmitting(true)
       
-      // Validate required fields
-      if (!formData.fullName.trim()) {
-        Snackbar.showApiError('Please enter your full name')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.email.trim()) {
-        Snackbar.showApiError('Please enter your email address')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.phone.trim()) {
-        Snackbar.showApiError('Please enter your phone number')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.gender) {
-        Snackbar.showApiError('Please select your gender')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.firmName.trim()) {
-        Snackbar.showApiError('Please enter your firm name')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.licenseNumber.trim()) {
-        Snackbar.showApiError('Please enter your license number')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.address.trim()) {
-        Snackbar.showApiError('Please enter your address')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.state) {
-        Snackbar.showApiError('Please select your state')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.city) {
-        Snackbar.showApiError('Please select your city')
-        setIsSubmitting(false)
-        return
-      }
-      if (!formData.regions) {
-        Snackbar.showApiError('Please select your regions')
+      // Validate all required fields
+      if (!validateForm()) {
         setIsSubmitting(false)
         return
       }
@@ -452,8 +518,69 @@ const CreateProfileScreen = ({ navigation }) => {
         profileData.append('brokerDetails[region][]', '68c7a35bf238b8913058a5d4') // Placeholder region ID
       }
       
-      // For now, we'll skip file uploads as they require actual file objects
-      // You can implement file upload functionality later
+      // Add profile image if selected (only if it's a new image, not from API)
+      if (profileImage && profileImage.uri && !profileImage.uri.startsWith('http')) {
+        profileData.append('brokerImage', {
+          uri: profileImage.uri,
+          type: profileImage.type || 'image/jpeg',
+          name: profileImage.fileName || 'profile.jpg'
+        })
+      }
+      
+      // Add document uploads if selected
+      if (selectedImages.aadharCard && selectedImages.aadharCard.uri) {
+        profileData.append('aadhar', {
+          uri: selectedImages.aadharCard.uri,
+          type: selectedImages.aadharCard.type || 'image/jpeg',
+          name: selectedImages.aadharCard.fileName || 'aadhar.jpg'
+        })
+        console.log('Added Aadhar document to FormData')
+      }
+      
+      if (selectedImages.panCard && selectedImages.panCard.uri) {
+        profileData.append('pan', {
+          uri: selectedImages.panCard.uri,
+          type: selectedImages.panCard.type || 'image/jpeg',
+          name: selectedImages.panCard.fileName || 'pan.jpg'
+        })
+        console.log('Added PAN document to FormData')
+      }
+      
+      if (selectedImages.gstCertificate && selectedImages.gstCertificate.uri) {
+        profileData.append('gst', {
+          uri: selectedImages.gstCertificate.uri,
+          type: selectedImages.gstCertificate.type || 'image/jpeg',
+          name: selectedImages.gstCertificate.fileName || 'gst.jpg'
+        })
+        console.log('Added GST document to FormData')
+      }
+      
+      if (selectedImages.brokerLicense && selectedImages.brokerLicense.uri) {
+        profileData.append('brokerLicense', {
+          uri: selectedImages.brokerLicense.uri,
+          type: selectedImages.brokerLicense.type || 'image/jpeg',
+          name: selectedImages.brokerLicense.fileName || 'broker_license.jpg'
+        })
+        console.log('Added Broker License document to FormData')
+      }
+      
+      if (selectedImages.companyId && selectedImages.companyId.uri) {
+        profileData.append('companyId', {
+          uri: selectedImages.companyId.uri,
+          type: selectedImages.companyId.type || 'image/jpeg',
+          name: selectedImages.companyId.fileName || 'company_id.jpg'
+        })
+        console.log('Added Company ID document to FormData')
+      }
+      
+      // Debug: Log the FormData contents
+      console.log('FormData being sent:')
+      console.log('FormData _parts:', profileData._parts)
+      if (profileData._parts) {
+        for (let [key, value] of profileData._parts) {
+          console.log(`${key}:`, typeof value === 'object' ? `File: ${value.name}` : value)
+        }
+      }
       
       // Get token from storage
       const token = await storage.getToken()
@@ -475,89 +602,12 @@ const CreateProfileScreen = ({ navigation }) => {
     } catch (error) {
       setIsSubmitting(false)
       console.error('Profile completion error:', error)
+      console.error('Error details:', error.response?.data || error.message)
       Snackbar.showApiError('Failed to create profile. Please try again.')
     }
   }
 
-  const handleStepClick = (step) => {
-    // Only allow navigation to previous steps or current step
-    // For forward navigation, validate current step first
-    if (step > currentStep) {
-      if (!validateCurrentStep()) {
-        return
-      }
-    }
-    
-    // Allow navigation to any step (previous, current, or validated next)
-    setCurrentStep(step)
-  }
 
-  const isStepCompleted = (step) => {
-    switch (step) {
-      case 1:
-        return formData.fullName.trim() && formData.gender && formData.email.trim() && 
-               formData.phone.trim() && formData.firmName.trim()
-      case 2:
-        return formData.licenseNumber.trim() && formData.address.trim()
-      case 3:
-        return formData.state && formData.city && formData.regions
-      case 4:
-        return true // Documents are optional
-      default:
-        return false
-    }
-  }
-
-  const renderStepIndicator = () => (
-    <View style={styles.stepIndicator}>
-      {[1, 2, 3, 4].map((step) => {
-        const isCompleted = isStepCompleted(step)
-        const isCurrent = currentStep === step
-        const canNavigate = step <= currentStep || (step === currentStep + 1 && isStepCompleted(currentStep))
-        
-        return (
-          <TouchableOpacity 
-            key={step} 
-            style={styles.stepContainer}
-            onPress={() => canNavigate ? handleStepClick(step) : null}
-            activeOpacity={canNavigate ? 0.7 : 1}
-          >
-            <View style={[
-              styles.stepCircle,
-              isCurrent ? styles.stepCircleActive : 
-              isCompleted ? styles.stepCircleCompleted : styles.stepCircleInactive
-            ]}>
-              {isCompleted ? (
-                <MaterialIcons name="check" size={16} color="#FFFFFF" />
-              ) : (
-                <Text style={[
-                  styles.stepNumber,
-                  isCurrent ? styles.stepNumberActive : styles.stepNumberInactive
-                ]}>
-                  {step}
-                </Text>
-              )}
-            </View>
-            <Text style={[
-              styles.stepLabel,
-              isCurrent ? styles.stepLabelActive : 
-              isCompleted ? styles.stepLabelCompleted : styles.stepLabelInactive
-            ]}>
-              {step === 1 ? 'Personal Info' : 
-               step === 2 ? 'Professional' : 
-               step === 3 ? 'Regions' : 'Documents'}
-            </Text>
-            {step < 4 && (
-              <View style={[
-                styles.stepLine,
-                isCompleted ? styles.stepLineCompleted : styles.stepLineInactive
-              ]} />
-            )}
-          </TouchableOpacity>
-        )
-      })}
-    </View>
-  )
 
   const renderPersonalInfo = () => (
     <View style={styles.formContainer}>
@@ -698,7 +748,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
       <View style={styles.inputGroup}>
         <View style={styles.socialLabel}>
-          <MaterialIcons name="linkedin" size={16} color="#0077B5" />
+          <FontAwesome name="linkedin" size={16} color="#0077B5" />
           <Text style={styles.socialLabelText}>LinkedIn</Text>
         </View>
         <TextInput
@@ -754,7 +804,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
       <View style={styles.inputGroup}>
         <View style={styles.socialLabel}>
-          <MaterialIcons name="facebook" size={16} color="#1877F2" />
+          <FontAwesome name="facebook" size={16} color="#1877F2" />
           <Text style={styles.socialLabelText}>Facebook</Text>
         </View>
         <TextInput
@@ -836,11 +886,14 @@ const CreateProfileScreen = ({ navigation }) => {
         ].map((doc, index) => {
           const isUploaded = uploadedDocs[doc.key]
           const selectedImage = selectedImages[doc.key]
+          const existingDoc = existingDocs[doc.key]
+          const hasDocument = isUploaded || existingDoc
+          
           return (
             <TouchableOpacity 
               key={doc.key} 
               style={styles.documentCard}
-              onPress={() => isUploaded ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
+              onPress={() => hasDocument ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
             >
               <View style={styles.documentIcon}>
                 {selectedImage ? (
@@ -849,17 +902,23 @@ const CreateProfileScreen = ({ navigation }) => {
                     style={styles.documentPreview}
                     resizeMode="cover"
                   />
+                ) : existingDoc ? (
+                  <Image 
+                    source={{ uri: existingDoc }} 
+                    style={styles.documentPreview}
+                    resizeMode="cover"
+                  />
                 ) : (
                   <MaterialIcons 
-                    name={isUploaded ? "check-circle" : "cloud-upload"} 
+                    name={hasDocument ? "check-circle" : "cloud-upload"} 
                     size={32} 
-                    color={isUploaded ? "#4CAF50" : "#16BCC0"} 
+                    color={hasDocument ? "#4CAF50" : "#16BCC0"} 
                   />
                 )}
               </View>
               <Text style={styles.documentTitle}>{doc.title}</Text>
-              <Text style={[styles.documentStatus, isUploaded && styles.documentStatusUploaded]}>
-                {isUploaded ? 'View uploaded file' : `Click to upload ${doc.title}`}
+              <Text style={[styles.documentStatus, hasDocument && styles.documentStatusUploaded]}>
+                {hasDocument ? 'View uploaded file' : `Click to upload ${doc.title}`}
               </Text>
               <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
             </TouchableOpacity>
@@ -952,15 +1011,6 @@ const CreateProfileScreen = ({ navigation }) => {
     )
   }
 
-  const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 1: return renderPersonalInfo()
-      case 2: return renderProfessional()
-      case 3: return renderRegions()
-      case 4: return renderDocuments()
-      default: return renderPersonalInfo()
-    }
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -970,23 +1020,14 @@ const CreateProfileScreen = ({ navigation }) => {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Header with Title */}
+        <View style={styles.headerWithTitle}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
           </TouchableOpacity>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleContainer}>
           <Text style={styles.title}>Create Broker Profile</Text>
-          <Text style={styles.subtitle}>
-            Complete your profile to get started with connecting with potential clients
-          </Text>
+          <View style={styles.headerSpacer} />
         </View>
-
-        {/* Step Indicator */}
-        {renderStepIndicator()}
 
         {/* Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -996,35 +1037,47 @@ const CreateProfileScreen = ({ navigation }) => {
               <Text style={styles.loadingText}>Loading profile data...</Text>
             </View>
           ) : (
-            renderCurrentStep()
-          )}
-        </ScrollView>
-
-        {/* Action Button */}
-        <View style={styles.actionButtonContainer}>
-          {currentStep < 4 ? (
+            <View style={styles.singlePageForm}>
+              {/* Profile Image Upload */}
+              <View style={styles.profileImageContainer}>
+                <TouchableOpacity style={styles.profileImageButton} onPress={handleProfileImageUpload}>
+                  {profileImage ? (
+                    <View style={styles.profileImageWrapper}>
+                      <Image 
+                        source={{ uri: profileImage.uri }} 
+                        style={styles.profileImage}
+                        resizeMode="cover"
+                        onLoadStart={() => setProfileImageLoading(true)}
+                        onLoadEnd={() => setProfileImageLoading(false)}
+                      />
+                      {profileImageLoading && (
+                        <View style={styles.profileImageLoadingOverlay}>
+                          <ActivityIndicator size="small" color="#16BCC0" />
+                        </View>
+                      )}
             <TouchableOpacity 
-              style={[
-                styles.actionButton,
-                !isStepCompleted(currentStep) && styles.actionButtonDisabled
-              ]} 
-              onPress={nextStep}
-              disabled={!isStepCompleted(currentStep)}
-            >
-              <Text style={[
-                styles.actionButtonText,
-                !isStepCompleted(currentStep) && styles.actionButtonTextDisabled
-              ]}>
-                Continue to {currentStep === 1 ? 'Professional' : 
-                           currentStep === 2 ? 'Regions' : 'Documents'}
-              </Text>
-              <MaterialIcons 
-                name="arrow-forward" 
-                size={20} 
-                color={isStepCompleted(currentStep) ? "#FFFFFF" : "#8E8E93"} 
-              />
+                        style={styles.editImageButton} 
+                        onPress={handleProfileImageUpload}
+                      >
+                        <MaterialIcons name="edit" size={16} color="#FFFFFF" />
             </TouchableOpacity>
-          ) : (
+                    </View>
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <MaterialIcons name="camera-alt" size={32} color="#16BCC0" />
+                      <Text style={styles.profileImageText}>Add Profile Photo</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {renderPersonalInfo()}
+              {renderProfessional()}
+              {renderRegions()}
+              {renderDocuments()}
+
+              {/* Action Button */}
+              <View style={styles.actionButtonContainer}>
             <TouchableOpacity 
               style={styles.completeButton} 
               onPress={handleCompleteProfile}
@@ -1044,8 +1097,10 @@ const CreateProfileScreen = ({ navigation }) => {
                 </>
               )}
             </TouchableOpacity>
-          )}
         </View>
+            </View>
+          )}
+        </ScrollView>
 
         {/* Modals */}
         {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
@@ -1067,14 +1122,14 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  header: {
+  headerWithTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
   backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: 15,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -1084,99 +1139,99 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
   },
-  titleContainer: {
-    paddingHorizontal: 30,
-    marginBottom: 30,
-  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#000000',
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  stepIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    marginBottom: 30,
-  },
-  stepContainer: {
-    alignItems: 'center',
     flex: 1,
   },
-  stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  headerSpacer: {
+    width: 40,
+  },
+  profileImageContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    marginBottom: 16,
+  },
+  profileImageButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    position: 'relative',
   },
-  stepCircleActive: {
-    backgroundColor: '#16BCC0',
+  profileImageWrapper: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    position: 'relative',
   },
-  stepCircleCompleted: {
-    backgroundColor: '#4CAF50',
+  profileImage: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
   },
-  stepCircleInactive: {
-    backgroundColor: '#E5E5EA',
+  profileImageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  stepNumber: {
-    fontSize: 16,
-    fontWeight: '600',
+  profileImagePlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  stepNumberActive: {
-    color: '#FFFFFF',
-  },
-  stepNumberInactive: {
-    color: '#8E8E93',
-  },
-  stepLabel: {
+  profileImageText: {
     fontSize: 12,
     fontWeight: '500',
+    color: '#16BCC0',
+    marginTop: 8,
     textAlign: 'center',
   },
-  stepLabelActive: {
-    color: '#16BCC0',
-  },
-  stepLabelCompleted: {
-    color: '#4CAF50',
-  },
-  stepLabelInactive: {
-    color: '#8E8E93',
-  },
-  stepLine: {
+  editImageButton: {
     position: 'absolute',
-    top: 16,
-    left: '50%',
-    width: '100%',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(22, 188, 192, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
     height: 2,
-    zIndex: -1,
   },
-  stepLineCompleted: {
-    backgroundColor: '#4CAF50',
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  stepLineInactive: {
-    backgroundColor: '#E5E5EA',
+  singlePageForm: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 24,
-    marginBottom: 20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -1349,9 +1404,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actionButtonContainer: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingBottom: 20,
     paddingTop: 10,
+    marginTop: 20,
   },
   actionButton: {
     backgroundColor: '#16BCC0',

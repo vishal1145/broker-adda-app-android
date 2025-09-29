@@ -12,7 +12,7 @@ const getBaseURL = () => {
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: getBaseURL(),
-  timeout: 15000, // Increased timeout for ngrok
+  // timeout: 15000, // Increased timeout for ngrok
   headers: {
     'Content-Type': 'application/json',
   }
