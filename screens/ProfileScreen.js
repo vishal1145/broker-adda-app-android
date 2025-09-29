@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
   },
   modernHeaderGradient: {
     backgroundColor: '#16BCC0',
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 50,
     position: 'relative',
     overflow: 'hidden',

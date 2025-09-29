@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   // Header Styles
   modernHeader: {
     backgroundColor: '#16BCC0',
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
     marginBottom: 20,

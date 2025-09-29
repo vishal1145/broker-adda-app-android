@@ -159,116 +159,122 @@ const SignupScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Content */}
-        <View style={styles.content}>
-          {/* Header Section */}
-          <View style={styles.headerSection}>
-            <Text style={styles.illustrationTitle}>
-              Create Account
-            </Text>
-            <Text style={styles.illustrationSubtitle}>
-              Please enter your phone number to create an account
-            </Text>
-          </View>
+        {/* Main Content Container */}
+        <View style={styles.mainContent}>
+          {/* Content */}
+          <View style={styles.content}>
+            {/* Header Section */}
+            <View style={styles.headerSection}>
+              <Text style={styles.illustrationTitle}>
+                Create Account
+              </Text>
+              <Text style={styles.illustrationSubtitle}>
+                Please enter your phone number to create an account
+              </Text>
+            </View>
 
-          {/* Input Section */}
-          <View style={styles.inputSection}>
-            {/* Phone Number Input */}
-            <View style={styles.phoneInputContainer}>
-              <View style={styles.inputRow}>
-                <TouchableOpacity 
-                  style={[
-                    styles.countryCode,
-                    { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
-                  ]}
-                  onPress={toggleCountryDropdown}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
-                  <Text style={styles.dropdownIcon}>▼</Text>
-                </TouchableOpacity>
-                
-                <View style={styles.inputGap} />
-                
-                <TextInput
-                  style={[
-                    styles.phoneInput,
-                    { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
-                  ]}
-                  placeholder="Enter your phone number"
-                  value={phoneNumber}
-                  onChangeText={formatPhoneNumber}
-                  placeholderTextColor="#8E8E93"
-                  keyboardType="numeric"
-                  maxLength={10}
-                />
-              </View>
-              
-              {/* Country Code Dropdown */}
-              {showCountryDropdown && (
-                <View style={styles.dropdownContainer}>
-                  {countryCodes.map((country, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.dropdownItem}
-                      onPress={() => handleCountryCodeSelect(country.code)}
-                    >
-                      <Text style={styles.dropdownItemText}>{country.code}</Text>
-                    </TouchableOpacity>
-                  ))}
+            {/* Input Section */}
+            <View style={styles.inputSection}>
+              {/* Phone Number Input */}
+              <View style={styles.phoneInputContainer}>
+                <View style={styles.inputRow}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.countryCode,
+                      { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
+                    ]}
+                    onPress={toggleCountryDropdown}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
+                    <Text style={styles.dropdownIcon}>▼</Text>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.inputGap} />
+                  
+                  <TextInput
+                    style={[
+                      styles.phoneInput,
+                      { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
+                    ]}
+                    placeholder="Enter your phone number"
+                    value={phoneNumber}
+                    onChangeText={formatPhoneNumber}
+                    placeholderTextColor="#8E8E93"
+                    keyboardType="numeric"
+                    maxLength={10}
+                  />
                 </View>
-              )}
+                
+                {/* Country Code Dropdown */}
+                {showCountryDropdown && (
+                  <View style={styles.dropdownContainer}>
+                    {countryCodes.map((country, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.dropdownItem}
+                        onPress={() => handleCountryCodeSelect(country.code)}
+                      >
+                        <Text style={styles.dropdownItemText}>{country.code}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Action Button - Above dialpad */}
-        <View style={styles.actionButtonContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.actionButton, 
-              phoneNumber.length < 10 ? styles.actionButtonDisabled : null
-            ]} 
-            onPress={handleSignup}
-            disabled={isLoading || phoneNumber.length < 10}
-          >
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#FFFFFF" />
-                <Text style={[styles.actionButtonText, styles.loadingText]}>
-                  Please wait...
+          {/* Bottom Section */}
+          <View style={styles.bottomSection}>
+            {/* Action Button */}
+            <View style={styles.actionButtonContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.actionButton, 
+                  phoneNumber.length < 10 ? styles.actionButtonDisabled : null
+                ]} 
+                onPress={handleSignup}
+                disabled={isLoading || phoneNumber.length < 10}
+              >
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={[styles.actionButtonText, styles.loadingText]}>
+                      Please wait...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.actionButtonText}>Sign Up</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* Terms and Privacy Policy */}
+            <View style={styles.termsContainer}>
+              <Text style={styles.termsText}>
+                By continuing you agree to our{' '}
+                <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')} activeOpacity={0.7}>
+                  <Text style={styles.linkText}>Terms & Conditions</Text>
+                </TouchableOpacity>
+                {' '}and{' '}
+                <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} activeOpacity={0.7}>
+                  <Text style={styles.linkText}>Privacy Policy</Text>
+                </TouchableOpacity>
+              </Text>
+            </View>
+
+            {/* Login Link */}
+            <View style={styles.toggleContainer}>
+              <Text style={styles.toggleText}>
+                Already have an account?
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('PhoneLogin')} activeOpacity={0.7}>
+                <Text style={styles.toggleButton}>
+                  Login
                 </Text>
-              </View>
-            ) : (
-              <Text style={styles.actionButtonText}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Terms and Privacy Policy */}
-        <View style={styles.termsContainer}>
-          <Text style={styles.termsText}>
-            By continuing you agree to our{' '}
-            <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')} activeOpacity={0.7}>
-              <Text style={styles.linkText}>Terms & Conditions</Text>
-            </TouchableOpacity>
-            {' '}and{' '}
-            <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} activeOpacity={0.7}>
-              <Text style={styles.linkText}>Privacy Policy</Text>
-            </TouchableOpacity>
-          </Text>
-        </View>
-
-        {/* Login Link */}
-        <View style={styles.toggleContainer}>
-          <Text style={styles.toggleText}>
-            Already have an account?
-          </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('PhoneLogin')} activeOpacity={0.7}>
-            <Text style={styles.toggleButton}>
-              Login
-            </Text>
-          </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
       </KeyboardAvoidingView>
@@ -284,8 +290,12 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  mainContent: {
+    flex: 1,
+    flexDirection: 'column',
+  },
   header: {
-    paddingTop: 50,
+    paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
@@ -302,9 +312,15 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5EA',
   },
   content: {
-    flex: 0.5,
+    flex: 1,
     paddingHorizontal: 30,
     paddingTop: 20,
+    paddingBottom: 20,
+    justifyContent: 'flex-start',
+    minHeight: 200,
+  },
+  bottomSection: {
+    flexShrink: 0,
     paddingBottom: 20,
   },
   headerSection: {
@@ -318,6 +334,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginBottom: 15,
     lineHeight: 34,
+    flexShrink: 1,
   },
   illustrationSubtitle: {
     fontSize: 16,
@@ -326,9 +343,11 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     lineHeight: 24,
     paddingHorizontal: 0,
+    flexShrink: 1,
   },
   inputSection: {
-    marginBottom: 30,
+    marginBottom: 20,
+    flexShrink: 0,
   },
   phoneInputContainer: {
     marginBottom: 0,
@@ -446,7 +465,7 @@ const styles = StyleSheet.create({
   actionButtonContainer: {
     paddingHorizontal: 30,
     paddingBottom: 15,
-    paddingTop: 10,
+    paddingTop: 20,
   },
   actionButton: {
     backgroundColor: '#16BCC0',
@@ -485,9 +504,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingBottom: 15,
+    paddingTop: 10,
     gap: 5,
+    flexWrap: 'wrap',
   },
   toggleText: {
     fontSize: 16,
@@ -500,9 +521,10 @@ const styles = StyleSheet.create({
     color: '#16BCC0',
   },
   termsContainer: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingBottom: 15,
     paddingTop: 5,
+    flexShrink: 1,
   },
   termsText: {
     fontSize: 14,
@@ -510,6 +532,8 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   linkText: {
     fontSize: 14,
