@@ -10,6 +10,8 @@ import LoginScreen from '../screens/LoginScreen';
 import PhoneLoginScreen from '../screens/PhoneLoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import CreateProfileScreen from '../screens/CreateProfileScreen';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LeadsScreen from '../screens/LeadsScreen';
 import PropertiesScreen from '../screens/PropertiesScreen';
@@ -77,6 +79,8 @@ const AppNavigator = () => {
         <Stack.Screen name="PhoneLogin" component={PhoneLoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="CreateProfile" component={CreateProfileScreen} />
+        <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
         <Stack.Screen 
           name="Profile" 

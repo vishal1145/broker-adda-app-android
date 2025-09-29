@@ -32,5 +32,8 @@
     "react-native-toast-message": "^2.1.6",
     "react-refresh": "^0.17.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@react-native/codegen": "^0.81.4"
+  }
 }

@@ -245,6 +245,20 @@ const SignupScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Terms and Privacy Policy */}
+        <View style={styles.termsContainer}>
+          <Text style={styles.termsText}>
+            By continuing you agree to our{' '}
+            <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')} activeOpacity={0.7}>
+              <Text style={styles.linkText}>Terms & Conditions</Text>
+            </TouchableOpacity>
+            {' '}and{' '}
+            <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} activeOpacity={0.7}>
+              <Text style={styles.linkText}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </Text>
+        </View>
+
         {/* Login Link */}
         <View style={styles.toggleContainer}>
           <Text style={styles.toggleText}>
@@ -484,6 +498,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#16BCC0',
+  },
+  termsContainer: {
+    paddingHorizontal: 30,
+    paddingBottom: 15,
+    paddingTop: 5,
+  },
+  termsText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  linkText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#16BCC0',
+    textDecorationLine: 'underline',
   },
 })
 
