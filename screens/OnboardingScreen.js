@@ -142,7 +142,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 1:
         return {
           headerTitle: 'Welcome to BrokerLink',
-          image: require('../assets/onbording1.avif'),
+          image: require('../assets/onbording1.png'),
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
@@ -151,7 +151,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 2:
         return {
           headerTitle: 'Onboarding',
-          image: require('../assets/onbording2.avif'),
+          image: require('../assets/onbording2.png'),
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,

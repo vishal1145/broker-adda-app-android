@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20,
     justifyContent: 'flex-start',
-    minHeight: 200,
-    maxHeight: 350,
+    minHeight: 120,
+    maxHeight: 200,
   },
   bottomSection: {
     flexShrink: 0,
