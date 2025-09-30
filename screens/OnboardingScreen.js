@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     borderRadius: 2,
   },
   imageContainer: {
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dottedLineActive: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
   },
   dottedLineInactive: {
     backgroundColor: '#E5E5EA',
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     width: 20,
     height: 20,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   getStartedButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,

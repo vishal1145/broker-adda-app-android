@@ -159,19 +159,19 @@ const PropertiesScreen = ({ navigation }) => {
 
         <View style={styles.propertyDetails}>
           <View style={styles.detailItem}>
-            <MaterialIcons name="bed" size={16} color="#16BCC0" />
+            <MaterialIcons name="bed" size={16} color="#009689" />
             <Text style={styles.detailText}>{property.bedrooms} beds</Text>
           </View>
           <View style={styles.detailItem}>
-            <MaterialIcons name="bathtub" size={16} color="#16BCC0" />
+            <MaterialIcons name="bathtub" size={16} color="#009689" />
             <Text style={styles.detailText}>{property.bathrooms} baths</Text>
           </View>
           <View style={styles.detailItem}>
-            <MaterialIcons name="square-foot" size={16} color="#16BCC0" />
+            <MaterialIcons name="square-foot" size={16} color="#009689" />
             <Text style={styles.detailText}>{property.sqft} sqft</Text>
           </View>
           <View style={styles.detailItem}>
-            <MaterialIcons name={getTypeIcon(property.type)} size={16} color="#16BCC0" />
+            <MaterialIcons name={getTypeIcon(property.type)} size={16} color="#009689" />
             <Text style={styles.detailText}>{property.type}</Text>
           </View>
         </View>
@@ -201,15 +201,15 @@ const PropertiesScreen = ({ navigation }) => {
 
         <View style={styles.propertyFooter}>
           <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="visibility" size={18} color="#16BCC0" />
+            <MaterialIcons name="visibility" size={18} color="#009689" />
             <Text style={styles.actionButtonText}>View Details</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="edit" size={18} color="#16BCC0" />
+            <MaterialIcons name="edit" size={18} color="#009689" />
             <Text style={styles.actionButtonText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="share" size={18} color="#16BCC0" />
+            <MaterialIcons name="share" size={18} color="#009689" />
             <Text style={styles.actionButtonText}>Share</Text>
           </TouchableOpacity>
         </View>
@@ -343,7 +343,7 @@ const PropertiesScreen = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Properties ({filteredProperties.length})</Text>
             <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#16BCC0" />
+              <MaterialIcons name="sort" size={20} color="#009689" />
               <Text style={styles.sortText}>Sort</Text>
             </TouchableOpacity>
           </View>
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -508,8 +508,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterTabActive: {
-    backgroundColor: '#16BCC0',
-    borderColor: '#16BCC0',
+    backgroundColor: '#009689',
+    borderColor: '#009689',
   },
   filterTabText: {
     fontSize: 14,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   sortText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
     marginLeft: 4,
   },
 
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   propertyPrice: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#16BCC0',
+    color: '#009689',
   },
   propertyAddress: {
     flexDirection: 'row',
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
 })
 

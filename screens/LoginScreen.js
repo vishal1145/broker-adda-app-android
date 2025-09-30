@@ -9,7 +9,7 @@ const LoginScreen = ({ navigation }) => {
   }
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor="#16BCC0" />
+      <StatusBar barStyle="light-content" backgroundColor="#009689" />
       
       {/* Background Image */}
       <Image 
@@ -51,7 +51,7 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
   },
   backgroundImage: {
     position: 'absolute',
@@ -119,14 +119,14 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   mobileButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 18,
     paddingHorizontal: 24,
     borderRadius: 50,
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: {
       width: 0,
       height: 4,

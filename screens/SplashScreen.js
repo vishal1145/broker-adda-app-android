@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
   },
   headerPattern: {
     position: 'absolute',

@@ -156,7 +156,7 @@ const SignupScreen = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+            <MaterialIcons name="arrow-back" size={24} color="#009689" />
           </TouchableOpacity>
         </View>
 
@@ -182,7 +182,7 @@ const SignupScreen = ({ navigation }) => {
                   <TouchableOpacity 
                     style={[
                       styles.countryCode,
-                      { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
+                      { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
                     ]}
                     onPress={toggleCountryDropdown}
                     activeOpacity={0.7}
@@ -196,7 +196,7 @@ const SignupScreen = ({ navigation }) => {
                   <TextInput
                     style={[
                       styles.phoneInput,
-                      { borderColor: phoneNumber.length > 0 ? '#16BCC0' : '#E5E5EA' }
+                      { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
                     ]}
                     placeholder="Enter your phone number"
                     value={phoneNumber}
@@ -403,13 +403,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   countryCodeText: {
-    color: '#16BCC0',
+    color: '#009689',
     fontSize: 16,
     fontWeight: '600',
     marginRight: 5,
   },
   dropdownIcon: {
-    color: '#16BCC0',
+    color: '#009689',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
   phoneInput: {
     flex: 1,
@@ -474,12 +474,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   actionButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   toggleButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
   termsContainer: {
     paddingHorizontal: 20,
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
     textDecorationLine: 'underline',
   },
 })

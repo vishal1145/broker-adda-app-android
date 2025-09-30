@@ -172,15 +172,15 @@ const LeadsScreen = ({ navigation }) => {
 
       <View style={styles.leadFooter}>
         <TouchableOpacity style={styles.actionButton}>
-          <MaterialIcons name="call" size={18} color="#16BCC0" />
+          <MaterialIcons name="call" size={18} color="#009689" />
           <Text style={styles.actionButtonText}>Call</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <MaterialIcons name="email" size={18} color="#16BCC0" />
+          <MaterialIcons name="email" size={18} color="#009689" />
           <Text style={styles.actionButtonText}>Email</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <MaterialIcons name="edit" size={18} color="#16BCC0" />
+          <MaterialIcons name="edit" size={18} color="#009689" />
           <Text style={styles.actionButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -313,7 +313,7 @@ const LeadsScreen = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Leads ({filteredLeads.length})</Text>
             <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#16BCC0" />
+              <MaterialIcons name="sort" size={20} color="#009689" />
               <Text style={styles.sortText}>Sort</Text>
             </TouchableOpacity>
           </View>
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -478,8 +478,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterTabActive: {
-    backgroundColor: '#16BCC0',
-    borderColor: '#16BCC0',
+    backgroundColor: '#009689',
+    borderColor: '#009689',
   },
   filterTabText: {
     fontSize: 14,
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   sortText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
     marginLeft: 4,
   },
 
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   leadBudget: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
   leadActions: {
     alignItems: 'flex-end',
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
 })
 

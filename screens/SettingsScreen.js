@@ -64,7 +64,7 @@ const SettingsScreen = ({ navigation }) => {
     <TouchableOpacity style={styles.settingItem} onPress={onPress}>
       <View style={styles.settingLeft}>
         <View style={styles.settingIcon}>
-          <MaterialIcons name={item.icon} size={24} color="#16BCC0" />
+          <MaterialIcons name={item.icon} size={24} color="#009689" />
         </View>
         <View style={styles.settingInfo}>
           <Text style={styles.settingTitle}>{item.title}</Text>
@@ -76,7 +76,7 @@ const SettingsScreen = ({ navigation }) => {
           <Switch
             value={item.value}
             onValueChange={item.onToggle}
-            trackColor={{ false: '#E5E7EB', true: '#16BCC0' }}
+            trackColor={{ false: '#E5E7EB', true: '#009689' }}
             thumbColor={item.value ? '#FFFFFF' : '#FFFFFF'}
           />
         ) : (
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,

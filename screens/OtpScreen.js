@@ -163,7 +163,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+            <MaterialIcons name="arrow-back" size={24} color="#009689" />
           </TouchableOpacity>
           {/* <Text style={styles.headerTitle}>Enter Verification Code</Text>
           <View style={styles.headerBorder} /> */}
@@ -194,7 +194,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                       style={[
                         styles.otpBox,
                         { 
-                          borderColor: otp[index] ? '#16BCC0' : (focusedIndex === index ? '#16BCC0' : '#E5E5EA'),
+                          borderColor: otp[index] ? '#009689' : (focusedIndex === index ? '#009689' : '#E5E5EA'),
                           backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
                         }
                       ]}
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   otpBox: {
     flex: 1,                         
     marginHorizontal: 4,             
-    height: 55,
+    height: 50,
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 2,
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   toggleButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
@@ -396,12 +396,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   actionButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: {
       width: 0,
       height: 4,

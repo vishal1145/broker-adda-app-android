@@ -626,7 +626,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const renderPersonalInfo = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="person" size={20} color="#16BCC0" />
+        <MaterialIcons name="person" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Personal Information</Text>
       </View>
       
@@ -706,7 +706,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const renderProfessional = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="work" size={20} color="#16BCC0" />
+        <MaterialIcons name="work" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Professional Information</Text>
       </View>
       
@@ -728,7 +728,7 @@ const CreateProfileScreen = ({ navigation }) => {
         <View style={styles.addressHeader}>
           <Text style={styles.inputLabel}>Address *</Text>
           <TouchableOpacity style={styles.locationButton}>
-            <MaterialIcons name="location-on" size={16} color="#16BCC0" />
+            <MaterialIcons name="location-on" size={16} color="#009689" />
             <Text style={styles.locationButtonText}>Use Current Location</Text>
           </TouchableOpacity>
         </View>
@@ -756,7 +756,7 @@ const CreateProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="link" size={20} color="#16BCC0" />
+        <MaterialIcons name="link" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Social Media & Online Presence</Text>
       </View>
 
@@ -790,7 +790,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
       <View style={styles.inputGroup}>
         <View style={styles.socialLabel}>
-          <MaterialIcons name="language" size={16} color="#16BCC0" />
+          <MaterialIcons name="language" size={16} color="#009689" />
           <Text style={styles.socialLabelText}>Website</Text>
         </View>
         <TextInput
@@ -835,7 +835,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const renderRegions = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="location-on" size={20} color="#16BCC0" />
+        <MaterialIcons name="location-on" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Preferred Regions *</Text>
       </View>
       <Text style={styles.sectionDescription}>
@@ -886,7 +886,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const renderDocuments = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="description" size={20} color="#16BCC0" />
+        <MaterialIcons name="description" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Documents (Optional)</Text>
       </View>
       
@@ -926,7 +926,7 @@ const CreateProfileScreen = ({ navigation }) => {
                   <MaterialIcons 
                     name={hasDocument ? "check-circle" : "cloud-upload"} 
                     size={32} 
-                    color={hasDocument ? "#4CAF50" : "#16BCC0"} 
+                    color={hasDocument ? "#4CAF50" : "#009689"} 
                   />
                 )}
               </View>
@@ -975,12 +975,12 @@ const CreateProfileScreen = ({ navigation }) => {
                   >
                     <Text style={styles.modalItemText}>{option}</Text>
                     {(formData.specializations || []).includes(option) && (
-                      <MaterialIcons name="check" size={20} color="#16BCC0" />
+                      <MaterialIcons name="check" size={20} color="#009689" />
                     )}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <View style={styles.modalFooter}>
+                <View style={styles.modalFooter}>
                 <TouchableOpacity style={styles.modalDoneButton} onPress={onClose}>
                   <Text style={styles.modalDoneButtonText}>Done</Text>
                 </TouchableOpacity>
@@ -1014,7 +1014,7 @@ const CreateProfileScreen = ({ navigation }) => {
                 >
                   <Text style={styles.modalItemText}>{option}</Text>
                   {formData[field] === option && (
-                    <MaterialIcons name="check" size={20} color="#16BCC0" />
+                    <MaterialIcons name="check" size={20} color="#009689" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -1030,14 +1030,14 @@ const CreateProfileScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      <KeyboardAvoidingView 
+      {/* <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      > */}
         {/* Header with Title */}
         <View style={styles.headerWithTitle}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+            <MaterialIcons name="arrow-back" size={24} color="#009689" />
           </TouchableOpacity>
           <Text style={styles.title}>Create Broker Profile</Text>
           <View style={styles.headerSpacer} />
@@ -1047,7 +1047,7 @@ const CreateProfileScreen = ({ navigation }) => {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#16BCC0" />
+              <ActivityIndicator size="large" color="#009689" />
               <Text style={styles.loadingText}>Loading profile data...</Text>
             </View>
           ) : (
@@ -1066,7 +1066,7 @@ const CreateProfileScreen = ({ navigation }) => {
                       />
                       {profileImageLoading && (
                         <View style={styles.profileImageLoadingOverlay}>
-                          <ActivityIndicator size="small" color="#16BCC0" />
+                          <ActivityIndicator size="small" color="#009689" />
                         </View>
                       )}
             <TouchableOpacity 
@@ -1078,7 +1078,7 @@ const CreateProfileScreen = ({ navigation }) => {
                     </View>
                   ) : (
                     <View style={styles.profileImagePlaceholder}>
-                      <MaterialIcons name="camera-alt" size={32} color="#16BCC0" />
+                      <MaterialIcons name="camera-alt" size={32} color="#009689" />
                       <Text style={styles.profileImageText}>Add Profile Photo</Text>
                     </View>
                   )}
@@ -1123,7 +1123,7 @@ const CreateProfileScreen = ({ navigation }) => {
         {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
         {renderModal('Select Regions', regions, 'regions', showRegionModal, () => setShowRegionModal(false))}
 
-      </KeyboardAvoidingView>
+      {/* </KeyboardAvoidingView> */}
     </SafeAreaView>
   )
 }
@@ -1209,7 +1209,7 @@ const styles = StyleSheet.create({
   profileImageText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#16BCC0',
+    color: '#009689',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -1220,7 +1220,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(22, 188, 192, 0.9)',
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -1332,7 +1332,7 @@ const styles = StyleSheet.create({
   locationButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
     marginLeft: 4,
   },
   socialInputGroup: {
@@ -1391,7 +1391,7 @@ const styles = StyleSheet.create({
   },
   documentStatus: {
     fontSize: 12,
-    color: '#16BCC0',
+    color: '#009689',
     textAlign: 'center',
     marginBottom: 4,
   },
@@ -1409,12 +1409,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   actionButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1475,11 +1475,12 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     padding: 20,
+    paddingBottom: 40,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
   },
   modalDoneButton: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

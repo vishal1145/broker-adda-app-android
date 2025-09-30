@@ -21,7 +21,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+          <MaterialIcons name="arrow-back" size={24} color="#009689" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Privacy Policy</Text>
         <View style={styles.headerSpacer} />
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   contactText: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#16BCC0',
+    color: '#009689',
     textAlign: 'center',
     marginTop: 30,
     marginBottom: 60,

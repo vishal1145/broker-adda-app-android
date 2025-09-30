@@ -84,7 +84,7 @@ const NotificationsScreen = ({ navigation }) => {
       priority: 'medium',
       isRead: true,
       icon: 'update',
-      iconColor: '#16BCC0'
+      iconColor: '#009689'
     }
   ])
 
@@ -275,7 +275,7 @@ const NotificationsScreen = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Notifications ({filteredNotifications.length})</Text>
             <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#16BCC0" />
+              <MaterialIcons name="sort" size={20} color="#009689" />
               <Text style={styles.sortText}>Sort</Text>
             </TouchableOpacity>
           </View>
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -440,8 +440,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterTabActive: {
-    backgroundColor: '#16BCC0',
-    borderColor: '#16BCC0',
+    backgroundColor: '#009689',
+    borderColor: '#009689',
   },
   filterTabText: {
     fontSize: 14,
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   sortText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
     marginLeft: 4,
   },
 
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   },
   unreadCard: {
     borderLeftWidth: 4,
-    borderLeftColor: '#16BCC0',
+    borderLeftColor: '#009689',
     backgroundColor: '#F8FAFC',
   },
   notificationHeader: {
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
   },
   priorityIndicator: {
     width: 12,

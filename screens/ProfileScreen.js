@@ -207,14 +207,14 @@ const ProfileScreen = ({ navigation }) => {
     <View style={styles.infoCard}>
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleContainer}>
-          <MaterialIcons name={icon} size={24} color="#16BCC0" />
+          <MaterialIcons name={icon} size={24} color="#009689" />
       <Text style={styles.cardTitle}>{title}</Text>
         </View>
       </View>
       {items.map((item, index) => (
         <View key={index} style={styles.infoItem}>
           <View style={styles.infoIconContainer}>
-            <MaterialIcons name={item.icon} size={20} color="#16BCC0" />
+            <MaterialIcons name={item.icon} size={20} color="#009689" />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.infoLabel}>{item.label}</Text>
@@ -260,10 +260,10 @@ const ProfileScreen = ({ navigation }) => {
                   }
                 }}
               >
-                <MaterialIcons name="arrow-back" size={24} color="#16BCC0" />
+                <MaterialIcons name="arrow-back" size={24} color="#009689" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
-                <MaterialIcons name="edit" size={20} color="#16BCC0" />
+                <MaterialIcons name="edit" size={20} color="#009689" />
               </TouchableOpacity>
               
               <View style={styles.modernProfileSection}>
@@ -350,7 +350,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.statsHeader}>
             <Text style={styles.sectionTitle}>Performance Overview</Text>
             <View style={styles.statsSubtitle}>
-              <MaterialIcons name="analytics" size={16} color="#16BCC0" />
+              <MaterialIcons name="analytics" size={16} color="#009689" />
               <Text style={styles.statsSubtitleText}>Real-time metrics</Text>
             </View>
           </View>
@@ -477,7 +477,7 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.brokerInfoCard}>
               <View style={styles.brokerInfoHeader}>
                 <View style={styles.brokerInfoIconContainer}>
-                  <MaterialIcons name="account-circle" size={32} color="#16BCC0" />
+                  <MaterialIcons name="account-circle" size={32} color="#009689" />
                 </View>
                 <View style={styles.brokerInfoTitleContainer}>
                   <Text style={styles.brokerInfoTitle}>Professional Details</Text>
@@ -489,7 +489,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.brokerInfoRow}>
                   <View style={styles.brokerInfoLeft}>
                     <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="business" size={20} color="#16BCC0" />
+                      <MaterialIcons name="business" size={20} color="#009689" />
                     </View>
                     <Text style={styles.brokerInfoLabel}>Firm</Text>
                   </View>
@@ -501,7 +501,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.brokerInfoRow}>
                   <View style={styles.brokerInfoLeft}>
                     <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="person" size={20} color="#16BCC0" />
+                      <MaterialIcons name="person" size={20} color="#009689" />
                     </View>
                     <Text style={styles.brokerInfoLabel}>Gender</Text>
                   </View>
@@ -513,7 +513,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.brokerInfoRow}>
                   <View style={styles.brokerInfoLeft}>
                     <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="schedule" size={20} color="#16BCC0" />
+                      <MaterialIcons name="schedule" size={20} color="#009689" />
                     </View>
                     <Text style={styles.brokerInfoLabel}>Status</Text>
                   </View>
@@ -530,7 +530,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.brokerInfoRow}>
                   <View style={styles.brokerInfoLeft}>
                     <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="calendar-today" size={20} color="#16BCC0" />
+                      <MaterialIcons name="calendar-today" size={20} color="#009689" />
                     </View>
                     <Text style={styles.brokerInfoLabel}>Joined Date</Text>
                   </View>
@@ -542,7 +542,7 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.brokerInfoRow}>
                   <View style={styles.brokerInfoLeft}>
                     <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="description" size={20} color="#16BCC0" />
+                      <MaterialIcons name="description" size={20} color="#009689" />
                     </View>
                     <Text style={styles.brokerInfoLabel}>License Number</Text>
                   </View>
@@ -680,7 +680,7 @@ const ProfileScreen = ({ navigation }) => {
                     case 'facebook':
                       return <FontAwesome name="facebook" size={24} color="#1877F2" />
                     default:
-                      return <MaterialIcons name="link" size={24} color="#16BCC0" />
+                      return <MaterialIcons name="link" size={24} color="#009689" />
                   }
                 }
 
@@ -709,7 +709,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Documents</Text>
             <TouchableOpacity style={styles.neuUploadButton}>
-              <MaterialIcons name="add" size={20} color="#16BCC0" />
+              <MaterialIcons name="add" size={20} color="#009689" />
               <Text style={styles.neuUploadText}>Upload</Text>
             </TouchableOpacity>
           </View>
@@ -720,7 +720,7 @@ const ProfileScreen = ({ navigation }) => {
                   <MaterialIcons 
                     name={document.fileType === 'PDF' ? 'picture-as-pdf' : 'image'} 
                     size={24} 
-                    color="#16BCC0" 
+                    color="#009689" 
                   />
               </View>
                 <View style={styles.documentNeuContent}>
@@ -737,7 +737,7 @@ const ProfileScreen = ({ navigation }) => {
                     style={styles.neuActionButton}
                   onPress={() => handlePreviewDocument(document.id)}
                 >
-                  <MaterialIcons name="visibility" size={18} color="#16BCC0" />
+                  <MaterialIcons name="visibility" size={18} color="#009689" />
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.neuActionButton, styles.neuDownloadButton]}
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernHeaderGradient: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 50,
     position: 'relative',
@@ -1063,7 +1063,7 @@ const styles = StyleSheet.create({
   statsSubtitleText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#16BCC0',
+    color: '#009689',
   },
   advancedStatsGrid: {
     flexDirection: 'row',
@@ -1167,10 +1167,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1374,7 +1374,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -1490,8 +1490,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   neuDownloadButton: {
-    backgroundColor: '#16BCC0',
-    borderColor: '#16BCC0',
+    backgroundColor: '#009689',
+    borderColor: '#009689',
   },
   neuUploadButton: {
     flexDirection: 'row',
@@ -1512,7 +1512,7 @@ const styles = StyleSheet.create({
   neuUploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
 
   // Tags
@@ -1661,8 +1661,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   downloadButton: {
-    backgroundColor: '#16BCC0',
-    borderColor: '#16BCC0',
+    backgroundColor: '#009689',
+    borderColor: '#009689',
   },
   uploadButton: {
     width: 36,

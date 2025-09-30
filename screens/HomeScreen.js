@@ -240,11 +240,11 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.metricCard}>
       <View style={styles.cardHeader}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-          <MaterialIcons name={icon} size={16} color={iconColor === "#16BCC0" ? "#FFFFFF" : "#16BCC0"} />
+          <MaterialIcons name={icon} size={16} color={iconColor === "#009689" ? "#FFFFFF" : "#009689"} />
         </View>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.changePill}>
-          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#16BCC0" />
+          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#009689" />
           <Text style={styles.changeText}>{change}%</Text>
         </View>
       </View>
@@ -440,7 +440,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="business" size={24} color="#16BCC0" />
+                  <MaterialIcons name="business" size={24} color="#009689" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -457,7 +457,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="home" size={24} color="#16BCC0" />
+                  <MaterialIcons name="home" size={24} color="#009689" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -474,7 +474,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="location-on" size={24} color="#16BCC0" />
+                  <MaterialIcons name="location-on" size={24} color="#009689" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -562,7 +562,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See All</Text>
-              <MaterialIcons name="arrow-forward" size={16} color="#16BCC0" />
+              <MaterialIcons name="arrow-forward" size={16} color="#009689" />
             </TouchableOpacity>
           </View>
           
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
 
   // Modern Header Styles
   modernHeader: {
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -800,10 +800,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#16BCC0',
+    shadowColor: '#009689',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
   },
   propertyProgressFill: {
     height: '100%',
-    backgroundColor: '#16BCC0',
+    backgroundColor: '#009689',
     borderRadius: 3,
   },
 
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#16BCC0',
+    color: '#009689',
   },
   notificationsContainer: {
     gap: 16,
