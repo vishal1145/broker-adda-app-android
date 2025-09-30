@@ -196,6 +196,13 @@ const OnboardingScreen = ({ navigation }) => {
           <Text style={styles.description}>
             {stepData.description}
           </Text>
+          
+          {/* Step Indicator for steps 1 and 2 */}
+          {!stepData.showFeatures && (
+            <View style={styles.stepIndicatorInline}>
+              <DottedLineIndicator activeStep={currentStep} />
+            </View>
+          )}
         </View>
 
         {/* Feature List for Step 3 */}
@@ -244,6 +251,11 @@ const OnboardingScreen = ({ navigation }) => {
               </View>
               <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
             </TouchableOpacity>
+            
+            {/* Step Indicator for Step 3 - positioned below feature list */}
+            <View style={styles.stepIndicatorInline}>
+              <DottedLineIndicator activeStep={currentStep} />
+            </View>
           </View>
         )}
       </View>
@@ -280,10 +292,6 @@ const OnboardingScreen = ({ navigation }) => {
         </Animated.View>
       </PanGestureHandler>
 
-      {/* Step Indicator */}
-      <View style={styles.stepIndicator}>
-        <DottedLineIndicator activeStep={currentStep} />
-      </View>
 
       {/* Get Started Button - Only on final step */}
       {currentStep === 3 && (
@@ -359,6 +367,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 30,
     width: '100%',
     alignItems: 'center',
@@ -393,6 +402,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 20,
     paddingTop: 20,
+  },
+  stepIndicatorInline: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   stepText: {
     fontSize: 14,
