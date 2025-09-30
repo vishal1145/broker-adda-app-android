@@ -22,10 +22,11 @@ const OnboardingScreen = ({ navigation }) => {
       if (currentStep < 3) {
         const newStep = currentStep + 1
         setCurrentStep(newStep)
-        Animated.timing(translateX, {
+        Animated.spring(translateX, {
           toValue: -screenWidth * (newStep - 1),
-          duration: 300,
           useNativeDriver: true,
+          tension: 100,
+          friction: 8,
         }).start()
       }
       // On final step, swipe left does nothing (stays on step 3)
@@ -34,18 +35,20 @@ const OnboardingScreen = ({ navigation }) => {
       if (currentStep > 1) {
         const newStep = currentStep - 1
         setCurrentStep(newStep)
-        Animated.timing(translateX, {
+        Animated.spring(translateX, {
           toValue: -screenWidth * (newStep - 1),
-          duration: 300,
           useNativeDriver: true,
+          tension: 100,
+          friction: 8,
         }).start()
       } else if (currentStep === 3) {
         // On final step, swipe right goes to step 2
         setCurrentStep(2)
-        Animated.timing(translateX, {
+        Animated.spring(translateX, {
           toValue: -screenWidth,
-          duration: 300,
           useNativeDriver: true,
+          tension: 100,
+          friction: 8,
         }).start()
       }
     }
@@ -59,29 +62,44 @@ const OnboardingScreen = ({ navigation }) => {
   const onHandlerStateChange = (event) => {
     if (event.nativeEvent.state === State.END) {
       const { translationX, velocityX } = event.nativeEvent
+      const currentPosition = -screenWidth * (currentStep - 1)
       
       // Determine swipe direction based on translation and velocity
-      if (translationX > 30 || velocityX > 300) {
-        // Swipe right - go to previous step (allowed on all steps except first)
+      if (translationX > 50 || velocityX > 500) {
+        // Swipe right - go to previous step
         if (currentStep > 1) {
-          handleSwipe('right')
+          const newStep = currentStep - 1
+          setCurrentStep(newStep)
+          Animated.spring(translateX, {
+            toValue: -screenWidth * (newStep - 1),
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start()
         } else {
           // Snap back to current position if on first step
           Animated.spring(translateX, {
-            toValue: -screenWidth * (currentStep - 1),
+            toValue: currentPosition,
             useNativeDriver: true,
             tension: 100,
             friction: 8,
           }).start()
         }
-      } else if (translationX < -30 || velocityX < -300) {
-        // Swipe left - go to next step (only if not on final step)
+      } else if (translationX < -50 || velocityX < -500) {
+        // Swipe left - go to next step
         if (currentStep < 3) {
-          handleSwipe('left')
+          const newStep = currentStep + 1
+          setCurrentStep(newStep)
+          Animated.spring(translateX, {
+            toValue: -screenWidth * (newStep - 1),
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start()
         } else {
           // Snap back to current position if on final step
           Animated.spring(translateX, {
-            toValue: -screenWidth * (currentStep - 1),
+            toValue: currentPosition,
             useNativeDriver: true,
             tension: 100,
             friction: 8,
@@ -90,7 +108,7 @@ const OnboardingScreen = ({ navigation }) => {
       } else {
         // Snap back to current position
         Animated.spring(translateX, {
-          toValue: -screenWidth * (currentStep - 1),
+          toValue: currentPosition,
           useNativeDriver: true,
           tension: 100,
           friction: 8,
@@ -107,10 +125,11 @@ const OnboardingScreen = ({ navigation }) => {
   const handleSkip = () => {
     // Skip to final step (step 3)
     setCurrentStep(3)
-    Animated.timing(translateX, {
+    Animated.spring(translateX, {
       toValue: -screenWidth * 2, // Move to step 3 (index 2)
-      duration: 300,
       useNativeDriver: true,
+      tension: 100,
+      friction: 8,
     }).start()
   }
 
@@ -142,7 +161,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 1:
         return {
           headerTitle: 'Welcome to BrokerLink',
-          image: require('../assets/onbording1.png'),
+          image: require('../assets/Screenshot_2.png'),
           mainHeading: 'Connect with Brokers\nAcross Agra',
           description: 'Expand your reach by linking with trusted brokers in every region.',
           showProgressBar: false,
@@ -151,7 +170,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 2:
         return {
           headerTitle: 'Onboarding',
-          image: require('../assets/onbording2.png'),
+          image: require('../assets/Screenshot_3.png'),
           mainHeading: 'Discover New Opportunities',
           description: 'Access a wider network of professionals and properties, unlocking new collaborations.',
           showProgressBar: false,
@@ -160,7 +179,7 @@ const OnboardingScreen = ({ navigation }) => {
       case 3:
         return {
           headerTitle: 'Final Step',
-          image: require('../assets/onbording3.png'),
+          image: require('../assets/Screenshot_1.png'),
           mainHeading: 'Unlock Your BrokerLink Potential',
           description: 'Access powerful features designed to expand your network and grow your business today.',
           showProgressBar: false,
@@ -177,86 +196,103 @@ const OnboardingScreen = ({ navigation }) => {
 
     return (
       <View key={step} style={styles.stepContainer}>
-        {/* Central Image */}
-        <View style={styles.imageContainer}>
-          <Image 
-            source={typeof stepData.image === 'string' ? { uri: stepData.image } : stepData.image}
-            style={styles.centralImage}
-            resizeMode="cover"
-            onError={(error) => console.log('Image load error:', error)}
-            onLoad={() => console.log('Image loaded successfully')}
-          />
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.contentSection}>
-          <Text style={styles.mainHeading}>
-            {stepData.mainHeading}
-          </Text>
-          <Text style={styles.description}>
-            {stepData.description}
-          </Text>
-          
-          {/* Step Indicator for steps 1 and 2 */}
-          {!stepData.showFeatures && (
-            <View style={styles.stepIndicatorInline}>
-              <DottedLineIndicator activeStep={currentStep} />
+        {/* For Step 3: Show heading first, then description, then checkboxes (no image) */}
+        {step === 3 ? (
+          <>
+            {/* Main Heading for Step 3 */}
+            <View style={styles.step3HeadingContainer}>
+              <Text style={styles.mainHeading}>
+                {stepData.mainHeading}
+              </Text>
             </View>
-          )}
-        </View>
 
-        {/* Feature List for Step 3 */}
-        {stepData.showFeatures && (
-          <View style={styles.featureList}>
-            <TouchableOpacity 
-              style={styles.featureItem} 
-              onPress={() => toggleCheckbox('connectBrokers')}
-              activeOpacity={0.7}
-            >
-              <View style={checkboxes.connectBrokers ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                {checkboxes.connectBrokers && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.featureText}>Connect with verified brokers across regions.</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.featureItem} 
-              onPress={() => toggleCheckbox('shareListings')}
-              activeOpacity={0.7}
-            >
-              <View style={checkboxes.shareListings ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                {checkboxes.shareListings && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.featureText}>Share listings and find exclusive opportunities.</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.featureItem} 
-              onPress={() => toggleCheckbox('networkingEvents')}
-              activeOpacity={0.7}
-            >
-              <View style={checkboxes.networkingEvents ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                {checkboxes.networkingEvents && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.featureText}>Participate in local and national networking events.</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.featureItem} 
-              onPress={() => toggleCheckbox('trackConnections')}
-              activeOpacity={0.7}
-            >
-              <View style={checkboxes.trackConnections ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                {checkboxes.trackConnections && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
-            </TouchableOpacity>
-            
-            {/* Step Indicator for Step 3 - positioned below feature list */}
-            <View style={styles.stepIndicatorInline}>
-              <DottedLineIndicator activeStep={currentStep} />
+            {/* Description for Step 3 */}
+            <View style={styles.step3DescriptionContainer}>
+              <Text style={styles.description}>
+                {stepData.description}
+              </Text>
             </View>
-          </View>
+
+            {/* Feature List for Step 3 */}
+            <View style={styles.featureList}>
+              <TouchableOpacity 
+                style={styles.featureItem} 
+                onPress={() => toggleCheckbox('connectBrokers')}
+                activeOpacity={0.7}
+              >
+                <View style={checkboxes.connectBrokers ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                  {checkboxes.connectBrokers && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.featureText}>Connect with verified brokers across regions.</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.featureItem} 
+                onPress={() => toggleCheckbox('shareListings')}
+                activeOpacity={0.7}
+              >
+                <View style={checkboxes.shareListings ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                  {checkboxes.shareListings && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.featureText}>Share listings and find exclusive opportunities.</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.featureItem} 
+                onPress={() => toggleCheckbox('networkingEvents')}
+                activeOpacity={0.7}
+              >
+                <View style={checkboxes.networkingEvents ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                  {checkboxes.networkingEvents && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.featureText}>Participate in local and national networking events.</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.featureItem} 
+                onPress={() => toggleCheckbox('trackConnections')}
+                activeOpacity={0.7}
+              >
+                <View style={checkboxes.trackConnections ? styles.checkboxChecked : styles.checkboxUnchecked}>
+                  {checkboxes.trackConnections && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
+              </TouchableOpacity>
+              
+              {/* Step Indicator for Step 3 - positioned below feature list */}
+              <View style={styles.stepIndicatorInline}>
+                <DottedLineIndicator activeStep={currentStep} />
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Central Image for Steps 1 and 2 */}
+            <View style={styles.imageContainer}>
+              <Image 
+                source={typeof stepData.image === 'string' ? { uri: stepData.image } : stepData.image}
+                style={styles.centralImage}
+                resizeMode="cover"
+                onError={(error) => console.log('Image load error:', error)}
+                onLoad={() => console.log('Image loaded successfully')}
+              />
+            </View>
+
+            {/* Main Content for Steps 1 and 2 */}
+            <View style={styles.contentSection}>
+              <Text style={styles.mainHeading}>
+                {stepData.mainHeading}
+              </Text>
+              <Text style={styles.description}>
+                {stepData.description}
+              </Text>
+              
+              {/* Step Indicator for steps 1 and 2 */}
+              <View style={styles.stepIndicatorInline}>
+                <DottedLineIndicator activeStep={currentStep} />
+              </View>
+            </View>
+          </>
         )}
       </View>
     )
@@ -283,7 +319,8 @@ const OnboardingScreen = ({ navigation }) => {
         ref={panRef}
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
-        minDist={10}
+        activeOffsetX={[-10, 10]}
+        failOffsetY={[-5, 5]}
       >
         <Animated.View style={[styles.sliderContainer, { transform: [{ translateX }] }]}>
           {renderStep(1)}
@@ -321,8 +358,7 @@ const styles = StyleSheet.create({
   stepContainer: {
     width: '33.333%', // 100% / 3 steps
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'column',
     paddingBottom: 40,
   },
   mainContentContainer: {
@@ -366,37 +402,38 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   imageContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 30,
+    flex: 1,
     width: '100%',
-    alignItems: 'center',
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   centralImage: {
     width: '100%',
-    height: 250,
+    height: '100%',
     borderRadius: 0,
   },
   contentSection: {
     paddingHorizontal: 30,
-    paddingTop: 30,
-    paddingBottom: 30,
+    paddingTop: 20,
+    paddingBottom: 20,
     alignItems: 'center',
+    flexShrink: 0,
   },
   mainHeading: {
-    fontSize:30,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#000000',
+    color: '#1F2937',
     textAlign: 'center',
     marginBottom: 18,
-    lineHeight: 36,
+    lineHeight: 40,
   },
   description: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '400',
-    color: '#8E8E93',
+    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 28,
   },
   stepIndicator: {
     alignItems: 'center',
@@ -431,66 +468,84 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5EA',
   },
   featureList: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
     paddingBottom: 40,
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
     width: '100%',
-    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   checkboxChecked: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     backgroundColor: '#009689',
-    borderRadius: 4,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    shadowColor: '#009689',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   checkboxUnchecked: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
     flexShrink: 0,
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   featureText: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '400',
-    color: '#000000',
-    lineHeight: 22,
+    fontWeight: '500',
+    color: '#1F2937',
+    lineHeight: 24,
     textAlign: 'left',
-    marginLeft: 12,
+    marginLeft: 16,
   },
   buttonContainer: {
-    paddingHorizontal: 30,
-    paddingBottom: 40,
-    paddingTop: 10,
+    paddingHorizontal: 40,
+    paddingBottom: 50,
+    paddingTop: 20,
   },
   getStartedButton: {
     backgroundColor: '#009689',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 50,
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 10,
+    shadowColor: '#009689',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   getStartedButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   skipButtonContainer: {
     position: 'absolute',
@@ -508,6 +563,20 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontSize: 16,
     fontWeight: '500',
+  },
+  step3HeadingContainer: {
+    paddingHorizontal: 40,
+    paddingTop: 80,
+    paddingBottom: 20,
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  step3DescriptionContainer: {
+    paddingHorizontal: 40,
+    paddingTop: 0,
+    paddingBottom: 40,
+    alignItems: 'center',
+    flexShrink: 0,
   },
 })
 
