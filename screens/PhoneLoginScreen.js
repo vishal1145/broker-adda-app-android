@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   header: {
-    paddingTop: 20,
+    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

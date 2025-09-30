@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    paddingTop: 20,
+    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

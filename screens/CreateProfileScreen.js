@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
   headerWithTitle: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
