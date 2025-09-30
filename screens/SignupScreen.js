@@ -254,13 +254,13 @@ const SignupScreen = ({ navigation }) => {
             <View style={styles.termsContainer}>
               <Text style={styles.termsText}>
                 By continuing you agree to our{' '}
-                <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')} activeOpacity={0.7}>
-                  <Text style={styles.linkText}>Terms & Conditions</Text>
-                </TouchableOpacity>
+                <Text style={styles.linkText} onPress={() => navigation.navigate('TermsAndConditions')}>
+                  Terms & Conditions
+                </Text>
                 {' '}and{' '}
-                <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')} activeOpacity={0.7}>
-                  <Text style={styles.linkText}>Privacy Policy</Text>
-                </TouchableOpacity>
+                <Text style={styles.linkText} onPress={() => navigation.navigate('PrivacyPolicy')}>
+                  Privacy Policy
+                </Text>
               </Text>
             </View>
 

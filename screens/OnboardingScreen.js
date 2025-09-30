@@ -315,6 +315,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingBottom: 40,
   },
   mainContentContainer: {
     flex: 1,
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
   },
   skipButtonContainer: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     right: 20,
     zIndex: 10,
   },
