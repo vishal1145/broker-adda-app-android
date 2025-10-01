@@ -398,7 +398,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Handle view uploaded document
   const handleViewDocument = (docType) => {
-    Snackbar.showInfo('View Document', `View functionality for ${docType} will be implemented to open the uploaded file.`)
+    Snackbar.showInfo('View Document', `View functionality for ${docType} will be implemented to open the uploaded file. Tap the edit button to replace the document.`)
   }
 
   // Handle profile image upload
@@ -987,40 +987,59 @@ const CreateProfileScreen = ({ navigation }) => {
           const hasDocument = isUploaded || existingDoc
           
           return (
-            <TouchableOpacity 
-              key={doc.key} 
-              style={styles.documentCard}
-              onPress={() => hasDocument ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
-            >
-              <View style={styles.documentIcon}>
-                {selectedImage ? (
-                  <SafeImage 
-                    source={{ uri: selectedImage.uri }} 
-                    style={styles.documentPreview}
-                    imageType={doc.key}
-                    resizeMode="cover"
-                  />
-                ) : existingDoc ? (
-                  <SafeImage 
-                    source={{ uri: existingDoc }} 
-                    style={styles.documentPreview}
-                    imageType={doc.key}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <MaterialIcons 
-                    name={hasDocument ? "check-circle" : "cloud-upload"} 
-                    size={32} 
-                    color={hasDocument ? "#4CAF50" : "#009689"} 
-                  />
-                )}
-              </View>
-              <Text style={styles.documentTitle}>{doc.title}</Text>
-              <Text style={[styles.documentStatus, hasDocument && styles.documentStatusUploaded]}>
-                {hasDocument ? 'View uploaded file' : `Click to upload ${doc.title}`}
-              </Text>
-              <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
-            </TouchableOpacity>
+            <View key={doc.key} style={styles.documentCard}>
+              <TouchableOpacity 
+                style={styles.documentCardContent}
+                onPress={() => hasDocument ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
+              >
+                <View style={styles.documentIcon}>
+                  {selectedImage ? (
+                    <View style={styles.documentImageWrapper}>
+                      <SafeImage 
+                        source={{ uri: selectedImage.uri }} 
+                        style={styles.documentPreview}
+                        imageType={doc.key}
+                        resizeMode="cover"
+                      />
+                      {hasDocument && (
+                        <TouchableOpacity 
+                          style={styles.editDocumentButton} 
+                          onPress={() => handleDocumentUpload(doc.key)}
+                        >
+                          <MaterialIcons name="edit" size={14} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ) : existingDoc ? (
+                    <View style={styles.documentImageWrapper}>
+                      <SafeImage 
+                        source={{ uri: existingDoc }} 
+                        style={styles.documentPreview}
+                        imageType={doc.key}
+                        resizeMode="cover"
+                      />
+                      <TouchableOpacity 
+                        style={styles.editDocumentButton} 
+                        onPress={() => handleDocumentUpload(doc.key)}
+                      >
+                        <MaterialIcons name="edit" size={14} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <MaterialIcons 
+                      name={hasDocument ? "check-circle" : "cloud-upload"} 
+                      size={32} 
+                      color={hasDocument ? "#4CAF50" : "#009689"} 
+                    />
+                  )}
+                </View>
+                <Text style={styles.documentTitle}>{doc.title}</Text>
+                <Text style={[styles.documentStatus, hasDocument && styles.documentStatusUploaded]}>
+                  {hasDocument ? 'Tap to view or edit' : `Click to upload ${doc.title}`}
+                </Text>
+                <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
+              </TouchableOpacity>
+            </View>
           )
         })}
       </View>
@@ -1484,14 +1503,20 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#F8F9FA',
     borderRadius: 8,
-    padding: 16,
     marginBottom: 16,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E5EA',
   },
+  documentCardContent: {
+    padding: 16,
+    alignItems: 'center',
+  },
   documentIcon: {
     marginBottom: 12,
+    position: 'relative',
+  },
+  documentImageWrapper: {
+    position: 'relative',
   },
   documentPreview: {
     width: 40,
@@ -1499,6 +1524,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#4CAF50',
+  },
+  editDocumentButton: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#009689',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   documentTitle: {
     fontSize: 14,

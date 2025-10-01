@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
   step3DescriptionContainer: {
     paddingHorizontal: 40,
     paddingTop: 0,
-    paddingBottom: 40,
+    paddingBottom: 60,
     alignItems: 'center',
     flexShrink: 0,
   },
