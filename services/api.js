@@ -155,6 +155,19 @@ export const authAPI = {
       console.error('Get profile error:', error);
       throw error;
     }
+  },
+
+  // Get regions by city
+  getRegions: async (city) => {
+    try {
+      console.log('Fetching regions for city:', city);
+      const response = await api.get(`/api/regions?city=${city.toLowerCase()}`);
+      console.log('Regions fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get regions error:', error);
+      throw error;
+    }
   }
 };
 

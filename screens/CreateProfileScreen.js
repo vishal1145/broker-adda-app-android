@@ -49,6 +49,7 @@ const CreateProfileScreen = ({ navigation }) => {
     state: '',
     city: '',
     regions: '',
+    selectedRegionId: '',
     
     // Documents
     aadharCard: null,
@@ -89,15 +90,41 @@ const CreateProfileScreen = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null)
   const [profileImageLoading, setProfileImageLoading] = useState(false)
   const [imageLoadErrors, setImageLoadErrors] = useState({})
+  const [regionsList, setRegionsList] = useState([])
+  const [regionsLoading, setRegionsLoading] = useState(false)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
-  const states = ['Uttar Pradesh', 'Maharashtra', 'Karnataka', 'Tamil Nadu', 'Gujarat']
-  const cities = ['Noida', 'Mumbai', 'Bangalore', 'Chennai', 'Ahmedabad']
-  const regions = ['Electronic City', 'Whitefield', 'Koramangala', 'Indiranagar', 'JP Nagar']
+  const states = ['Uttar Pradesh']
+  const cities = ['Noida', 'Agra']
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Fetch regions based on selected city
+  const fetchRegions = async (city) => {
+    if (!city) {
+      setRegionsList([])
+      return
+    }
+
+    try {
+      setRegionsLoading(true)
+      const response = await authAPI.getRegions(city)
+      
+      if (response.success && response.data && response.data.regions) {
+        setRegionsList(response.data.regions)
+      } else {
+        console.error('Failed to fetch regions:', response.message)
+        setRegionsList([])
+      }
+    } catch (error) {
+      console.error('Error fetching regions:', error)
+      setRegionsList([])
+    } finally {
+      setRegionsLoading(false)
+    }
   }
 
   // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
@@ -222,6 +249,7 @@ const CreateProfileScreen = ({ navigation }) => {
             state: broker.state || '',
             city: broker.city || '',
             regions: broker.region?.[0]?.name || '', // Using first region name
+            selectedRegionId: broker.region?.[0]?._id || '', // Using first region ID
           }))
           
           // Set existing profile image if available
@@ -232,6 +260,11 @@ const CreateProfileScreen = ({ navigation }) => {
               type: 'image/jpeg',
               fileName: 'profile.jpg'
             })
+          }
+          
+          // Fetch regions if city is already selected
+          if (broker.city) {
+            fetchRegions(broker.city)
           }
           
           // Check for uploaded documents
@@ -533,7 +566,7 @@ const CreateProfileScreen = ({ navigation }) => {
           Snackbar.showValidationError('Please select your city')
           return false
         }
-        if (!formData.regions) {
+        if (!formData.selectedRegionId) {
           Snackbar.showValidationError('Please select your regions')
           return false
         }
@@ -552,7 +585,7 @@ const CreateProfileScreen = ({ navigation }) => {
            formData.address.trim() && 
            formData.state && 
            formData.city && 
-           formData.regions
+           formData.selectedRegionId
   }
 
   const handleCompleteProfile = async () => {
@@ -610,9 +643,9 @@ const CreateProfileScreen = ({ navigation }) => {
         profileData.append('brokerDetails[socialMedia][facebook]', formData.facebook)
       }
       
-      // Regions (using a placeholder region ID - you may need to map this to actual region IDs)
-      if (formData.regions) {
-        profileData.append('brokerDetails[region][]', '68c7a35bf238b8913058a5d4') // Placeholder region ID
+      // Regions (using the selected region ID)
+      if (formData.selectedRegionId) {
+        profileData.append('brokerDetails[region][]', formData.selectedRegionId)
       }
       
       // Add profile image if selected (only if it's a new image, not from API)
@@ -954,13 +987,20 @@ const CreateProfileScreen = ({ navigation }) => {
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Regions *</Text>
         <TouchableOpacity 
-          style={styles.input}
-          onPress={() => setShowRegionModal(true)}
+          style={[styles.input, (regionsLoading || regionsList.length === 0) && styles.disabledInput]}
+          onPress={() => !regionsLoading && regionsList.length > 0 && setShowRegionModal(true)}
+          disabled={regionsLoading || regionsList.length === 0}
         >
           <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
-            {formData.regions || 'Select regions'}
+            {regionsLoading ? 'Loading regions...' : 
+             regionsList.length === 0 && formData.city ? 'No regions available' :
+             formData.regions || 'Select regions'}
           </Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+          {regionsLoading ? (
+            <ActivityIndicator size="small" color="#009689" />
+          ) : (
+            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -1112,7 +1152,20 @@ const CreateProfileScreen = ({ navigation }) => {
                   key={index}
                   style={styles.modalItem}
                   onPress={() => {
-                    updateFormData(field, option)
+                    if (field === 'regions') {
+                      // Find the region object to get the ID
+                      const selectedRegion = regionsList.find(region => region.name === option)
+                      updateFormData('regions', option)
+                      updateFormData('selectedRegionId', selectedRegion ? selectedRegion._id : '')
+                    } else if (field === 'city') {
+                      // Handle city selection - fetch regions and clear selected region
+                      updateFormData(field, option)
+                      updateFormData('regions', '') // Clear selected region
+                      updateFormData('selectedRegionId', '') // Clear selected region ID
+                      fetchRegions(option) // Fetch regions for the selected city
+                    } else {
+                      updateFormData(field, option)
+                    }
                     onClose()
                   }}
                 >
@@ -1226,7 +1279,7 @@ const CreateProfileScreen = ({ navigation }) => {
         {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
         {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
         {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
-        {renderModal('Select Regions', regions, 'regions', showRegionModal, () => setShowRegionModal(false))}
+        {renderModal('Select Regions', regionsList.length > 0 ? regionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
 
       {/* </KeyboardAvoidingView> */}
     </SafeAreaView>
