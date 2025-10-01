@@ -54,6 +54,88 @@ const ProfileScreen = ({ navigation }) => {
   
   const [isLoading, setIsLoading] = useState(true)
   const [profileImage, setProfileImage] = useState(null)
+  const [imageLoadErrors, setImageLoadErrors] = useState({})
+
+  // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
+  const getSecureImageUrl = (url) => {
+    if (!url) return null
+    console.log('Original URL:', url)
+    // Convert HTTP to HTTPS for better compatibility with APK builds
+    if (url.startsWith('http://')) {
+      const secureUrl = url.replace('http://', 'https://')
+      console.log('Converted to HTTPS:', secureUrl)
+      return secureUrl
+    }
+    console.log('Using original URL:', url)
+    return url
+  }
+
+  // Helper function to handle image loading errors
+  const handleImageError = (imageType, error) => {
+    console.log(`Image load error for ${imageType}:`, error)
+    setImageLoadErrors(prev => ({
+      ...prev,
+      [imageType]: true
+    }))
+  }
+
+  // Retry loading an image
+  const retryImageLoad = (imageType) => {
+    setImageLoadErrors(prev => ({
+      ...prev,
+      [imageType]: false
+    }))
+  }
+
+  // Enhanced image component with fallback
+  const SafeImage = ({ source, style, imageType, ...props }) => {
+    const [imageError, setImageError] = useState(false)
+    const [currentSource, setCurrentSource] = useState(source)
+
+    const handleError = (error) => {
+      console.log(`Image error for ${imageType}:`, error)
+      console.log('Failed URL:', currentSource?.uri)
+      
+      // If we're using HTTPS and it fails, try HTTP as fallback
+      if (currentSource?.uri?.startsWith('https://')) {
+        const httpUrl = currentSource.uri.replace('https://', 'http://')
+        console.log('Trying HTTP fallback:', httpUrl)
+        setCurrentSource({ uri: httpUrl })
+        setImageError(false)
+      } else {
+        setImageError(true)
+        handleImageError(imageType, error)
+      }
+    }
+
+    const retry = () => {
+      setImageError(false)
+      setCurrentSource(source)
+    }
+
+    if (imageError) {
+      return (
+        <View style={[style, { backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }]}>
+          <MaterialIcons name="broken-image" size={24} color="#8E8E93" />
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={retry}
+          >
+            <MaterialIcons name="refresh" size={12} color="#009689" />
+          </TouchableOpacity>
+        </View>
+      )
+    }
+
+    return (
+      <Image
+        source={currentSource}
+        style={style}
+        onError={handleError}
+        {...props}
+      />
+    )
+  }
 
   // Fetch user profile data
   const fetchProfileData = async () => {
@@ -104,7 +186,7 @@ const ProfileScreen = ({ navigation }) => {
                 fileType: broker.kycDocs?.aadhar ? 'JPEG' : 'JPEG',
                 hasFile: !!broker.kycDocs?.aadhar,
                 uploadDate: '2024-01-15',
-                url: broker.kycDocs?.aadhar || ''
+                url: getSecureImageUrl(broker.kycDocs?.aadhar) || ''
               },
               {
                 id: 2,
@@ -112,7 +194,7 @@ const ProfileScreen = ({ navigation }) => {
                 fileType: broker.kycDocs?.pan ? 'JPEG' : 'JPEG',
                 hasFile: !!broker.kycDocs?.pan,
                 uploadDate: '2024-01-15',
-                url: broker.kycDocs?.pan || ''
+                url: getSecureImageUrl(broker.kycDocs?.pan) || ''
               },
               {
                 id: 3,
@@ -120,7 +202,7 @@ const ProfileScreen = ({ navigation }) => {
                 fileType: broker.kycDocs?.gst ? 'JPEG' : 'JPEG',
                 hasFile: !!broker.kycDocs?.gst,
                 uploadDate: '2024-01-20',
-                url: broker.kycDocs?.gst || ''
+                url: getSecureImageUrl(broker.kycDocs?.gst) || ''
               },
               {
                 id: 4,
@@ -143,9 +225,10 @@ const ProfileScreen = ({ navigation }) => {
           
           setProfileData(mappedData)
           
-          // Set profile image if available
+          // Set profile image if available with secure URL
           if (broker.brokerImage) {
-            setProfileImage(broker.brokerImage)
+            const secureImageUrl = getSecureImageUrl(broker.brokerImage)
+            setProfileImage(secureImageUrl)
           }
         }
       }
@@ -270,9 +353,10 @@ const ProfileScreen = ({ navigation }) => {
                 <View style={styles.modernProfileImageContainer}>
                   <View style={styles.profileImageWrapper}>
                     {profileImage ? (
-                      <Image 
+                      <SafeImage 
                         source={{ uri: profileImage }}
                         style={styles.modernProfileImage}
+                        imageType="profileImage"
                         resizeMode="cover"
                       />
                     ) : (
@@ -1699,6 +1783,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  retryButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#009689',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 })
 

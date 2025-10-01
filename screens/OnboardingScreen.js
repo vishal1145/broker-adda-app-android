@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { PanGestureHandler, State } from 'react-native-gesture-handler'
+import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler'
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -15,104 +15,115 @@ const OnboardingScreen = ({ navigation }) => {
   const screenWidth = Dimensions.get('window').width
   const translateX = useRef(new Animated.Value(0)).current
   const panRef = useRef()
+  const isAnimating = useRef(false)
+
+  const animateToStep = (step, velocity = 0) => {
+    if (isAnimating.current) return
+    isAnimating.current = true
+    
+    const targetValue = -screenWidth * (step - 1)
+    
+    // Use different animation based on velocity for more natural feel
+    if (Math.abs(velocity) > 1000) {
+      // High velocity - use timing animation for snappy feel
+      Animated.timing(translateX, {
+        toValue: targetValue,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        isAnimating.current = false
+      })
+    } else {
+      // Normal velocity - use spring animation
+      Animated.spring(translateX, {
+        toValue: targetValue,
+        useNativeDriver: true,
+        tension: 300,
+        friction: 30,
+        velocity: velocity,
+      }).start(() => {
+        isAnimating.current = false
+      })
+    }
+  }
 
   const handleSwipe = (direction) => {
+    if (isAnimating.current) return
+    
     if (direction === 'left') {
       // Swipe left to go to next step (only if not on final step)
-      if (currentStep < 3) {
+      if (currentStep < 4) {
         const newStep = currentStep + 1
         setCurrentStep(newStep)
-        Animated.spring(translateX, {
-          toValue: -screenWidth * (newStep - 1),
-          useNativeDriver: true,
-          tension: 100,
-          friction: 8,
-        }).start()
+        animateToStep(newStep)
       }
-      // On final step, swipe left does nothing (stays on step 3)
     } else if (direction === 'right') {
       // Swipe right to go to previous step
       if (currentStep > 1) {
         const newStep = currentStep - 1
         setCurrentStep(newStep)
-        Animated.spring(translateX, {
-          toValue: -screenWidth * (newStep - 1),
-          useNativeDriver: true,
-          tension: 100,
-          friction: 8,
-        }).start()
-      } else if (currentStep === 3) {
-        // On final step, swipe right goes to step 2
-        setCurrentStep(2)
-        Animated.spring(translateX, {
-          toValue: -screenWidth,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 8,
-        }).start()
+        animateToStep(newStep)
+      } else if (currentStep === 4) {
+        // On final step, swipe right goes to step 3
+        setCurrentStep(3)
+        animateToStep(3)
       }
     }
   }
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX } }],
-    { useNativeDriver: true }
+    { 
+      useNativeDriver: true,
+      listener: (event) => {
+        // Prevent gesture when animating
+        if (isAnimating.current) {
+          return
+        }
+      }
+    }
   )
 
   const onHandlerStateChange = (event) => {
+    if (event.nativeEvent.state === State.ACTIVE) {
+      // Reset animation flag when gesture starts
+      isAnimating.current = false
+    }
+    
     if (event.nativeEvent.state === State.END) {
+      if (isAnimating.current) return
+      
       const { translationX, velocityX } = event.nativeEvent
       const currentPosition = -screenWidth * (currentStep - 1)
       
+      // More sensitive thresholds for better responsiveness
+      const swipeThreshold = 30
+      const velocityThreshold = 300
+      
       // Determine swipe direction based on translation and velocity
-      if (translationX > 50 || velocityX > 500) {
+      if (translationX > swipeThreshold || velocityX > velocityThreshold) {
         // Swipe right - go to previous step
         if (currentStep > 1) {
           const newStep = currentStep - 1
           setCurrentStep(newStep)
-          Animated.spring(translateX, {
-            toValue: -screenWidth * (newStep - 1),
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start()
+          animateToStep(newStep, velocityX)
         } else {
           // Snap back to current position if on first step
-          Animated.spring(translateX, {
-            toValue: currentPosition,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start()
+          animateToStep(currentStep, 0)
         }
-      } else if (translationX < -50 || velocityX < -500) {
+      } else if (translationX < -swipeThreshold || velocityX < -velocityThreshold) {
         // Swipe left - go to next step
-        if (currentStep < 3) {
+        if (currentStep < 4) {
           const newStep = currentStep + 1
           setCurrentStep(newStep)
-          Animated.spring(translateX, {
-            toValue: -screenWidth * (newStep - 1),
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start()
+          animateToStep(newStep, velocityX)
         } else {
           // Snap back to current position if on final step
-          Animated.spring(translateX, {
-            toValue: currentPosition,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start()
+          animateToStep(currentStep, 0)
         }
       } else {
         // Snap back to current position
-        Animated.spring(translateX, {
-          toValue: currentPosition,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 8,
-        }).start()
+        animateToStep(currentStep, 0)
       }
     }
   }
@@ -123,14 +134,9 @@ const OnboardingScreen = ({ navigation }) => {
   }
 
   const handleSkip = () => {
-    // Skip to final step (step 3)
-    setCurrentStep(3)
-    Animated.spring(translateX, {
-      toValue: -screenWidth * 2, // Move to step 3 (index 2)
-      useNativeDriver: true,
-      tension: 100,
-      friction: 8,
-    }).start()
+    // Skip to final step (step 4)
+    setCurrentStep(4)
+    animateToStep(4)
   }
 
   const toggleCheckbox = (checkboxKey) => {
@@ -143,7 +149,7 @@ const OnboardingScreen = ({ navigation }) => {
   const DottedLineIndicator = ({ activeStep }) => {
     return (
       <View style={styles.dottedLineContainer}>
-        {[1, 2, 3].map((step) => (
+        {[1, 2, 3, 4].map((step) => (
           <View
             key={step}
             style={[
@@ -178,6 +184,15 @@ const OnboardingScreen = ({ navigation }) => {
         }
       case 3:
         return {
+          headerTitle: 'Build Your Network',
+          image: require('../assets/onbording3.png'),
+          mainHeading: 'Grow Your Business\nTogether',
+          description: 'Join a community of successful brokers and unlock unlimited growth potential.',
+          showProgressBar: false,
+          showFeatures: false
+        }
+      case 4:
+        return {
           headerTitle: 'Final Step',
           image: require('../assets/onbording3.png'),
           mainHeading: 'Unlock Your BrokerLink Potential',
@@ -196,24 +211,24 @@ const OnboardingScreen = ({ navigation }) => {
 
     return (
       <View key={step} style={styles.stepContainer}>
-        {/* For Step 3: Show heading first, then description, then checkboxes (no image) */}
-        {step === 3 ? (
+        {/* For Step 4: Show heading first, then description, then checkboxes (no image) */}
+        {step === 4 ? (
           <>
-            {/* Main Heading for Step 3 */}
+            {/* Main Heading for Step 4 */}
             <View style={styles.step3HeadingContainer}>
               <Text style={styles.mainHeading}>
                 {stepData.mainHeading}
               </Text>
             </View>
 
-            {/* Description for Step 3 */}
+            {/* Description for Step 4 */}
             <View style={styles.step3DescriptionContainer}>
               <Text style={styles.description}>
                 {stepData.description}
               </Text>
             </View>
 
-            {/* Feature List for Step 3 */}
+            {/* Feature List for Step 4 */}
             <View style={styles.featureList}>
               <TouchableOpacity 
                 style={styles.featureItem} 
@@ -259,7 +274,7 @@ const OnboardingScreen = ({ navigation }) => {
                 <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
               </TouchableOpacity>
               
-              {/* Step Indicator for Step 3 - positioned below feature list */}
+              {/* Step Indicator for Step 4 - positioned below feature list */}
               <View style={styles.stepIndicatorInline}>
                 <DottedLineIndicator activeStep={currentStep} />
               </View>
@@ -267,7 +282,7 @@ const OnboardingScreen = ({ navigation }) => {
           </>
         ) : (
           <>
-            {/* Central Image for Steps 1 and 2 */}
+            {/* Central Image for Steps 1, 2, and 3 */}
             <View style={styles.imageContainer}>
               <Image 
                 source={typeof stepData.image === 'string' ? { uri: stepData.image } : stepData.image}
@@ -278,7 +293,7 @@ const OnboardingScreen = ({ navigation }) => {
               />
             </View>
 
-            {/* Main Content for Steps 1 and 2 */}
+            {/* Main Content for Steps 1, 2, and 3 */}
             <View style={styles.contentSection}>
               <Text style={styles.mainHeading}>
                 {stepData.mainHeading}
@@ -287,7 +302,7 @@ const OnboardingScreen = ({ navigation }) => {
                 {stepData.description}
               </Text>
               
-              {/* Step Indicator for steps 1 and 2 */}
+              {/* Step Indicator for steps 1, 2, and 3 */}
               <View style={styles.stepIndicatorInline}>
                 <DottedLineIndicator activeStep={currentStep} />
               </View>
@@ -299,53 +314,60 @@ const OnboardingScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.onboardingContainer} edges={[]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Skip Button - Only on steps 1 and 2 */}
-      {(currentStep === 1 || currentStep === 2) && (
-        <View style={styles.skipButtonContainer}>
-          <TouchableOpacity 
-            style={styles.skipButton} 
-            onPress={handleSkip}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.skipButtonText}>Skip</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      <PanGestureHandler
-        ref={panRef}
-        onGestureEvent={onGestureEvent}
-        onHandlerStateChange={onHandlerStateChange}
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-5, 5]}
-      >
-        <Animated.View style={[styles.sliderContainer, { transform: [{ translateX }] }]}>
-          {renderStep(1)}
-          {renderStep(2)}
-          {renderStep(3)}
-        </Animated.View>
-      </PanGestureHandler>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaView style={styles.onboardingContainer} edges={[]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        
+        {/* Skip Button - Only on steps 1, 2, and 3 */}
+        {(currentStep === 1 || currentStep === 2 || currentStep === 3) && (
+          <View style={styles.skipButtonContainer}>
+            <TouchableOpacity 
+              style={styles.skipButton} 
+              onPress={handleSkip}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.skipButtonText}>Skip</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        <PanGestureHandler
+          ref={panRef}
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          activeOffsetX={[-5, 5]}
+          failOffsetY={[-10, 10]}
+          minPointers={1}
+          maxPointers={1}
+        >
+          <Animated.View style={[styles.sliderContainer, { transform: [{ translateX }] }]}>
+            {renderStep(1)}
+            {renderStep(2)}
+            {renderStep(3)}
+            {renderStep(4)}
+          </Animated.View>
+        </PanGestureHandler>
 
-
-      {/* Get Started Button - Only on final step */}
-      {currentStep === 3 && (
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.getStartedButton} 
-            onPress={handleGetStarted}
-          >
-            <Text style={styles.getStartedButtonText}>Get Started</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </SafeAreaView>
+        {/* Get Started Button - Only on final step */}
+        {currentStep === 4 && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={styles.getStartedButton} 
+              onPress={handleGetStarted}
+            >
+              <Text style={styles.getStartedButtonText}>Get Started</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    </GestureHandlerRootView>
   )
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   onboardingContainer: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -353,10 +375,10 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flex: 1,
     flexDirection: 'row',
-    width: '300%', // 3 steps * 100%
+    width: '400%', // 4 steps * 100%
   },
   stepContainer: {
-    width: '33.333%', // 100% / 3 steps
+    width: '25%', // 100% / 4 steps
     flex: 1,
     flexDirection: 'column',
     paddingBottom: 40,

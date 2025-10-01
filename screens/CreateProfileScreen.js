@@ -88,6 +88,7 @@ const CreateProfileScreen = ({ navigation }) => {
   })
   const [profileImage, setProfileImage] = useState(null)
   const [profileImageLoading, setProfileImageLoading] = useState(false)
+  const [imageLoadErrors, setImageLoadErrors] = useState({})
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -97,6 +98,87 @@ const CreateProfileScreen = ({ navigation }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
+  const getSecureImageUrl = (url) => {
+    if (!url) return null
+    console.log('Original URL:', url)
+    // Convert HTTP to HTTPS for better compatibility with APK builds
+    if (url.startsWith('http://')) {
+      const secureUrl = url.replace('http://', 'https://')
+      console.log('Converted to HTTPS:', secureUrl)
+      return secureUrl
+    }
+    console.log('Using original URL:', url)
+    return url
+  }
+
+  // Helper function to handle image loading errors
+  const handleImageError = (imageType, error) => {
+    console.log(`Image load error for ${imageType}:`, error)
+    setImageLoadErrors(prev => ({
+      ...prev,
+      [imageType]: true
+    }))
+  }
+
+  // Retry loading an image
+  const retryImageLoad = (imageType) => {
+    setImageLoadErrors(prev => ({
+      ...prev,
+      [imageType]: false
+    }))
+  }
+
+  // Enhanced image component with fallback
+  const SafeImage = ({ source, style, imageType, ...props }) => {
+    const [imageError, setImageError] = useState(false)
+    const [currentSource, setCurrentSource] = useState(source)
+
+    const handleError = (error) => {
+      console.log(`Image error for ${imageType}:`, error)
+      console.log('Failed URL:', currentSource?.uri)
+      
+      // If we're using HTTPS and it fails, try HTTP as fallback
+      if (currentSource?.uri?.startsWith('https://')) {
+        const httpUrl = currentSource.uri.replace('https://', 'http://')
+        console.log('Trying HTTP fallback:', httpUrl)
+        setCurrentSource({ uri: httpUrl })
+        setImageError(false)
+      } else {
+        setImageError(true)
+        handleImageError(imageType, error)
+      }
+    }
+
+    const retry = () => {
+      setImageError(false)
+      setCurrentSource(source)
+    }
+
+    if (imageError) {
+      return (
+        <View style={[style, { backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }]}>
+          <MaterialIcons name="broken-image" size={24} color="#8E8E93" />
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={retry}
+          >
+            <MaterialIcons name="refresh" size={12} color="#009689" />
+          </TouchableOpacity>
+        </View>
+      )
+    }
+
+    return (
+      <Image
+        source={currentSource}
+        style={style}
+        onError={handleError}
+        {...props}
+      />
+    )
   }
 
   // Fetch existing profile data
@@ -144,8 +226,9 @@ const CreateProfileScreen = ({ navigation }) => {
           
           // Set existing profile image if available
           if (broker.brokerImage) {
+            const secureImageUrl = getSecureImageUrl(broker.brokerImage)
             setProfileImage({
-              uri: broker.brokerImage,
+              uri: secureImageUrl,
               type: 'image/jpeg',
               fileName: 'profile.jpg'
             })
@@ -161,13 +244,13 @@ const CreateProfileScreen = ({ navigation }) => {
               companyId: !!broker.kycDocs.companyId
             })
             
-            // Set existing document URLs for display
+            // Set existing document URLs for display with secure URLs
             setExistingDocs({
-              aadharCard: broker.kycDocs.aadhar || null,
-              panCard: broker.kycDocs.pan || null,
-              gstCertificate: broker.kycDocs.gst || null,
-              brokerLicense: broker.kycDocs.brokerLicense || null,
-              companyId: broker.kycDocs.companyId || null
+              aadharCard: getSecureImageUrl(broker.kycDocs.aadhar) || null,
+              panCard: getSecureImageUrl(broker.kycDocs.pan) || null,
+              gstCertificate: getSecureImageUrl(broker.kycDocs.gst) || null,
+              brokerLicense: getSecureImageUrl(broker.kycDocs.brokerLicense) || null,
+              companyId: getSecureImageUrl(broker.kycDocs.companyId) || null
             })
           }
         }
@@ -911,15 +994,17 @@ const CreateProfileScreen = ({ navigation }) => {
             >
               <View style={styles.documentIcon}>
                 {selectedImage ? (
-                  <Image 
+                  <SafeImage 
                     source={{ uri: selectedImage.uri }} 
                     style={styles.documentPreview}
+                    imageType={doc.key}
                     resizeMode="cover"
                   />
                 ) : existingDoc ? (
-                  <Image 
+                  <SafeImage 
                     source={{ uri: existingDoc }} 
                     style={styles.documentPreview}
+                    imageType={doc.key}
                     resizeMode="cover"
                   />
                 ) : (
@@ -1057,9 +1142,10 @@ const CreateProfileScreen = ({ navigation }) => {
                 <TouchableOpacity style={styles.profileImageButton} onPress={handleProfileImageUpload}>
                   {profileImage ? (
                     <View style={styles.profileImageWrapper}>
-                      <Image 
+                      <SafeImage 
                         source={{ uri: profileImage.uri }} 
                         style={styles.profileImage}
+                        imageType="profileImage"
                         resizeMode="cover"
                         onLoadStart={() => setProfileImageLoading(true)}
                         onLoadEnd={() => setProfileImageLoading(false)}
@@ -1069,12 +1155,12 @@ const CreateProfileScreen = ({ navigation }) => {
                           <ActivityIndicator size="small" color="#009689" />
                         </View>
                       )}
-            <TouchableOpacity 
+                      <TouchableOpacity 
                         style={styles.editImageButton} 
                         onPress={handleProfileImageUpload}
                       >
                         <MaterialIcons name="edit" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
+                      </TouchableOpacity>
                     </View>
                   ) : (
                     <View style={styles.profileImagePlaceholder}>
@@ -1205,6 +1291,38 @@ const styles = StyleSheet.create({
   profileImagePlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  profileImageFallback: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    position: 'relative',
+  },
+  retryButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#009689',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   profileImageText: {
     fontSize: 12,
