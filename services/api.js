@@ -168,6 +168,91 @@ export const authAPI = {
       console.error('Get regions error:', error);
       throw error;
     }
+  },
+
+  // Get nearest regions by latitude and longitude
+  getNearestRegions: async (latitude, longitude, limit = 5) => {
+    try {
+      console.log('Fetching nearest regions for coordinates:', { latitude, longitude, limit });
+      const response = await api.get(`/api/regions/nearest?latitude=${latitude}&longitude=${longitude}&limit=${limit}`);
+      console.log('Nearest regions fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get nearest regions error:', error);
+      throw error;
+    }
+  }
+};
+
+// Google Places API functions
+export const placesAPI = {
+  // Google Places API key from environment
+  API_KEY: config.GOOGLE_PLACES_API_KEY,
+  
+  // Get address suggestions from Google Places Autocomplete
+  getAddressSuggestions: async (query) => {
+    try {
+      console.log('Fetching address suggestions for:', query);
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${placesAPI.API_KEY}&components=country:in&types=address`
+      );
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.predictions) {
+        console.log('Address suggestions fetched successfully:', data.predictions.length, 'results');
+        return {
+          success: true,
+          data: data.predictions
+        };
+      } else {
+        console.log('No address suggestions found or API error:', data.status);
+        return {
+          success: false,
+          data: [],
+          error: data.error_message || 'No suggestions found'
+        };
+      }
+    } catch (error) {
+      console.error('Get address suggestions error:', error);
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  },
+
+  // Get place details from Google Places API
+  getPlaceDetails: async (placeId) => {
+    try {
+      console.log('Fetching place details for place ID:', placeId);
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${placesAPI.API_KEY}&fields=formatted_address,address_components,geometry`
+      );
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.result) {
+        console.log('Place details fetched successfully:', data.result);
+        return {
+          success: true,
+          data: data.result
+        };
+      } else {
+        console.log('Place details not found or API error:', data.status);
+        return {
+          success: false,
+          data: null,
+          error: data.error_message || 'Place details not found'
+        };
+      }
+    } catch (error) {
+      console.error('Get place details error:', error);
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      };
+    }
   }
 };
 

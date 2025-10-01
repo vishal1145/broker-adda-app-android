@@ -16,11 +16,12 @@ import {
   PermissionsAndroid,
   Alert
 } from 'react-native'
+// import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
-import { authAPI } from '../services/api'
+import { authAPI, placesAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 const CreateProfileScreen = ({ navigation }) => {
@@ -92,6 +93,19 @@ const CreateProfileScreen = ({ navigation }) => {
   const [imageLoadErrors, setImageLoadErrors] = useState({})
   const [regionsList, setRegionsList] = useState([])
   const [regionsLoading, setRegionsLoading] = useState(false)
+  const [addressDetails, setAddressDetails] = useState({
+    formattedAddress: '',
+    city: '',
+    state: '',
+    country: '',
+    postalCode: '',
+    latitude: null,
+    longitude: null
+  })
+  const [addressSuggestions, setAddressSuggestions] = useState([])
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false)
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [addressDebounceTimer, setAddressDebounceTimer] = useState(null)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -100,6 +114,138 @@ const CreateProfileScreen = ({ navigation }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Fetch address suggestions from Google Places API
+  const fetchAddressSuggestions = async (query) => {
+    if (!query || query.length < 1) {
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+      return
+    }
+
+    try {
+      setAddressLoading(true)
+      const result = await placesAPI.getAddressSuggestions(query)
+      
+      if (result.success && result.data.length > 0) {
+        setAddressSuggestions(result.data)
+        setShowAddressSuggestions(true)
+      } else {
+        setAddressSuggestions([])
+        setShowAddressSuggestions(false)
+        if (result.error) {
+          console.log('Address suggestions error:', result.error)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching address suggestions:', error)
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+
+  // Handle address selection from suggestions
+  const handleAddressSelect = async (placeId, description) => {
+    try {
+      setAddressLoading(true)
+      setShowAddressSuggestions(false)
+      
+      // Fetch place details using API
+      const result = await placesAPI.getPlaceDetails(placeId)
+      
+      if (result.success && result.data) {
+        const details = result.data
+        console.log('Selected address details:', details)
+        
+        // Extract address components safely
+        const addressComponents = Array.isArray(details.address_components) ? details.address_components : []
+        let city = ''
+        let state = ''
+        let country = ''
+        let postalCode = ''
+        
+        addressComponents.forEach(component => {
+          if (component && component.types && Array.isArray(component.types)) {
+            const types = component.types
+            if (types.includes('locality')) {
+              city = component.long_name || ''
+            } else if (types.includes('administrative_area_level_1')) {
+              state = component.long_name || ''
+            } else if (types.includes('country')) {
+              country = component.long_name || ''
+            } else if (types.includes('postal_code')) {
+              postalCode = component.long_name || ''
+            }
+          }
+        })
+        
+        // Update address details
+        setAddressDetails({
+          formattedAddress: details.formatted_address || description || '',
+          city: city,
+          state: state,
+          country: country,
+          postalCode: postalCode,
+          latitude: details.geometry?.location?.lat || null,
+          longitude: details.geometry?.location?.lng || null
+        })
+        
+        // Update form data with the formatted address
+        updateFormData('address', details.formatted_address || description || '')
+        
+        // Auto-populate city and state if they match our available options
+        if (state && states.includes(state)) {
+          updateFormData('state', state)
+        }
+        if (city && cities.includes(city)) {
+          updateFormData('city', city)
+        }
+        
+        // Fetch nearest regions using latitude and longitude
+        const lat = details.geometry?.location?.lat
+        const lng = details.geometry?.location?.lng
+        if (lat && lng) {
+          await fetchNearestRegions(lat, lng)
+        } else if (city) {
+          // Fallback to city-based regions if coordinates are not available
+          fetchRegions(city)
+        }
+        
+        Snackbar.showSuccess('Address Selected', 'Address details have been populated')
+      } else {
+        console.error('Failed to get place details:', result.error)
+        Snackbar.showError('Error', 'Failed to get address details')
+      }
+    } catch (error) {
+      console.error('Error handling address selection:', error)
+      Snackbar.showError('Error', 'Failed to process address selection')
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+
+  // Handle address input change with debouncing
+  const handleAddressChange = (text) => {
+    updateFormData('address', text)
+    
+    // Clear existing timer
+    if (addressDebounceTimer) {
+      clearTimeout(addressDebounceTimer)
+    }
+    
+    if (text.length >= 1) {
+      // Set new timer for debounced API call
+      const timer = setTimeout(() => {
+        fetchAddressSuggestions(text)
+      }, 300) // 300ms debounce
+      setAddressDebounceTimer(timer)
+    } else {
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+    }
   }
 
   // Fetch regions based on selected city
@@ -121,6 +267,32 @@ const CreateProfileScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error fetching regions:', error)
+      setRegionsList([])
+    } finally {
+      setRegionsLoading(false)
+    }
+  }
+
+  // Fetch nearest regions based on latitude and longitude
+  const fetchNearestRegions = async (latitude, longitude, limit = 5) => {
+    if (!latitude || !longitude) {
+      setRegionsList([])
+      return
+    }
+
+    try {
+      setRegionsLoading(true)
+      const response = await authAPI.getNearestRegions(latitude, longitude, limit)
+      
+      if (response.success && response.data && response.data.regions) {
+        setRegionsList(response.data.regions)
+        console.log('Nearest regions fetched:', response.data.regions.length, 'regions')
+      } else {
+        console.error('Failed to fetch nearest regions:', response.message)
+        setRegionsList([])
+      }
+    } catch (error) {
+      console.error('Error fetching nearest regions:', error)
       setRegionsList([])
     } finally {
       setRegionsLoading(false)
@@ -300,6 +472,15 @@ const CreateProfileScreen = ({ navigation }) => {
   useEffect(() => {
     fetchProfileData()
   }, [])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (addressDebounceTimer) {
+        clearTimeout(addressDebounceTimer)
+      }
+    }
+  }, [addressDebounceTimer])
 
   // Request camera permission for Android
   const requestCameraPermission = async () => {
@@ -623,7 +804,7 @@ const CreateProfileScreen = ({ navigation }) => {
       }
       
       // Specializations
-      if (formData.specializations.length > 0) {
+      if (Array.isArray(formData.specializations) && formData.specializations.length > 0) {
         formData.specializations.forEach(spec => {
           profileData.append('brokerDetails[specializations][]', spec)
         })
@@ -848,14 +1029,52 @@ const CreateProfileScreen = ({ navigation }) => {
             <Text style={styles.locationButtonText}>Use Current Location</Text>
           </TouchableOpacity>
         </View>
-        <TextInput
-          style={styles.input}
-          value={formData.address}
-          onChangeText={(text) => updateFormData('address', text)}
-          placeholder="Enter your address"
-          placeholderTextColor="#8E8E93"
-          multiline
-        />
+        <View style={styles.addressInputContainer}>
+          <View style={styles.addressInputWrapper}>
+            <MaterialIcons name="location-on" size={20} color="#8E8E93" style={styles.addressInputIcon} />
+            <TextInput
+              style={styles.addressInput}
+              value={formData.address}
+              onChangeText={handleAddressChange}
+              placeholder="Enter your address"
+              placeholderTextColor="#8E8E93"
+              multiline
+              numberOfLines={2}
+            />
+            {addressLoading && (
+              <ActivityIndicator size="small" color="#009689" style={styles.addressLoadingIcon} />
+            )}
+            {formData.address && !addressLoading && (
+              <TouchableOpacity onPress={() => {
+                updateFormData('address', '')
+                setAddressSuggestions([])
+                setShowAddressSuggestions(false)
+              }}>
+                <MaterialIcons name="clear" size={20} color="#8E8E93" style={styles.addressInputIcon} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* Address Suggestions Dropdown */}
+          {showAddressSuggestions && addressSuggestions.length > 0 && (
+            <View style={styles.addressSuggestionsContainer}>
+              <ScrollView style={styles.addressSuggestionsList} nestedScrollEnabled>
+                {addressSuggestions.map((suggestion, index) => (
+                  <TouchableOpacity
+                    key={suggestion.place_id || index}
+                    style={styles.addressSuggestionItem}
+                    onPress={() => handleAddressSelect(suggestion.place_id, suggestion.description)}
+                  >
+                    <MaterialIcons name="location-on" size={16} color="#8E8E93" style={styles.suggestionIcon} />
+                    <Text style={styles.suggestionText} numberOfLines={2}>
+                      {suggestion.description}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
       </View>
 
       <View style={styles.inputGroup}>
@@ -1105,7 +1324,7 @@ const CreateProfileScreen = ({ navigation }) => {
                     key={index}
                     style={styles.modalItem}
                     onPress={() => {
-                      const currentSpecs = formData.specializations || []
+                      const currentSpecs = Array.isArray(formData.specializations) ? formData.specializations : []
                       let newSpecs
                       if (currentSpecs.includes(option)) {
                         // Remove if already selected
@@ -1727,6 +1946,78 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: 8,
+  },
+  // Custom Address Input Styles
+  addressInputContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  addressInputWrapper: {
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 50,
+  },
+  addressInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    minHeight: 40,
+    textAlignVertical: 'top',
+  },
+  addressInputIcon: {
+    marginHorizontal: 8,
+  },
+  addressLoadingIcon: {
+    marginHorizontal: 8,
+  },
+  addressSuggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    maxHeight: 200,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1001,
+  },
+  addressSuggestionsList: {
+    maxHeight: 200,
+  },
+  addressSuggestionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  suggestionIcon: {
+    marginRight: 12,
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: '#000000',
+    flex: 1,
   },
 })
 
