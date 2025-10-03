@@ -806,6 +806,11 @@ const CreateProfileScreen = ({ navigation }) => {
           ...prev,
           [docType]: true
         }))
+        // Clear existing document when new one is selected
+        setExistingDocs(prev => ({
+          ...prev,
+          [docType]: null
+        }))
         Snackbar.showSuccess('Success', `${docType} image selected successfully!`)
       }
     }
@@ -822,9 +827,32 @@ const CreateProfileScreen = ({ navigation }) => {
       showImagePickerOptions(docType)
   }
 
-  // Handle view uploaded document
+  // Handle view uploaded document - now opens gallery for editing
   const handleViewDocument = (docType) => {
-    Snackbar.showInfo('View Document', `View functionality for ${docType} will be implemented to open the uploaded file. Tap the edit button to replace the document.`)
+    handleDocumentUpload(docType)
+  }
+
+  // Handle remove document
+  const handleRemoveDocument = (docType) => {
+    // Clear the selected image
+    setSelectedImages(prev => ({
+      ...prev,
+      [docType]: null
+    }))
+    
+    // Mark as not uploaded
+    setUploadedDocs(prev => ({
+      ...prev,
+      [docType]: false
+    }))
+    
+    // Clear existing document if it was from API
+    setExistingDocs(prev => ({
+      ...prev,
+      [docType]: null
+    }))
+    
+    Snackbar.showSuccess('Document Removed', `${docType} has been removed successfully`)
   }
 
   // Handle profile image upload
@@ -1095,6 +1123,15 @@ const CreateProfileScreen = ({ navigation }) => {
         })
         console.log('Added Company ID document to FormData')
       }
+      
+      // Debug: Log the selected images being sent
+      console.log('Selected images being sent:')
+      console.log('selectedImages state:', selectedImages)
+      Object.keys(selectedImages).forEach(key => {
+        if (selectedImages[key]) {
+          console.log(`${key}:`, selectedImages[key].uri)
+        }
+      })
       
       // Debug: Log the FormData contents
       console.log('FormData being sent:')
@@ -1483,57 +1520,62 @@ const CreateProfileScreen = ({ navigation }) => {
           const hasDocument = isUploaded || existingDoc
           
           return (
-            <View key={doc.key} style={styles.documentCard}>
+            <View key={doc.key} style={styles.documentCardWrapper}>
+              {/* Document Title Above Card */}
+              <Text style={styles.documentTitleAbove}>{doc.title}</Text>
+              
               <TouchableOpacity 
-                style={styles.documentCardContent}
-                onPress={() => hasDocument ? handleViewDocument(doc.title) : handleDocumentUpload(doc.key)}
+                style={styles.documentCard}
+                onPress={() => handleDocumentUpload(doc.key)}
+                activeOpacity={0.8}
               >
-                <View style={styles.documentIcon}>
-                  {selectedImage ? (
-                    <View style={styles.documentImageWrapper}>
-                      <SafeImage 
-                        source={{ uri: selectedImage.uri }} 
-                        style={styles.documentPreview}
-                        imageType={doc.key}
-                        resizeMode="cover"
-                      />
-                      {hasDocument && (
-                        <TouchableOpacity 
-                          style={styles.editDocumentButton} 
-                          onPress={() => handleDocumentUpload(doc.key)}
-                        >
-                          <MaterialIcons name="edit" size={14} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ) : existingDoc ? (
-                    <View style={styles.documentImageWrapper}>
-                      <SafeImage 
-                        source={{ uri: existingDoc }} 
-                        style={styles.documentPreview}
-                        imageType={doc.key}
-                        resizeMode="cover"
-                      />
-                      <TouchableOpacity 
-                        style={styles.editDocumentButton} 
-                        onPress={() => handleDocumentUpload(doc.key)}
-                      >
-                        <MaterialIcons name="edit" size={14} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <MaterialIcons 
-                      name={hasDocument ? "check-circle" : "cloud-upload"} 
-                      size={32} 
-                      color={hasDocument ? "#4CAF50" : "#009689"} 
+                {selectedImage ? (
+                  <View style={styles.documentImageWrapper}>
+                    <SafeImage 
+                      source={{ uri: selectedImage.uri }} 
+                      style={styles.documentFullImage}
+                      imageType={doc.key}
+                      resizeMode="cover"
                     />
-                  )}
-                </View>
-                <Text style={styles.documentTitle}>{doc.title}</Text>
-                <Text style={[styles.documentStatus, hasDocument && styles.documentStatusUploaded]}>
-                  {hasDocument ? 'Tap to view or edit' : `Click to upload ${doc.title}`}
-                </Text>
-                <Text style={styles.documentFormat}>PDF, JPG, PNG up to 10MB</Text>
+                    <TouchableOpacity 
+                      style={styles.editButton}
+                      onPress={(e) => {
+                        e.stopPropagation?.()
+                        handleViewDocument(doc.key)
+                      }}
+                    >
+                      <MaterialIcons name="edit" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : existingDoc ? (
+                  <View style={styles.documentImageWrapper}>
+                    <SafeImage 
+                      source={{ uri: existingDoc }} 
+                      style={styles.documentFullImage}
+                      imageType={doc.key}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity 
+                      style={styles.editButton}
+                      onPress={(e) => {
+                        e.stopPropagation?.()
+                        handleViewDocument(doc.key)
+                      }}
+                    >
+                      <MaterialIcons name="edit" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.documentPlaceholder}>
+                    <MaterialIcons 
+                      name="cloud-upload" 
+                      size={48} 
+                      color="#009689" 
+                    />
+                    <Text style={styles.uploadText}>Upload {doc.title}</Text>
+                    <Text style={styles.formatText}>PDF, JPG, PNG up to 10MB</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           )
@@ -2015,39 +2057,40 @@ const styles = StyleSheet.create({
   documentsGrid: {
     flexDirection: 'column',
   },
+  documentCardWrapper: {
+    marginBottom: 20,
+  },
+  documentTitleAbove: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
   documentCard: {
     width: '100%',
     backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    marginBottom: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E5EA',
-  },
-  documentCardContent: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  documentIcon: {
-    marginBottom: 12,
-    position: 'relative',
+    overflow: 'hidden',
+    minHeight: 120,
   },
   documentImageWrapper: {
     position: 'relative',
+    width: '100%',
+    height: 120,
   },
-  documentPreview: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#4CAF50',
+  documentFullImage: {
+    width: '100%',
+    height: '100%',
   },
-  editDocumentButton: {
+  editButton: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2056,32 +2099,30 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  documentTitle: {
+  documentPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    height: 120,
+  },
+  uploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  documentStatus: {
-    fontSize: 12,
     color: '#009689',
+    marginTop: 8,
     textAlign: 'center',
-    marginBottom: 4,
   },
-  documentStatusUploaded: {
-    color: '#4CAF50',
-  },
-  documentFormat: {
+  formatText: {
     fontSize: 10,
     color: '#8E8E93',
     textAlign: 'center',
+    marginTop: 4,
   },
   actionButtonContainer: {
     paddingBottom: 20,
