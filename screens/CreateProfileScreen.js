@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -26,6 +26,8 @@ import { storage } from '../services/storage'
 import * as Location from 'expo-location'
 
 const CreateProfileScreen = ({ navigation }) => {
+  const [currentStep, setCurrentStep] = useState(1) // 1: Personal Info, 2: Professional, 3: Regions, 4: Documents
+  const scrollViewRef = useRef(null)
   const [formData, setFormData] = useState({
     // Personal Info
     fullName: '',
@@ -118,6 +120,63 @@ const CreateProfileScreen = ({ navigation }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Step validation functions
+  const isStep1Valid = () => {
+    // Step 1: Personal Information - validate required fields
+    return formData.fullName.trim() && 
+           formData.gender && 
+           formData.email.trim() && 
+           formData.phone.trim() && 
+           formData.firmName.trim()
+  }
+
+  const isStep2Valid = () => {
+    // Step 2: Professional Information - validate required fields
+    return formData.licenseNumber.trim() && 
+           formData.address.trim()
+  }
+
+  const isStep3Valid = () => {
+    // Step 3: Regions - validate required fields
+    return formData.state && 
+           formData.city && 
+           formData.selectedRegionId
+  }
+
+  const isStep4Valid = () => {
+    // Step 4: Documents - no validation required, all optional
+    return true
+  }
+
+  // Navigation functions
+  const goToNextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1)
+      // Scroll to top when going to next step
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+      }, 100)
+    }
+  }
+
+  const goToPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+      // Scroll to top when going to previous step
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+      }, 100)
+    }
+  }
+
+  const getStepTitle = () => {
+    return 'Create Broker Profile'
+  }
+
+  const getStepDescription = () => {
+    return ''
   }
 
   // Handle region selection from cards
@@ -1169,6 +1228,50 @@ const CreateProfileScreen = ({ navigation }) => {
 
 
 
+  // Step 1: Personal Information
+  const renderStep1 = () => (
+    <View>
+      {/* Profile Image Upload */}
+      <View style={styles.sectionContainer}>
+        <View style={styles.profileImageContainer}>
+          <TouchableOpacity style={styles.profileImageButton} onPress={handleProfileImageUpload}>
+            {profileImage ? (
+              <View style={styles.profileImageWrapper}>
+                <SafeImage 
+                  source={{ uri: profileImage.uri }} 
+                  style={styles.profileImage}
+                  imageType="profileImage"
+                  resizeMode="cover"
+                  onLoadStart={() => setProfileImageLoading(true)}
+                  onLoadEnd={() => setProfileImageLoading(false)}
+                />
+                {profileImageLoading && (
+                  <View style={styles.profileImageLoadingOverlay}>
+                    <ActivityIndicator size="small" color="#009689" />
+                  </View>
+                )}
+                <TouchableOpacity 
+                  style={styles.editImageButton} 
+                  onPress={handleProfileImageUpload}
+                >
+                  <MaterialIcons name="edit" size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <MaterialIcons name="camera-alt" size={32} color="#009689" />
+                <Text style={styles.profileImageText}>Add Profile Photo</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Personal Information */}
+      {renderPersonalInfo()}
+    </View>
+  )
+
   const renderPersonalInfo = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
@@ -1246,6 +1349,13 @@ const CreateProfileScreen = ({ navigation }) => {
           keyboardType="numeric"
         />
       </View>
+    </View>
+  )
+
+  // Step 2: Professional Information
+  const renderStep2 = () => (
+    <View>
+      {renderProfessional()}
     </View>
   )
 
@@ -1426,6 +1536,13 @@ const CreateProfileScreen = ({ navigation }) => {
     </View>
   )
 
+  // Step 3: Preferred Regions
+  const renderStep3 = () => (
+    <View>
+      {renderRegions()}
+    </View>
+  )
+
   const renderRegions = () => (
     <View style={styles.sectionContainer}>
       <View style={styles.sectionHeader}>
@@ -1496,6 +1613,13 @@ const CreateProfileScreen = ({ navigation }) => {
       ) : (
         renderRegionCards()
       )}
+    </View>
+  )
+
+  // Step 4: Documents
+  const renderStep4 = () => (
+    <View>
+      {renderDocuments()}
     </View>
   )
 
@@ -1683,105 +1807,147 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
 
+  // Render step content based on current step
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return renderStep1()
+      case 2:
+        return renderStep2()
+      case 3:
+        return renderStep3()
+      case 4:
+        return renderStep4()
+      default:
+        return null
+    }
+  }
+
+  // Get current step validation
+  const getCurrentStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return isStep1Valid()
+      case 2:
+        return isStep2Valid()
+      case 3:
+        return isStep3Valid()
+      case 4:
+        return isStep4Valid()
+      default:
+        return false
+    }
+  }
+
+  // Get button text based on current step
+  const getButtonText = () => {
+    switch (currentStep) {
+      case 1:
+        return 'Continue to Professional'
+      case 2:
+        return 'Continue to Regions'
+      case 3:
+        return 'Continue to Documents'
+      case 4:
+        return 'Complete Profile'
+      default:
+        return 'Continue'
+    }
+  }
+
+  // Get button icon based on current step
+  const getButtonIcon = () => {
+    if (currentStep < 4) {
+      return <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
+    } else if (currentStep === 4) {
+      return <MaterialIcons name="check" size={20} color="#FFFFFF" />
+    }
+    return null
+  }
+
+  // Handle button press
+  const handleStepButtonPress = () => {
+    if (currentStep === 4) {
+      handleCompleteProfile()
+    } else {
+      goToNextStep()
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* <KeyboardAvoidingView 
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      > */}
-        {/* Header with Title */}
-        <View style={styles.headerWithTitle}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#009689" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Create Broker Profile</Text>
-          <View style={styles.headerSpacer} />
+      {/* Header with Title */}
+      <View style={styles.headerWithTitle}>
+        <TouchableOpacity style={styles.backButton} onPress={() => {
+          if (currentStep > 1) {
+            goToPreviousStep()
+          } else {
+            navigation.goBack()
+          }
+        }}>
+          <MaterialIcons name="arrow-back" size={24} color="#009689" />
+        </TouchableOpacity>
+        <Text style={styles.title}>{getStepTitle()}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Step Description - Only show if there's content */}
+      {getStepDescription() && (
+        <View style={styles.stepDescriptionContainer}>
+          <Text style={styles.stepDescription}>{getStepDescription()}</Text>
         </View>
+      )}
 
-        {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#009689" />
-              <Text style={styles.loadingText}>Loading profile data...</Text>
-            </View>
-          ) : (
-            <View style={styles.singlePageForm}>
-              {/* Profile Image Upload */}
-              <View style={styles.profileImageContainer}>
-                <TouchableOpacity style={styles.profileImageButton} onPress={handleProfileImageUpload}>
-                  {profileImage ? (
-                    <View style={styles.profileImageWrapper}>
-                      <SafeImage 
-                        source={{ uri: profileImage.uri }} 
-                        style={styles.profileImage}
-                        imageType="profileImage"
-                        resizeMode="cover"
-                        onLoadStart={() => setProfileImageLoading(true)}
-                        onLoadEnd={() => setProfileImageLoading(false)}
-                      />
-                      {profileImageLoading && (
-                        <View style={styles.profileImageLoadingOverlay}>
-                          <ActivityIndicator size="small" color="#009689" />
-                        </View>
-                      )}
-                      <TouchableOpacity 
-                        style={styles.editImageButton} 
-                        onPress={handleProfileImageUpload}
-                      >
-                        <MaterialIcons name="edit" size={16} color="#FFFFFF" />
-                      </TouchableOpacity>
+      {/* Content */}
+      <ScrollView ref={scrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#009689" />
+            <Text style={styles.loadingText}>Loading profile data...</Text>
+          </View>
+        ) : (
+          <View style={styles.singlePageForm}>
+            {renderStepContent()}
+
+            {/* Action Button */}
+            <View style={styles.actionButtonContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.actionButton, 
+                  (!getCurrentStepValid() || isSubmitting) ? styles.actionButtonDisabled : null
+                ]} 
+                onPress={handleStepButtonPress}
+                disabled={isSubmitting || !getCurrentStepValid()}
+              >
+                {isSubmitting ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={[styles.actionButtonText, styles.loadingText]}>
+                      {currentStep === 4 ? 'Creating Profile...' : 'Processing...'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Text style={styles.actionButtonText}>{getButtonText()}</Text>
+                    <View style={styles.buttonIcon}>
+                      {getButtonIcon()}
                     </View>
-                  ) : (
-                    <View style={styles.profileImagePlaceholder}>
-                      <MaterialIcons name="camera-alt" size={32} color="#009689" />
-                      <Text style={styles.profileImageText}>Add Profile Photo</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {renderPersonalInfo()}
-              {renderProfessional()}
-              {renderRegions()}
-              {renderDocuments()}
-
-              {/* Action Button */}
-              <View style={styles.actionButtonContainer}>
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                (!isFormValid() || isSubmitting) ? styles.actionButtonDisabled : null
-              ]} 
-              onPress={handleCompleteProfile}
-              disabled={isSubmitting || !isFormValid()}
-            >
-              {isSubmitting ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={[styles.actionButtonText, styles.loadingText]}>
-                    Creating Profile...
-                  </Text>
-                </View>
-              ) : (
-                <Text style={styles.actionButtonText}>Complete Profile</Text>
-              )}
-            </TouchableOpacity>
-        </View>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
-          )}
-        </ScrollView>
+          </View>
+        )}
+      </ScrollView>
 
-        {/* Modals */}
-        {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
-        {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
-        {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
-        {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
-        {renderModal('Select Regions', regionsList.length > 0 ? regionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
-
-      {/* </KeyboardAvoidingView> */}
+      {/* Modals */}
+      {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
+      {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
+      {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
+      {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
+      {renderModal('Select Regions', regionsList.length > 0 ? regionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
     </SafeAreaView>
   )
 }
@@ -1820,6 +1986,16 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40,
+  },
+  stepDescriptionContainer: {
+    paddingHorizontal: 30,
+    paddingBottom: 20,
+  },
+  stepDescription: {
+    fontSize: 16,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   profileImageContainer: {
     alignItems: 'center',
@@ -2153,6 +2329,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginLeft: 8,
   },
   modalOverlay: {
     flex: 1,
