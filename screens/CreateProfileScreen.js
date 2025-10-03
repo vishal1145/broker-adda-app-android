@@ -106,6 +106,8 @@ const CreateProfileScreen = ({ navigation }) => {
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
   const [addressDebounceTimer, setAddressDebounceTimer] = useState(null)
+  const [showManualRegionSelection, setShowManualRegionSelection] = useState(false)
+  const [selectedRegionId, setSelectedRegionId] = useState('')
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -114,6 +116,71 @@ const CreateProfileScreen = ({ navigation }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Handle region selection from cards
+  const handleRegionSelect = (region) => {
+    setSelectedRegionId(region._id)
+    updateFormData('regions', region.name)
+    updateFormData('selectedRegionId', region._id)
+    Snackbar.showSuccess('Region Selected', `${region.name} has been selected`)
+  }
+
+  // Render region cards
+  const renderRegionCards = () => {
+    if (!regionsList || regionsList.length === 0) {
+      return (
+        <View style={styles.noRegionsContainer}>
+          <MaterialIcons name="location-off" size={48} color="#8E8E93" />
+          <Text style={styles.noRegionsText}>No regions available</Text>
+          <Text style={styles.noRegionsSubtext}>Try selecting a different city or use manual selection</Text>
+        </View>
+      )
+    }
+
+    // Debug logging
+    console.log('Regions data:', regionsList)
+    regionsList.forEach((region, index) => {
+      console.log(`Region ${index}:`, {
+        name: region.name,
+        distanceKm: region.distanceKm,
+        type: typeof region.distanceKm
+      })
+    })
+
+    return (
+      <View style={styles.regionCardsContainer}>
+        <View style={styles.regionCardsList}>
+          {regionsList.map((region, index) => (
+            <TouchableOpacity
+              key={region._id}
+              style={[
+                styles.regionCard,
+                selectedRegionId === region._id && styles.regionCardSelected
+              ]}
+              onPress={() => handleRegionSelect(region)}
+            >
+              <Text style={styles.regionCardName} numberOfLines={2}>
+                {region.name}
+              </Text>
+              <Text style={styles.regionCardAddress} numberOfLines={2}>
+                {region.centerLocation}
+              </Text>
+              <View style={styles.regionCardDetails}>
+                <Text style={styles.regionCardDistance}>
+                  {region.distanceKm !== null && region.distanceKm !== undefined ? 
+                    `${Number(region.distanceKm).toFixed(1)} km away` : 
+                    '0.0 km away'}
+                </Text>
+                <Text style={styles.regionCardBrokers}>
+                  {region.brokerCount} Broker{region.brokerCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    )
   }
 
   // Fetch address suggestions from Google Places API
@@ -432,6 +499,11 @@ const CreateProfileScreen = ({ navigation }) => {
               type: 'image/jpeg',
               fileName: 'profile.jpg'
             })
+          }
+          
+          // Set selected region ID for highlighting
+          if (broker.region?.[0]?._id) {
+            setSelectedRegionId(broker.region[0]._id)
           }
           
           // Fetch regions if city is already selected
@@ -1172,56 +1244,71 @@ const CreateProfileScreen = ({ navigation }) => {
       <View style={styles.sectionHeader}>
         <MaterialIcons name="location-on" size={20} color="#009689" />
         <Text style={styles.sectionTitle}>Preferred Regions *</Text>
+        <TouchableOpacity 
+          style={styles.locationButton}
+          onPress={() => setShowManualRegionSelection(!showManualRegionSelection)}
+        >
+          <MaterialIcons name={showManualRegionSelection ? "location-on" : "search"} size={16} color="#009689" />
+          <Text style={styles.locationButtonText}>
+            {showManualRegionSelection ? "Use Nearby" : "Choose Manually"}
+          </Text>
+        </TouchableOpacity>
       </View>
       <Text style={styles.sectionDescription}>
         Select the regions where you provide real estate services
       </Text>
       
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>State *</Text>
-        <TouchableOpacity 
-          style={styles.input}
-          onPress={() => setShowStateModal(true)}
-        >
-          <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
-            {formData.state || 'Select state'}
-          </Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-        </TouchableOpacity>
-      </View>
+      {showManualRegionSelection ? (
+        <>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>State *</Text>
+            <TouchableOpacity 
+              style={styles.input}
+              onPress={() => setShowStateModal(true)}
+            >
+              <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
+                {formData.state || 'Select state'}
+              </Text>
+              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>City *</Text>
-        <TouchableOpacity 
-          style={styles.input}
-          onPress={() => setShowCityModal(true)}
-        >
-          <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
-            {formData.city || 'Select city'}
-          </Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-        </TouchableOpacity>
-      </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>City *</Text>
+            <TouchableOpacity 
+              style={styles.input}
+              onPress={() => setShowCityModal(true)}
+            >
+              <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
+                {formData.city || 'Select city'}
+              </Text>
+              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+          </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Regions *</Text>
-        <TouchableOpacity 
-          style={[styles.input, (regionsLoading || regionsList.length === 0) && styles.disabledInput]}
-          onPress={() => !regionsLoading && regionsList.length > 0 && setShowRegionModal(true)}
-          disabled={regionsLoading || regionsList.length === 0}
-        >
-          <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
-            {regionsLoading ? 'Loading regions...' : 
-             regionsList.length === 0 && formData.city ? 'No regions available' :
-             formData.regions || 'Select regions'}
-          </Text>
-          {regionsLoading ? (
-            <ActivityIndicator size="small" color="#009689" />
-          ) : (
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          )}
-        </TouchableOpacity>
-      </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Regions *</Text>
+            <TouchableOpacity 
+              style={[styles.input, (regionsLoading || regionsList.length === 0) && styles.disabledInput]}
+              onPress={() => !regionsLoading && regionsList.length > 0 && setShowRegionModal(true)}
+              disabled={regionsLoading || regionsList.length === 0}
+            >
+              <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
+                {regionsLoading ? 'Loading regions...' : 
+                 regionsList.length === 0 && formData.city ? 'No regions available' :
+                 formData.regions || 'Select regions'}
+              </Text>
+              {regionsLoading ? (
+                <ActivityIndicator size="small" color="#009689" />
+              ) : (
+                <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        renderRegionCards()
+      )}
     </View>
   )
 
@@ -1376,11 +1463,13 @@ const CreateProfileScreen = ({ navigation }) => {
                       const selectedRegion = regionsList.find(region => region.name === option)
                       updateFormData('regions', option)
                       updateFormData('selectedRegionId', selectedRegion ? selectedRegion._id : '')
+                      setSelectedRegionId(selectedRegion ? selectedRegion._id : '')
                     } else if (field === 'city') {
                       // Handle city selection - fetch regions and clear selected region
                       updateFormData(field, option)
                       updateFormData('regions', '') // Clear selected region
                       updateFormData('selectedRegionId', '') // Clear selected region ID
+                      setSelectedRegionId('') // Clear selected region state
                       fetchRegions(option) // Fetch regions for the selected city
                     } else {
                       updateFormData(field, option)
@@ -1663,6 +1752,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
     marginLeft: 8,
+    flex: 1,
   },
   sectionDescription: {
     fontSize: 14,
@@ -2018,6 +2108,80 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000000',
     flex: 1,
+  },
+  // Region Cards Styles
+  regionCardsContainer: {
+    marginTop: 16,
+  },
+  regionCardsList: {
+    flexDirection: 'column',
+  },
+  regionCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  regionCardSelected: {
+    borderColor: '#009689',
+    borderWidth: 2,
+  },
+  regionCardName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  regionCardAddress: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  regionCardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  regionCardDistance: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  regionCardBrokers: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  noRegionsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  noRegionsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noRegionsSubtext: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 })
 
