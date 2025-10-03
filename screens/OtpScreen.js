@@ -37,11 +37,8 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
     setIsLoading(true)
     
     try {
-      // Format phone number with country code
-      const formattedPhone = `+91${phoneNumber}`
-      
-      // Call the OTP verification API
-      const response = await authAPI.verifyOTP(formattedPhone, otpString)
+      // Send only phone number without country code
+      const response = await authAPI.verifyOTP(phoneNumber, otpString)
       
       // Save token, phone, and broker ID from response
       if (response && response.data) {
@@ -96,8 +93,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
 
   const handleResendOtp = async () => {
     try {
-      const formattedPhone = `+91${phoneNumber}`
-      await authAPI.resendOTP(formattedPhone)
+      await authAPI.resendOTP(phoneNumber)
       console.log('OTP resent successfully')
       
       // Clear the OTP input fields
@@ -179,7 +175,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                 Enter Verification Code
               </Text>
               <Text style={styles.illustrationSubtitle}>
-                We've sent a 6-digit code to +91 {phoneNumber}
+                We've sent a 6-digit code to {phoneNumber}
               </Text>
             </View>
 

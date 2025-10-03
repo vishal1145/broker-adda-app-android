@@ -45,11 +45,8 @@ const SignupScreen = ({ navigation }) => {
     setIsLoading(true)
     
     try {
-      // Format phone number with selected country code
-      const formattedPhone = `${selectedCountryCode}${phoneNumber}`
-      
-      // Call the signup API
-      const response = await authAPI.signup(formattedPhone)
+      // Send only phone number without country code
+      const response = await authAPI.signup(phoneNumber)
       
       setIsLoading(false)
       setIsOtpSent(true)
@@ -99,8 +96,7 @@ const SignupScreen = ({ navigation }) => {
 
   const handleResendOtp = async () => {
     try {
-      const formattedPhone = `${selectedCountryCode}${phoneNumber}`
-      await authAPI.signup(formattedPhone)
+      await authAPI.signup(phoneNumber)
       console.log('OTP resent successfully')
     } catch (error) {
       console.error('Resend OTP Error:', error)
