@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI, placesAPI } from '../services/api'
 import { storage } from '../services/storage'
+import * as Location from 'expo-location'
 
 const CreateProfileScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -108,6 +109,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const [addressDebounceTimer, setAddressDebounceTimer] = useState(null)
   const [showManualRegionSelection, setShowManualRegionSelection] = useState(false)
   const [selectedRegionId, setSelectedRegionId] = useState('')
+  const [locationLoading, setLocationLoading] = useState(false)
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -575,6 +577,144 @@ const CreateProfileScreen = ({ navigation }) => {
       }
     }
     return true
+  }
+
+  // Request location permission
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync()
+      if (status !== 'granted') {
+        Snackbar.showError('Permission Denied', 'Location permission is required to use current location')
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error('Error requesting location permission:', error)
+      Snackbar.showError('Error', 'Failed to request location permission')
+      return false
+    }
+  }
+
+  // Get current location coordinates
+  const getCurrentLocation = async () => {
+    try {
+      setLocationLoading(true)
+      
+      // Check if location services are enabled
+      const isLocationEnabled = await Location.hasServicesEnabledAsync()
+      if (!isLocationEnabled) {
+        Snackbar.showError('Location Services Disabled', 'Please enable location services in your device settings')
+        return null
+      }
+
+      // Request permission
+      const hasPermission = await requestLocationPermission()
+      if (!hasPermission) {
+        return null
+      }
+
+      // Get current position
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeout: 15000,
+        maximumAge: 10000
+      })
+
+      console.log('Current location:', location.coords)
+      return {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      }
+    } catch (error) {
+      console.error('Error getting current location:', error)
+      Snackbar.showError('Location Error', 'Failed to get current location. Please try again.')
+      return null
+    } finally {
+      setLocationLoading(false)
+    }
+  }
+
+  // Reverse geocoding to get address from coordinates
+  const getAddressFromCoordinates = async (latitude, longitude) => {
+    try {
+      console.log('Getting address for coordinates:', { latitude, longitude })
+      
+      const result = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude
+      })
+
+      if (result && result.length > 0) {
+        const address = result[0]
+        console.log('Reverse geocoding result:', address)
+        
+        // Format the address
+        const addressParts = []
+        if (address.street) addressParts.push(address.street)
+        if (address.streetNumber) addressParts.push(address.streetNumber)
+        if (address.district) addressParts.push(address.district)
+        if (address.city) addressParts.push(address.city)
+        if (address.region) addressParts.push(address.region)
+        if (address.postalCode) addressParts.push(address.postalCode)
+        if (address.country) addressParts.push(address.country)
+        
+        const formattedAddress = addressParts.join(', ')
+        
+        return {
+          formattedAddress,
+          city: address.city || '',
+          state: address.region || '',
+          country: address.country || '',
+          postalCode: address.postalCode || '',
+          latitude,
+          longitude
+        }
+      } else {
+        throw new Error('No address found for the given coordinates')
+      }
+    } catch (error) {
+      console.error('Error in reverse geocoding:', error)
+      throw error
+    }
+  }
+
+  // Handle use current location button press
+  const handleUseCurrentLocation = async () => {
+    try {
+      // Get current location
+      const coordinates = await getCurrentLocation()
+      if (!coordinates) {
+        return
+      }
+
+      // Get address from coordinates
+      const addressDetails = await getAddressFromCoordinates(
+        coordinates.latitude, 
+        coordinates.longitude
+      )
+
+      // Update address details state
+      setAddressDetails(addressDetails)
+      
+      // Update form data with the formatted address
+      updateFormData('address', addressDetails.formattedAddress)
+      
+      // Auto-populate city and state if they match our available options
+      if (addressDetails.state && states.includes(addressDetails.state)) {
+        updateFormData('state', addressDetails.state)
+      }
+      if (addressDetails.city && cities.includes(addressDetails.city)) {
+        updateFormData('city', addressDetails.city)
+      }
+      
+      // Fetch nearest regions using the coordinates
+      await fetchNearestRegions(coordinates.latitude, coordinates.longitude)
+      
+      Snackbar.showSuccess('Location Found', 'Current address has been filled automatically')
+    } catch (error) {
+      console.error('Error using current location:', error)
+      Snackbar.showError('Error', 'Failed to get current address. Please try again.')
+    }
   }
 
   // Show image picker options
@@ -1096,9 +1236,19 @@ const CreateProfileScreen = ({ navigation }) => {
       <View style={styles.inputGroup}>
         <View style={styles.addressHeader}>
           <Text style={styles.inputLabel}>Address *</Text>
-          <TouchableOpacity style={styles.locationButton}>
-            <MaterialIcons name="location-on" size={16} color="#009689" />
-            <Text style={styles.locationButtonText}>Use Current Location</Text>
+          <TouchableOpacity 
+            style={[styles.locationButton, locationLoading && styles.locationButtonDisabled]}
+            onPress={handleUseCurrentLocation}
+            disabled={locationLoading}
+          >
+            {locationLoading ? (
+              <ActivityIndicator size="small" color="#009689" />
+            ) : (
+              <MaterialIcons name="location-on" size={16} color="#009689" />
+            )}
+            <Text style={styles.locationButtonText}>
+              {locationLoading ? 'Getting Location...' : 'Use Current Location'}
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.addressInputContainer}>
@@ -1833,6 +1983,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#009689',
     marginLeft: 4,
+  },
+  locationButtonDisabled: {
+    backgroundColor: '#F5F5F5',
+    opacity: 0.6,
   },
   socialInputGroup: {
     marginBottom: 16,
