@@ -7,7 +7,7 @@ export const Snackbar = {
       type: 'error',
       text1: title,
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 4000,
     })
   },
@@ -18,7 +18,7 @@ export const Snackbar = {
       type: 'success',
       text1: title,
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 3000,
     })
   },
@@ -29,7 +29,7 @@ export const Snackbar = {
       type: 'info',
       text1: title,
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 4000,
     })
   },
@@ -40,7 +40,7 @@ export const Snackbar = {
       type: 'error', // Using error type for warning as toast-message doesn't have warning type
       text1: title,
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 4000,
     })
   },
@@ -51,7 +51,7 @@ export const Snackbar = {
       type: 'error',
       text1: 'Required Field',
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 4000,
     })
   },
@@ -62,7 +62,7 @@ export const Snackbar = {
       type: 'error',
       text1: 'Error',
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 5000,
     })
   },
@@ -73,7 +73,7 @@ export const Snackbar = {
       type: 'info',
       text1: 'Please wait',
       text2: message,
-      position: 'bottom',
+      position: 'top',
       visibilityTime: 2000,
     })
   },
