@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from 'react-native'
 import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -22,6 +23,8 @@ const SignupScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedCountryCode, setSelectedCountryCode] = useState('+91')
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  const [isTermsHovered, setIsTermsHovered] = useState(false)
+  const [isPrivacyHovered, setIsPrivacyHovered] = useState(false)
   
   const countryCodes = [
     { code: '+91', country: 'India' },
@@ -125,6 +128,44 @@ const SignupScreen = ({ navigation }) => {
     const limited = cleaned.slice(0, 10)
     
     setPhoneNumber(limited)
+  }
+
+  const handleTermsPress = async () => {
+    try {
+      // Replace with your actual terms and conditions URL
+      const termsUrl = 'https://broker-adda.algofolks.com/terms'
+      const supported = await Linking.canOpenURL(termsUrl)
+      
+      if (supported) {
+        await Linking.openURL(termsUrl)
+      } else {
+        // Fallback to navigation if URL opening fails
+        navigation.navigate('TermsAndConditions')
+      }
+    } catch (error) {
+      console.error('Error opening terms URL:', error)
+      // Fallback to navigation
+      navigation.navigate('TermsAndConditions')
+    }
+  }
+
+  const handlePrivacyPress = async () => {
+    try {
+      // Replace with your actual privacy policy URL
+      const privacyUrl = 'https://broker-adda.algofolks.com/privacy'
+      const supported = await Linking.canOpenURL(privacyUrl)
+      
+      if (supported) {
+        await Linking.openURL(privacyUrl)
+      } else {
+        // Fallback to navigation if URL opening fails
+        navigation.navigate('PrivacyPolicy')
+      }
+    } catch (error) {
+      console.error('Error opening privacy URL:', error)
+      // Fallback to navigation
+      navigation.navigate('PrivacyPolicy')
+    }
   }
 
 
@@ -250,13 +291,35 @@ const SignupScreen = ({ navigation }) => {
             <View style={styles.termsContainer}>
               <Text style={styles.termsText}>
                 By continuing you agree to our{' '}
-                <Text style={styles.linkText} onPress={() => navigation.navigate('TermsAndConditions')}>
-                  Terms & Conditions
-                </Text>
+                <TouchableOpacity 
+                  onPress={handleTermsPress}
+                  onPressIn={() => setIsTermsHovered(true)}
+                  onPressOut={() => setIsTermsHovered(false)}
+                  activeOpacity={0.7}
+                  style={styles.linkTouchable}
+                >
+                  <Text style={[
+                    styles.linkText, 
+                    isTermsHovered && styles.linkTextHovered
+                  ]}>
+                    Terms & Conditions
+                  </Text>
+                </TouchableOpacity>
                 {' '}and{' '}
-                <Text style={styles.linkText} onPress={() => navigation.navigate('PrivacyPolicy')}>
-                  Privacy Policy
-                </Text>
+                <TouchableOpacity 
+                  onPress={handlePrivacyPress}
+                  onPressIn={() => setIsPrivacyHovered(true)}
+                  onPressOut={() => setIsPrivacyHovered(false)}
+                  activeOpacity={0.7}
+                  style={styles.linkTouchable}
+                >
+                  <Text style={[
+                    styles.linkText, 
+                    isPrivacyHovered && styles.linkTextHovered
+                  ]}>
+                    Privacy Policy
+                  </Text>
+                </TouchableOpacity>
               </Text>
             </View>
 
@@ -537,11 +600,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     flexShrink: 1,
   },
+  linkTouchable: {
+    display: 'inline',
+  },
   linkText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#009689',
+    color: '#000000',
     textDecorationLine: 'underline',
+  },
+  linkTextHovered: {
+    color: '#009689',
   },
 })
 
