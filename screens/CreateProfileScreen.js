@@ -204,10 +204,16 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   const isStep3Valid = () => {
-    // Step 3: Regions - validate required fields
-    return formData.state && 
-           formData.city && 
-           formData.selectedRegionId
+    // Step 3: Regions - validate based on selection mode
+    if (showManualRegionSelection) {
+      // Manual mode: require state, city, and region selection
+      return formData.state && 
+             formData.city && 
+             formData.selectedRegionId
+    } else {
+      // Nearby mode: only require region selection
+      return formData.selectedRegionId
+    }
   }
 
   const isStep4Valid = () => {
@@ -302,6 +308,12 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Handle region selection from cards
   const handleRegionSelect = (region) => {
+    // Clear manual mode selections when selecting from nearby regions
+    if (!showManualRegionSelection) {
+      updateFormData('state', '')
+      updateFormData('city', '')
+    }
+    
     setSelectedRegionId(region._id)
     updateFormData('regions', region.name)
     updateFormData('selectedRegionId', region._id)
@@ -1952,6 +1964,16 @@ const CreateProfileScreen = ({ navigation }) => {
                   key={index}
                   style={styles.modalItem}
                   onPress={() => {
+                    // Clear nearby mode selections when making manual selections
+                    if (showManualRegionSelection && (field === 'state' || field === 'city' || field === 'regions')) {
+                      // Clear nearby region selection when making manual selections
+                      if (formData.selectedRegionId) {
+                        updateFormData('regions', '')
+                        updateFormData('selectedRegionId', '')
+                        setSelectedRegionId('')
+                      }
+                    }
+                    
                     if (field === 'regions') {
                       // Find the region object to get the ID from manual regions list
                       const selectedRegion = manualRegionsList.find(region => region.name === option)
