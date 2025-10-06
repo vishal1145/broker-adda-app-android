@@ -182,11 +182,19 @@ const CreateProfileScreen = ({ navigation }) => {
   // Step validation functions
   const isStep1Valid = () => {
     // Step 1: Personal Information - validate required fields
-    return formData.fullName.trim() && 
+    const basicValidation = formData.fullName.trim() && 
            formData.gender && 
            formData.email.trim() && 
            formData.phone.trim() && 
            formData.firmName.trim()
+    
+    // If WhatsApp number is provided, it must be valid
+    if (formData.whatsappNumber && formData.whatsappNumber.trim()) {
+      const whatsappValidation = validateWhatsAppNumber(formData.whatsappNumber)
+      return basicValidation && whatsappValidation.isValid
+    }
+    
+    return basicValidation
   }
 
   const isStep2Valid = () => {
