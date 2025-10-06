@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler'
+import { responsive } from '../utils/responsive'
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -12,7 +13,7 @@ const OnboardingScreen = ({ navigation }) => {
     trackConnections: true
   })
   
-  const screenWidth = Dimensions.get('window').width
+  const screenWidth = responsive.width
   const translateX = useRef(new Animated.Value(0)).current
   const panRef = useRef()
   const isAnimating = useRef(false)
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
     width: '100%',
     zIndex: 1,
     paddingHorizontal: 0,
-    paddingTop: 0,
+    paddingTop: responsive.verticalScale(20), // Add top padding to account for skip button
     paddingBottom: 0,
   },
   centralImage: {
@@ -444,19 +445,19 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   mainHeading: {
-    fontSize: 32,
+    fontSize: responsive.fontSize.largeTitle,
     fontWeight: '700',
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 18,
-    lineHeight: 40,
+    marginBottom: responsive.spacing.lg,
+    lineHeight: responsive.fontSize.largeTitle * 1.25,
   },
   description: {
-    fontSize: 18,
+    fontSize: responsive.fontSize.xl,
     fontWeight: '400',
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 28,
+    lineHeight: responsive.fontSize.xl * 1.5,
   },
   stepIndicator: {
     alignItems: 'center',
@@ -500,20 +501,20 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: responsive.spacing.lg,
     width: '100%',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: responsive.padding.md,
+    paddingHorizontal: responsive.padding.lg,
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: responsive.borderRadius.md,
     borderWidth: 1,
     borderColor: '#E9ECEF',
   },
   checkboxChecked: {
-    width: 24,
-    height: 24,
+    width: responsive.scale(24),
+    height: responsive.scale(24),
     backgroundColor: '#009689',
-    borderRadius: 6,
+    borderRadius: responsive.scale(6),
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -524,40 +525,40 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   checkboxUnchecked: {
-    width: 24,
-    height: 24,
+    width: responsive.scale(24),
+    height: responsive.scale(24),
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#D1D5DB',
-    borderRadius: 6,
+    borderRadius: responsive.scale(6),
     flexShrink: 0,
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: responsive.fontSize.md,
     fontWeight: 'bold',
   },
   featureText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: responsive.fontSize.lg,
     fontWeight: '500',
     color: '#1F2937',
-    lineHeight: 24,
+    lineHeight: responsive.fontSize.lg * 1.5,
     textAlign: 'left',
-    marginLeft: 16,
+    marginLeft: responsive.spacing.lg,
   },
   buttonContainer: {
-    paddingHorizontal: 40,
-    paddingBottom: 50,
-    paddingTop: 20,
+    paddingHorizontal: responsive.padding.xl,
+    paddingBottom: responsive.verticalScale(50),
+    paddingTop: responsive.scale(20),
   },
   getStartedButton: {
     backgroundColor: '#009689',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    borderRadius: 16,
+    paddingVertical: responsive.verticalScale(20),
+    paddingHorizontal: responsive.padding.xl,
+    borderRadius: responsive.borderRadius.xl,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: responsive.spacing.sm,
     shadowColor: '#009689',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -566,38 +567,45 @@ const styles = StyleSheet.create({
   },
   getStartedButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: responsive.fontSize.xl,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   skipButtonContainer: {
     position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
+    top: responsive.verticalScale(40),
+    right: responsive.scale(20),
+    zIndex: 100, // Increased z-index to ensure it's always on top
   },
   skipButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: responsive.padding.lg,
+    paddingVertical: responsive.padding.sm,
+    borderRadius: responsive.borderRadius.xl,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // More visible background
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   skipButtonText: {
-    color: '#8E8E93',
-    fontSize: 16,
-    fontWeight: '500',
+    color: '#6B7280', // Darker color for better visibility
+    fontSize: responsive.fontSize.lg,
+    fontWeight: '600', // Slightly bolder
   },
   step3HeadingContainer: {
-    paddingHorizontal: 40,
-    paddingTop: 80,
-    paddingBottom: 20,
+    paddingHorizontal: responsive.padding.xl,
+    paddingTop: responsive.verticalScale(20),
+    paddingBottom: responsive.scale(20),
     alignItems: 'center',
     flexShrink: 0,
   },
   step3DescriptionContainer: {
-    paddingHorizontal: 40,
+    paddingHorizontal: responsive.padding.xl,
     paddingTop: 0,
-    paddingBottom: 60,
+    paddingBottom: responsive.verticalScale(120),
     alignItems: 'center',
     flexShrink: 0,
   },
