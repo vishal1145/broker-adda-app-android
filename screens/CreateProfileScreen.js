@@ -123,6 +123,62 @@ const CreateProfileScreen = ({ navigation }) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // WhatsApp number validation
+  const validateWhatsAppNumber = (number) => {
+    if (!number || number.trim() === '') {
+      return { isValid: true, error: '' } // Optional field
+    }
+    
+    // Remove all non-digit characters
+    const cleanNumber = number.replace(/\D/g, '')
+    
+    // Check if it's a valid Indian mobile number (10 digits starting with 6,7,8,9)
+    if (cleanNumber.length === 10) {
+      const firstDigit = cleanNumber[0]
+      if (['6', '7', '8', '9'].includes(firstDigit)) {
+        return { isValid: true, error: '' }
+      }
+    }
+    
+    // Check if it's a valid Indian mobile number with country code (11 digits starting with 91)
+    if (cleanNumber.length === 11 && cleanNumber.startsWith('91')) {
+      const mobilePart = cleanNumber.substring(2)
+      const firstDigit = mobilePart[0]
+      if (['6', '7', '8', '9'].includes(firstDigit)) {
+        return { isValid: true, error: '' }
+      }
+    }
+    
+    // Check if it's a valid Indian mobile number with +91 (12 digits starting with 91)
+    if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) {
+      const mobilePart = cleanNumber.substring(2)
+      const firstDigit = mobilePart[0]
+      if (['6', '7', '8', '9'].includes(firstDigit)) {
+        return { isValid: true, error: '' }
+      }
+    }
+    
+    return { 
+      isValid: false, 
+      error: 'Please enter a valid 10-digit mobile number (e.g., 9876543210)' 
+    }
+  }
+
+  // Handle WhatsApp number change with validation
+  const handleWhatsAppNumberChange = (text) => {
+    updateFormData('whatsappNumber', text)
+  }
+
+  // Use current phone number for WhatsApp
+  const handleUseCurrentPhoneNumber = () => {
+    if (formData.phone && formData.phone.trim()) {
+      updateFormData('whatsappNumber', formData.phone)
+      Snackbar.showSuccess('Phone Number Copied', 'Current phone number has been copied to WhatsApp field')
+    } else {
+      Snackbar.showError('No Phone Number', 'Please enter your phone number first')
+    }
+  }
+
   // Step validation functions
   const isStep1Valid = () => {
     // Step 1: Personal Information - validate required fields
@@ -1048,6 +1104,15 @@ const CreateProfileScreen = ({ navigation }) => {
           Snackbar.showValidationError('Please enter your firm name')
           return false
         }
+        
+        // WhatsApp number validation (optional but must be valid if provided)
+        if (formData.whatsappNumber && formData.whatsappNumber.trim()) {
+          const whatsappValidation = validateWhatsAppNumber(formData.whatsappNumber)
+          if (!whatsappValidation.isValid) {
+            Snackbar.showValidationError(whatsappValidation.error)
+            return false
+          }
+        }
 
     // Professional validation
         if (!formData.licenseNumber.trim()) {
@@ -1361,15 +1426,35 @@ const CreateProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>WhatsApp Number</Text>
+        <View style={styles.whatsappHeader}>
+          <Text style={styles.inputLabel}>WhatsApp Number</Text>
+          <TouchableOpacity 
+            style={[styles.phoneButton, !formData.phone && styles.phoneButtonDisabled]}
+            onPress={handleUseCurrentPhoneNumber}
+            disabled={!formData.phone}
+          >
+            <MaterialIcons name="phone" size={16} color={formData.phone ? "#009689" : "#8E8E93"} />
+            <Text style={[styles.phoneButtonText, !formData.phone && styles.phoneButtonTextDisabled]}>
+              Use Current Phone
+            </Text>
+          </TouchableOpacity>
+        </View>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            formData.whatsappNumber && !validateWhatsAppNumber(formData.whatsappNumber).isValid && styles.inputError
+          ]}
           value={formData.whatsappNumber}
-          onChangeText={(text) => updateFormData('whatsappNumber', text)}
+          onChangeText={handleWhatsAppNumberChange}
           placeholder="Enter WhatsApp number"
           placeholderTextColor="#8E8E93"
           keyboardType="numeric"
         />
+        {formData.whatsappNumber && !validateWhatsAppNumber(formData.whatsappNumber).isValid && (
+          <Text style={styles.errorText}>
+            {validateWhatsAppNumber(formData.whatsappNumber).error}
+          </Text>
+        )}
       </View>
     </View>
   )
@@ -2216,6 +2301,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  whatsappHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  phoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F8F8',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  phoneButtonDisabled: {
+    backgroundColor: '#F5F5F5',
+    opacity: 0.6,
+  },
+  phoneButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#009689',
+    marginLeft: 4,
+  },
+  phoneButtonTextDisabled: {
+    color: '#8E8E93',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 1,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#FF3B30',
+    marginTop: 4,
+    marginLeft: 4,
   },
   locationButton: {
     flexDirection: 'row',
