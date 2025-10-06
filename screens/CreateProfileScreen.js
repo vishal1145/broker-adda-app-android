@@ -208,13 +208,69 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   // Navigation functions
-  const goToNextStep = () => {
+  const goToNextStep = async () => {
     if (currentStep < 4) {
-      setCurrentStep(currentStep + 1)
-      // Scroll to top when going to next step
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
-      }, 100)
+      // If moving from step 1 to step 2, verify email first
+      if (currentStep === 1) {
+        await verifyEmailAndProceed()
+      } else {
+        setCurrentStep(currentStep + 1)
+        // Scroll to top when going to next step
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+        }, 100)
+      }
+    }
+  }
+
+  // Verify email before proceeding to next step
+  const verifyEmailAndProceed = async () => {
+    try {
+      // Validate email format first
+      if (!formData.email.trim()) {
+        Snackbar.showValidationError('Please enter your email address')
+        return
+      }
+
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(formData.email.trim())) {
+        Snackbar.showValidationError('Please enter a valid email address')
+        return
+      }
+
+      // Show loading state
+      setIsLoading(true)
+
+      // Get current user ID from storage (if available)
+      const brokerId = await storage.getBrokerId()
+      
+      // Call checkEmail API
+      const response = await authAPI.checkEmail(formData.email.trim(), brokerId || null)
+      
+      setIsLoading(false)
+
+      if (response.success) {
+        if (response.data.exists) {
+          // Email already exists
+          Snackbar.showError('Email Already in Use', response.data.message)
+          return
+        } else {
+          // Email is available, proceed to next step
+          setCurrentStep(currentStep + 1)
+          // Scroll to top when going to next step
+          setTimeout(() => {
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+          }, 100)
+          Snackbar.showSuccess('Email Verified', 'Email is available for use')
+        }
+      } else {
+        Snackbar.showError('Verification Failed', 'Unable to verify email. Please try again.')
+      }
+    } catch (error) {
+      setIsLoading(false)
+      console.error('Email verification error:', error)
+      Snackbar.showApiError('Failed to verify email. Please try again.')
     }
   }
 
@@ -1980,11 +2036,11 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   // Handle button press
-  const handleStepButtonPress = () => {
+  const handleStepButtonPress = async () => {
     if (currentStep === 4) {
       handleCompleteProfile()
     } else {
-      goToNextStep()
+      await goToNextStep()
     }
   }
 
@@ -2030,16 +2086,17 @@ const CreateProfileScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={[
                   styles.actionButton, 
-                  (!getCurrentStepValid() || isSubmitting) ? styles.actionButtonDisabled : null
+                  (!getCurrentStepValid() || isSubmitting || isLoading) ? styles.actionButtonDisabled : null
                 ]} 
                 onPress={handleStepButtonPress}
-                disabled={isSubmitting || !getCurrentStepValid()}
+                disabled={isSubmitting || isLoading || !getCurrentStepValid()}
               >
-                {isSubmitting ? (
+                {(isSubmitting || isLoading) ? (
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator size="small" color="#FFFFFF" />
                     <Text style={[styles.actionButtonText, styles.loadingText]}>
-                      {currentStep === 4 ? 'Creating Profile...' : 'Processing...'}
+                      {currentStep === 4 ? 'Creating Profile...' : 
+                       currentStep === 1 && isLoading ? 'Verifying Email...' : 'Processing...'}
                     </Text>
                   </View>
                 ) : (

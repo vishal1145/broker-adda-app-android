@@ -181,6 +181,19 @@ export const authAPI = {
       console.error('Get nearest regions error:', error);
       throw error;
     }
+  },
+
+  // Check if email is already in use
+  checkEmail: async (email, userId) => {
+    try {
+      console.log('Checking email availability:', { email, userId });
+      const response = await api.get(`/api/auth/check-email?email=${encodeURIComponent(email)}&userId=${userId}`);
+      console.log('Email check completed:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Check email error:', error);
+      throw error;
+    }
   }
 };
 
