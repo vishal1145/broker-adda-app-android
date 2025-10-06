@@ -94,7 +94,8 @@ const CreateProfileScreen = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null)
   const [profileImageLoading, setProfileImageLoading] = useState(false)
   const [imageLoadErrors, setImageLoadErrors] = useState({})
-  const [regionsList, setRegionsList] = useState([])
+  const [nearbyRegionsList, setNearbyRegionsList] = useState([])
+  const [manualRegionsList, setManualRegionsList] = useState([])
   const [regionsLoading, setRegionsLoading] = useState(false)
   const [addressDetails, setAddressDetails] = useState({
     formattedAddress: '',
@@ -189,19 +190,26 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Render region cards
   const renderRegionCards = () => {
-    if (!regionsList || regionsList.length === 0) {
+    // Use nearby regions when in nearby mode, manual regions when in manual mode
+    const currentRegionsList = showManualRegionSelection ? manualRegionsList : nearbyRegionsList
+    
+    if (!currentRegionsList || currentRegionsList.length === 0) {
       return (
         <View style={styles.noRegionsContainer}>
           <MaterialIcons name="location-off" size={48} color="#8E8E93" />
           <Text style={styles.noRegionsText}>No regions available</Text>
-          <Text style={styles.noRegionsSubtext}>Try selecting a different city or use manual selection</Text>
+          <Text style={styles.noRegionsSubtext}>
+            {showManualRegionSelection 
+              ? 'Try selecting a different city' 
+              : 'No nearby regions found for your location'}
+          </Text>
         </View>
       )
     }
 
     // Debug logging
-    console.log('Regions data:', regionsList)
-    regionsList.forEach((region, index) => {
+    console.log('Regions data:', currentRegionsList)
+    currentRegionsList.forEach((region, index) => {
       console.log(`Region ${index}:`, {
         name: region.name,
         distanceKm: region.distanceKm,
@@ -212,7 +220,7 @@ const CreateProfileScreen = ({ navigation }) => {
     return (
       <View style={styles.regionCardsContainer}>
         <View style={styles.regionCardsList}>
-          {regionsList.map((region, index) => (
+          {currentRegionsList.map((region, index) => (
             <TouchableOpacity
               key={region._id}
               style={[
@@ -254,12 +262,15 @@ const CreateProfileScreen = ({ navigation }) => {
 
     try {
       setAddressLoading(true)
+      console.log('Fetching address suggestions for:', query)
       const result = await placesAPI.getAddressSuggestions(query)
       
       if (result.success && result.data.length > 0) {
+        console.log('Address suggestions received:', result.data.length, 'suggestions')
         setAddressSuggestions(result.data)
         setShowAddressSuggestions(true)
       } else {
+        console.log('No address suggestions found')
         setAddressSuggestions([])
         setShowAddressSuggestions(false)
         if (result.error) {
@@ -278,6 +289,7 @@ const CreateProfileScreen = ({ navigation }) => {
   // Handle address selection from suggestions
   const handleAddressSelect = async (placeId, description) => {
     try {
+      console.log('Address selection triggered:', { placeId, description })
       setAddressLoading(true)
       setShowAddressSuggestions(false)
       
@@ -336,9 +348,11 @@ const CreateProfileScreen = ({ navigation }) => {
         const lat = details.geometry?.location?.lat
         const lng = details.geometry?.location?.lng
         if (lat && lng) {
+          console.log('Address selected with coordinates, fetching nearby regions:', { lat, lng })
           await fetchNearestRegions(lat, lng)
         } else if (city) {
           // Fallback to city-based regions if coordinates are not available
+          console.log('Address selected without coordinates, fetching regions for city:', city)
           fetchRegions(city)
         }
         
@@ -379,7 +393,7 @@ const CreateProfileScreen = ({ navigation }) => {
   // Fetch regions based on selected city
   const fetchRegions = async (city) => {
     if (!city) {
-      setRegionsList([])
+      setManualRegionsList([])
       return
     }
 
@@ -388,14 +402,15 @@ const CreateProfileScreen = ({ navigation }) => {
       const response = await authAPI.getRegions(city)
       
       if (response.success && response.data && response.data.regions) {
-        setRegionsList(response.data.regions)
+        setManualRegionsList(response.data.regions)
+        console.log('Manual regions fetched:', response.data.regions.length, 'regions')
       } else {
         console.error('Failed to fetch regions:', response.message)
-        setRegionsList([])
+        setManualRegionsList([])
       }
     } catch (error) {
       console.error('Error fetching regions:', error)
-      setRegionsList([])
+      setManualRegionsList([])
     } finally {
       setRegionsLoading(false)
     }
@@ -404,7 +419,7 @@ const CreateProfileScreen = ({ navigation }) => {
   // Fetch nearest regions based on latitude and longitude
   const fetchNearestRegions = async (latitude, longitude, limit = 5) => {
     if (!latitude || !longitude) {
-      setRegionsList([])
+      setNearbyRegionsList([])
       return
     }
 
@@ -413,15 +428,15 @@ const CreateProfileScreen = ({ navigation }) => {
       const response = await authAPI.getNearestRegions(latitude, longitude, limit)
       
       if (response.success && response.data && response.data.regions) {
-        setRegionsList(response.data.regions)
+        setNearbyRegionsList(response.data.regions)
         console.log('Nearest regions fetched:', response.data.regions.length, 'regions')
       } else {
         console.error('Failed to fetch nearest regions:', response.message)
-        setRegionsList([])
+        setNearbyRegionsList([])
       }
     } catch (error) {
       console.error('Error fetching nearest regions:', error)
-      setRegionsList([])
+      setNearbyRegionsList([])
     } finally {
       setRegionsLoading(false)
     }
@@ -567,9 +582,16 @@ const CreateProfileScreen = ({ navigation }) => {
             setSelectedRegionId(broker.region[0]._id)
           }
           
-          // Fetch regions if city is already selected
+          // Fetch both nearby and manual regions on page load
+          if (broker.location?.coordinates && Array.isArray(broker.location.coordinates) && broker.location.coordinates.length >= 2) {
+            const [longitude, latitude] = broker.location.coordinates
+            console.log('Fetching nearby regions based on stored coordinates:', { latitude, longitude })
+            await fetchNearestRegions(latitude, longitude)
+          }
+          
           if (broker.city) {
-            fetchRegions(broker.city)
+            console.log('Fetching manual regions based on city:', broker.city)
+            await fetchRegions(broker.city)
           }
           
           // Check for uploaded documents
@@ -1550,7 +1572,14 @@ const CreateProfileScreen = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Preferred Regions *</Text>
         <TouchableOpacity 
           style={styles.locationButton}
-          onPress={() => setShowManualRegionSelection(!showManualRegionSelection)}
+          onPress={async () => {
+            const newMode = !showManualRegionSelection
+            setShowManualRegionSelection(newMode)
+            
+            // When switching to nearby mode, nearby regions are already loaded
+            // When switching to manual mode, manual regions are already loaded
+            console.log('Switched to mode:', newMode ? 'Manual' : 'Nearby')
+          }}
         >
           <MaterialIcons name={showManualRegionSelection ? "location-on" : "search"} size={16} color="#009689" />
           <Text style={styles.locationButtonText}>
@@ -1593,13 +1622,13 @@ const CreateProfileScreen = ({ navigation }) => {
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Regions *</Text>
             <TouchableOpacity 
-              style={[styles.input, (regionsLoading || regionsList.length === 0) && styles.disabledInput]}
-              onPress={() => !regionsLoading && regionsList.length > 0 && setShowRegionModal(true)}
-              disabled={regionsLoading || regionsList.length === 0}
+              style={[styles.input, (regionsLoading || manualRegionsList.length === 0) && styles.disabledInput]}
+              onPress={() => !regionsLoading && manualRegionsList.length > 0 && setShowRegionModal(true)}
+              disabled={regionsLoading || manualRegionsList.length === 0}
             >
               <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
                 {regionsLoading ? 'Loading regions...' : 
-                 regionsList.length === 0 && formData.city ? 'No regions available' :
+                 manualRegionsList.length === 0 && formData.city ? 'No regions available' :
                  formData.regions || 'Select regions'}
               </Text>
               {regionsLoading ? (
@@ -1775,8 +1804,8 @@ const CreateProfileScreen = ({ navigation }) => {
                   style={styles.modalItem}
                   onPress={() => {
                     if (field === 'regions') {
-                      // Find the region object to get the ID
-                      const selectedRegion = regionsList.find(region => region.name === option)
+                      // Find the region object to get the ID from manual regions list
+                      const selectedRegion = manualRegionsList.find(region => region.name === option)
                       updateFormData('regions', option)
                       updateFormData('selectedRegionId', selectedRegion ? selectedRegion._id : '')
                       setSelectedRegionId(selectedRegion ? selectedRegion._id : '')
@@ -1947,7 +1976,7 @@ const CreateProfileScreen = ({ navigation }) => {
       {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
       {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
       {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
-      {renderModal('Select Regions', regionsList.length > 0 ? regionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
+      {renderModal('Select Regions', manualRegionsList.length > 0 ? manualRegionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
     </SafeAreaView>
   )
 }
