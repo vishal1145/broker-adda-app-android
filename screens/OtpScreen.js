@@ -22,8 +22,9 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
   const [focusedIndex, setFocusedIndex] = useState(0)
   const inputRefs = useRef([])
 
-  const handleVerifyOtp = async () => {
-    const otpString = otp.join('')
+  const handleVerifyOtp = async (otpArray = null) => {
+    const currentOtp = otpArray || otp
+    const otpString = currentOtp.join('')
     if (!otpString.trim()) {
       Snackbar.showValidationError('Please enter the OTP')
       return
@@ -130,6 +131,14 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       setTimeout(() => {
         inputRefs.current[index + 1]?.focus()
       }, 50)
+    }
+    
+    // Check if all 6 digits are entered and auto-verify
+    if (newOtp.every(digit => digit !== '') && newOtp.length === 6) {
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        handleVerifyOtp(newOtp)
+      }, 200)
     }
   }
 

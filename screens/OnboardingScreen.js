@@ -426,6 +426,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
     width: '100%',
+    zIndex: 1,
     paddingHorizontal: 0,
     paddingTop: 0,
     paddingBottom: 0,
