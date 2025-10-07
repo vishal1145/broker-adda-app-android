@@ -204,16 +204,10 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   const isStep3Valid = () => {
-    // Step 3: Regions - validate based on selection mode
-    if (showManualRegionSelection) {
-      // Manual mode: require state, city, and region selection
-      return formData.state && 
-             formData.city && 
-             formData.selectedRegionId
-    } else {
-      // Nearby mode: only require region selection
-      return formData.selectedRegionId
-    }
+    // Step 3: Regions - always require state, city, and region selection
+    return formData.state && 
+           formData.city && 
+           formData.selectedRegionId
   }
 
   const isStep4Valid = () => {
@@ -308,15 +302,22 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Handle region selection from cards
   const handleRegionSelect = (region) => {
-    // Clear manual mode selections when selecting from nearby regions
-    if (!showManualRegionSelection) {
-      updateFormData('state', '')
-      updateFormData('city', '')
-    }
-    
+    // Set region data
     setSelectedRegionId(region._id)
     updateFormData('regions', region.name)
     updateFormData('selectedRegionId', region._id)
+    
+    // For nearby regions, extract state and city from the region data
+    if (!showManualRegionSelection) {
+      // Extract state and city from the selected region
+      if (region.state) {
+        updateFormData('state', region.state)
+      }
+      if (region.city) {
+        updateFormData('city', region.city)
+      }
+    }
+    
     Snackbar.showSuccess('Region Selected', `${region.name} has been selected`)
   }
 
@@ -760,6 +761,20 @@ const CreateProfileScreen = ({ navigation }) => {
     fetchProfileData()
   }, [])
 
+  // Load nearby regions when in nearby mode and no regions are loaded
+  useEffect(() => {
+    if (!showManualRegionSelection && nearbyRegionsList.length === 0 && !regionsLoading) {
+      // Try to get current location and fetch nearby regions
+      getCurrentLocation().then(coordinates => {
+        if (coordinates) {
+          fetchNearestRegions(coordinates.latitude, coordinates.longitude)
+        }
+      }).catch(error => {
+        console.log('Could not get current location for nearby regions:', error)
+      })
+    }
+  }, [showManualRegionSelection, nearbyRegionsList.length, regionsLoading])
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -1200,7 +1215,7 @@ const CreateProfileScreen = ({ navigation }) => {
           return false
         }
 
-    // Regions validation
+    // Regions validation - always require state, city, and region selection
         if (!formData.state) {
           Snackbar.showValidationError('Please select your state')
           return false
