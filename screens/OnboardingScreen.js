@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions } from 'react-native'
+import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { responsive } from '../utils/responsive'
@@ -214,7 +214,12 @@ const OnboardingScreen = ({ navigation }) => {
       <View key={step} style={styles.stepContainer}>
         {/* For Step 4: Show heading first, then description, then checkboxes (no image) */}
         {step === 4 ? (
-          <>
+          <ScrollView 
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
             {/* Main Heading for Step 4 */}
             <View style={styles.step3HeadingContainer}>
               <Text style={styles.mainHeading}>
@@ -280,7 +285,7 @@ const OnboardingScreen = ({ navigation }) => {
                 <DottedLineIndicator activeStep={currentStep} />
               </View>
             </View>
-          </>
+          </ScrollView>
         ) : (
           <>
             {/* Central Image for Steps 1, 2, and 3 */}
@@ -316,8 +321,8 @@ const OnboardingScreen = ({ navigation }) => {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={styles.onboardingContainer} edges={[]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.onboardingContainer} edges={['top', 'bottom']}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
         
         {/* Skip Button - Only on steps 1, 2, and 3 */}
         {(currentStep === 1 || currentStep === 2 || currentStep === 3) && (
@@ -382,7 +387,8 @@ const styles = StyleSheet.create({
     width: '25%', // 100% / 4 steps
     flex: 1,
     flexDirection: 'column',
-    paddingBottom: 40,
+    paddingBottom: responsive.verticalScale(20),
+    minHeight: Dimensions.get('window').height - 100, // Ensure minimum height
   },
   mainContentContainer: {
     flex: 1,
@@ -429,7 +435,7 @@ const styles = StyleSheet.create({
     width: '100%',
     zIndex: 1,
     paddingHorizontal: 0,
-    paddingTop: responsive.verticalScale(20), // Add top padding to account for skip button
+    paddingTop: responsive.verticalScale(40), // Increased padding to account for status bar and skip button
     paddingBottom: 0,
   },
   centralImage: {
@@ -445,19 +451,19 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   mainHeading: {
-    fontSize: responsive.fontSize.largeTitle,
+    fontSize: 28,
     fontWeight: '700',
     color: '#1F2937',
     textAlign: 'center',
     marginBottom: responsive.spacing.lg,
-    lineHeight: responsive.fontSize.largeTitle * 1.25,
+    lineHeight: 34,
   },
   description: {
-    fontSize: responsive.fontSize.xl,
+    fontSize: 16,
     fontWeight: '400',
-    color: '#6B7280',
+    color: '#8E8E93',
     textAlign: 'center',
-    lineHeight: responsive.fontSize.xl * 1.5,
+    lineHeight: 24,
   },
   stepIndicator: {
     alignItems: 'center',
@@ -492,11 +498,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E5EA',
   },
   featureList: {
-    paddingHorizontal: 40,
-    paddingBottom: 40,
+    paddingHorizontal: responsive.padding.xl,
+    paddingBottom: responsive.verticalScale(20),
     alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: responsive.verticalScale(20),
   },
   featureItem: {
     flexDirection: 'row',
@@ -535,22 +542,27 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#FFFFFF',
-    fontSize: responsive.fontSize.md,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   featureText: {
     flex: 1,
-    fontSize: responsive.fontSize.lg,
+    fontSize: 16,
     fontWeight: '500',
     color: '#1F2937',
-    lineHeight: responsive.fontSize.lg * 1.5,
+    lineHeight: 24,
     textAlign: 'left',
     marginLeft: responsive.spacing.lg,
   },
   buttonContainer: {
     paddingHorizontal: responsive.padding.xl,
-    paddingBottom: responsive.verticalScale(50),
-    paddingTop: responsive.scale(20),
+    paddingBottom: responsive.verticalScale(30),
+    paddingTop: responsive.scale(10),
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
   },
   getStartedButton: {
     backgroundColor: '#009689',
@@ -567,13 +579,13 @@ const styles = StyleSheet.create({
   },
   getStartedButtonText: {
     color: '#FFFFFF',
-    fontSize: responsive.fontSize.xl,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   skipButtonContainer: {
     position: 'absolute',
-    top: responsive.verticalScale(40),
+    top: responsive.verticalScale(50),
     right: responsive.scale(20),
     zIndex: 100, // Increased z-index to ensure it's always on top
   },
@@ -592,7 +604,7 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     color: '#6B7280', // Darker color for better visibility
-    fontSize: responsive.fontSize.lg,
+    fontSize: 16,
     fontWeight: '600', // Slightly bolder
   },
   step3HeadingContainer: {
@@ -605,9 +617,17 @@ const styles = StyleSheet.create({
   step3DescriptionContainer: {
     paddingHorizontal: responsive.padding.xl,
     paddingTop: 0,
-    paddingBottom: responsive.verticalScale(120),
+    paddingBottom: responsive.verticalScale(20),
     alignItems: 'center',
     flexShrink: 0,
+  },
+  scrollContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: responsive.verticalScale(100), // Extra padding for button space
   },
 })
 
