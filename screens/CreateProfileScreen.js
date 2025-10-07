@@ -716,7 +716,7 @@ const CreateProfileScreen = ({ navigation }) => {
           
           // Fetch both nearby and manual regions on page load
           if (broker.location?.coordinates && Array.isArray(broker.location.coordinates) && broker.location.coordinates.length >= 2) {
-            const [longitude, latitude] = broker.location.coordinates
+            const [latitude, longitude] = broker.location.coordinates
             console.log('Fetching nearby regions based on stored coordinates:', { latitude, longitude })
             await fetchNearestRegions(latitude, longitude)
           }
