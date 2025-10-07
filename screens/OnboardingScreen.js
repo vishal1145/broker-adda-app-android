@@ -6,12 +6,6 @@ import { responsive } from '../utils/responsive'
 
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [checkboxes, setCheckboxes] = useState({
-    connectBrokers: true,
-    shareListings: true,
-    networkingEvents: true,
-    trackConnections: true
-  })
   
   const screenWidth = responsive.width
   const translateX = useRef(new Animated.Value(0)).current
@@ -140,12 +134,6 @@ const OnboardingScreen = ({ navigation }) => {
     animateToStep(4)
   }
 
-  const toggleCheckbox = (checkboxKey) => {
-    setCheckboxes(prev => ({
-      ...prev,
-      [checkboxKey]: !prev[checkboxKey]
-    }))
-  }
   // Dotted line indicator component
   const DottedLineIndicator = ({ activeStep }) => {
     return (
@@ -236,49 +224,33 @@ const OnboardingScreen = ({ navigation }) => {
 
             {/* Feature List for Step 4 */}
             <View style={styles.featureList}>
-              <TouchableOpacity 
-                style={styles.featureItem} 
-                onPress={() => toggleCheckbox('connectBrokers')}
-                activeOpacity={0.7}
-              >
-                <View style={checkboxes.connectBrokers ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                  {checkboxes.connectBrokers && <Text style={styles.checkmark}>✓</Text>}
+              <View style={styles.featureItem}>
+                <View style={styles.checkboxChecked}>
+                  <Text style={styles.checkmark}>✓</Text>
                 </View>
                 <Text style={styles.featureText}>Connect with verified brokers across regions.</Text>
-              </TouchableOpacity>
+              </View>
               
-              <TouchableOpacity 
-                style={styles.featureItem} 
-                onPress={() => toggleCheckbox('shareListings')}
-                activeOpacity={0.7}
-              >
-                <View style={checkboxes.shareListings ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                  {checkboxes.shareListings && <Text style={styles.checkmark}>✓</Text>}
+              <View style={styles.featureItem}>
+                <View style={styles.checkboxChecked}>
+                  <Text style={styles.checkmark}>✓</Text>
                 </View>
                 <Text style={styles.featureText}>Share listings and find exclusive opportunities.</Text>
-              </TouchableOpacity>
+              </View>
               
-              <TouchableOpacity 
-                style={styles.featureItem} 
-                onPress={() => toggleCheckbox('networkingEvents')}
-                activeOpacity={0.7}
-              >
-                <View style={checkboxes.networkingEvents ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                  {checkboxes.networkingEvents && <Text style={styles.checkmark}>✓</Text>}
+              <View style={styles.featureItem}>
+                <View style={styles.checkboxChecked}>
+                  <Text style={styles.checkmark}>✓</Text>
                 </View>
                 <Text style={styles.featureText}>Participate in local and national networking events.</Text>
-              </TouchableOpacity>
+              </View>
               
-              <TouchableOpacity 
-                style={styles.featureItem} 
-                onPress={() => toggleCheckbox('trackConnections')}
-                activeOpacity={0.7}
-              >
-                <View style={checkboxes.trackConnections ? styles.checkboxChecked : styles.checkboxUnchecked}>
-                  {checkboxes.trackConnections && <Text style={styles.checkmark}>✓</Text>}
+              <View style={styles.featureItem}>
+                <View style={styles.checkboxChecked}>
+                  <Text style={styles.checkmark}>✓</Text>
                 </View>
                 <Text style={styles.featureText}>Track your connections and build your professional profile.</Text>
-              </TouchableOpacity>
+              </View>
               
               {/* Step Indicator for Step 4 - positioned below feature list */}
               <View style={styles.stepIndicatorInline}>
@@ -293,7 +265,7 @@ const OnboardingScreen = ({ navigation }) => {
               <Image 
                 source={typeof stepData.image === 'string' ? { uri: stepData.image } : stepData.image}
                 style={styles.centralImage}
-                resizeMode="cover"
+                resizeMode="contain"
                 onError={(error) => console.log('Image load error:', error)}
                 onLoad={() => console.log('Image loaded successfully')}
               />
@@ -434,8 +406,8 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     zIndex: 1,
-    paddingHorizontal: 0,
-    paddingTop: responsive.verticalScale(40), // Increased padding to account for status bar and skip button
+    paddingHorizontal: responsive.padding.md, // Added horizontal padding for image spacing
+    paddingTop: responsive.verticalScale(20), // Increased padding to account for status bar and skip button
     paddingBottom: 0,
   },
   centralImage: {
@@ -531,15 +503,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  checkboxUnchecked: {
-    width: responsive.scale(24),
-    height: responsive.scale(24),
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    borderRadius: responsive.scale(6),
-    flexShrink: 0,
-  },
   checkmark: {
     color: '#FFFFFF',
     fontSize: 14,
@@ -556,13 +519,15 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     paddingHorizontal: responsive.padding.xl,
-    paddingBottom: responsive.verticalScale(30),
+    paddingBottom: responsive.verticalScale(50), // Increased bottom padding to avoid navigation bar
     paddingTop: responsive.scale(10),
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
+    // Add safe area bottom padding
+    paddingBottom: Math.max(responsive.verticalScale(50), 34), // Ensure minimum safe area
   },
   getStartedButton: {
     backgroundColor: '#009689',

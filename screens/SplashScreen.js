@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     backgroundColor: '#009689',
+    justifyContent: 'space-between', // Distribute space between content and footer
   },
   headerPattern: {
     position: 'absolute',
@@ -143,16 +144,16 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: responsive.verticalScale(60),
+    marginBottom: responsive.verticalScale(20), // Reduce margin to save space
   },
   logoWrapper: {
-    width: responsive.scale(120),
-    height: responsive.scale(120),
-    borderRadius: responsive.scale(60),
+    width: responsive.scale(100), // Reduced from 120
+    height: responsive.scale(100), // Reduced from 120
+    borderRadius: responsive.scale(50), // Adjusted for new size
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: responsive.spacing.xxxl,
+    marginBottom: responsive.spacing.lg, // Reduced margin
     borderWidth: 3,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
@@ -183,11 +184,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   footer: {
-    position: 'absolute',
-    bottom: responsive.verticalScale(40),
-    left: 0,
-    right: 0,
     alignItems: 'center',
+    paddingHorizontal: responsive.padding.md,
+    paddingVertical: responsive.verticalScale(40),
   },
   footerText: {
     fontSize: responsive.fontSize.sm,
