@@ -1,10 +1,13 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
 
 const Footer = ({ state, descriptors, navigation }) => {
+  const insets = useSafeAreaInsets()
+  
   const tabs = [
     { key: 'Home', label: 'Home', icon: 'home' },
     { key: 'Leads', label: 'Leads', icon: 'trending-up' },
@@ -33,7 +36,7 @@ const Footer = ({ state, descriptors, navigation }) => {
   }
 
   return (
-    <View style={styles.footer}>
+    <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 30) }]}>
       <View style={styles.tabContainer}>
         {tabs.map((tab) => {
           const route = state.routes.find(route => route.name === tab.key);
@@ -69,7 +72,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
     paddingTop: 8,
-    paddingBottom: 30,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
