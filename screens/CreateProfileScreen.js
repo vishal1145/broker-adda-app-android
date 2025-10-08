@@ -14,7 +14,8 @@ import {
   ActivityIndicator,
   ActionSheetIOS,
   PermissionsAndroid,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native'
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
@@ -1917,7 +1918,7 @@ const CreateProfileScreen = ({ navigation }) => {
     // Special handling for specializations (multi-select)
     if (field === 'specializations') {
       return (
-        <Modal visible={isVisible} transparent animationType="fade">
+        <Modal visible={isVisible} transparent animationType="fade" statusBarTranslucent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
@@ -1964,7 +1965,7 @@ const CreateProfileScreen = ({ navigation }) => {
 
     // Regular single-select modal
     return (
-      <Modal visible={isVisible} transparent animationType="fade">
+      <Modal visible={isVisible} transparent animationType="fade" statusBarTranslucent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -2595,12 +2596,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
+    paddingBottom: 0,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '50%',
+    maxHeight: Dimensions.get('window').height * 0.6,
+    marginBottom: 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2616,7 +2620,8 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   modalList: {
-    maxHeight: 300,
+    maxHeight: Dimensions.get('window').height * 0.4,
+    paddingBottom: 0,
   },
   modalItem: {
     flexDirection: 'row',
@@ -2633,7 +2638,7 @@ const styles = StyleSheet.create({
   },
   modalFooter: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
     borderTopWidth: 1,
     borderTopColor: '#E5E5EA',
   },
@@ -2711,7 +2716,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    maxHeight: 200,
+    maxHeight: Dimensions.get('window').height * 0.25,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
@@ -2723,7 +2728,7 @@ const styles = StyleSheet.create({
     zIndex: 1001,
   },
   addressSuggestionsList: {
-    maxHeight: 200,
+    maxHeight: Dimensions.get('window').height * 0.25,
   },
   addressSuggestionItem: {
     paddingVertical: 12,
