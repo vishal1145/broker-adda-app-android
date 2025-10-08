@@ -20,7 +20,7 @@ import {
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
-import DocumentPicker from 'react-native-document-picker'
+import { pick, types } from '@react-native-documents/picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI, placesAPI } from '../services/api'
@@ -1043,12 +1043,12 @@ const CreateProfileScreen = ({ navigation }) => {
     if (source === 'documents') {
       // For document selection, use proper document picker
       const documentOptions = {
-        type: [DocumentPicker.types.allFiles],
+        type: [types.allFiles],
         allowMultiSelection: false,
       }
 
       try {
-        DocumentPicker.pick(documentOptions).then((response) => {
+        pick(documentOptions).then((response) => {
           if (response && response.length > 0) {
             const asset = response[0]
             console.log('Selected document for', docType, ':', asset)
@@ -1077,7 +1077,7 @@ const CreateProfileScreen = ({ navigation }) => {
             Snackbar.showSuccess('Success', `${docType} document selected successfully!`)
           }
         }).catch((err) => {
-          if (DocumentPicker.isCancel(err)) {
+          if (err.code === 'DOCUMENT_PICKER_CANCELED') {
             console.log('User cancelled document picker')
           } else {
             console.log('DocumentPicker Error: ', err)
