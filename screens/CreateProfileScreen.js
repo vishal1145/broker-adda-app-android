@@ -479,11 +479,11 @@ const CreateProfileScreen = ({ navigation }) => {
           updateFormData('city', city)
         }
         
-        // Fetch nearest regions using latitude and longitude
+        // Fetch nearest regions using address coordinates only
         const lat = details.geometry?.location?.lat
         const lng = details.geometry?.location?.lng
         if (lat && lng) {
-          console.log('Address selected with coordinates, fetching nearby regions:', { lat, lng })
+          console.log('Address selected with coordinates, fetching nearby regions based on address:', { lat, lng })
           await fetchNearestRegions(lat, lng)
         } else if (city) {
           // Fallback to city-based regions if coordinates are not available
@@ -746,15 +746,15 @@ const CreateProfileScreen = ({ navigation }) => {
             setSelectedRegionId(broker.region[0]._id)
           }
           
-          // Fetch both nearby and manual regions on page load
+          // Fetch regions based on stored profile data only
           if (broker.location?.coordinates && Array.isArray(broker.location.coordinates) && broker.location.coordinates.length >= 2) {
             const [latitude, longitude] = broker.location.coordinates
-            console.log('Fetching nearby regions based on stored coordinates:', { latitude, longitude })
+            console.log('Fetching nearby regions based on stored profile coordinates:', { latitude, longitude })
             await fetchNearestRegions(latitude, longitude)
           }
           
           if (broker.city) {
-            console.log('Fetching manual regions based on city:', broker.city)
+            console.log('Fetching manual regions based on stored city:', broker.city)
             await fetchRegions(broker.city)
           }
           
@@ -793,16 +793,12 @@ const CreateProfileScreen = ({ navigation }) => {
   }, [])
 
   // Load nearby regions when in nearby mode and no regions are loaded
+  // Only fetch if we have address coordinates, not current location
   useEffect(() => {
     if (!showManualRegionSelection && nearbyRegionsList.length === 0 && !regionsLoading) {
-      // Try to get current location and fetch nearby regions
-      getCurrentLocation().then(coordinates => {
-        if (coordinates) {
-          fetchNearestRegions(coordinates.latitude, coordinates.longitude)
-        }
-      }).catch(error => {
-        console.log('Could not get current location for nearby regions:', error)
-      })
+      // Only fetch nearby regions if we have address coordinates from the profile
+      // Don't automatically fetch current location
+      console.log('Nearby mode enabled but no automatic location fetch - waiting for address selection')
     }
   }, [showManualRegionSelection, nearbyRegionsList.length, regionsLoading])
 
@@ -966,7 +962,7 @@ const CreateProfileScreen = ({ navigation }) => {
         updateFormData('city', addressDetails.city)
       }
       
-      // Fetch nearest regions using the coordinates
+      // Fetch nearest regions using the address coordinates
       await fetchNearestRegions(coordinates.latitude, coordinates.longitude)
       
       Snackbar.showSuccess('Location Found', 'Current address has been filled automatically')
