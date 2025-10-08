@@ -590,6 +590,32 @@ const CreateProfileScreen = ({ navigation }) => {
     return url
   }
 
+  // Helper function to check if a file is an image
+  const isImageFile = (url) => {
+    if (!url) return false
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+    const lowerUrl = url.toLowerCase()
+    return imageExtensions.some(ext => lowerUrl.includes(ext))
+  }
+
+  // Helper function to check if a file is a PDF
+  const isPdfFile = (url) => {
+    if (!url) return false
+    const lowerUrl = url.toLowerCase()
+    return lowerUrl.includes('.pdf')
+  }
+
+  // Helper function to get file type icon
+  const getFileTypeIcon = (url) => {
+    if (isPdfFile(url)) {
+      return 'picture-as-pdf'
+    } else if (isImageFile(url)) {
+      return 'image'
+    } else {
+      return 'description'
+    }
+  }
+
   // Helper function to handle image loading errors
   const handleImageError = (imageType, error) => {
     console.log(`Image load error for ${imageType}:`, error)
@@ -704,11 +730,14 @@ const CreateProfileScreen = ({ navigation }) => {
           // Set existing profile image if available
           if (broker.brokerImage) {
             const secureImageUrl = getSecureImageUrl(broker.brokerImage)
-            setProfileImage({
-              uri: secureImageUrl,
-              type: 'image/jpeg',
-              fileName: 'profile.jpg'
-            })
+            // Only set as profile image if it's actually an image file
+            if (isImageFile(secureImageUrl)) {
+              setProfileImage({
+                uri: secureImageUrl,
+                type: 'image/jpeg',
+                fileName: 'profile.jpg'
+              })
+            }
           }
           
           // Set selected region ID for highlighting
@@ -1416,14 +1445,25 @@ const CreateProfileScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.profileImageButton} onPress={handleProfileImageUpload}>
             {profileImage ? (
               <View style={styles.profileImageWrapper}>
-                <SafeImage 
-                  source={{ uri: profileImage.uri }} 
-                  style={styles.profileImage}
-                  imageType="profileImage"
-                  resizeMode="cover"
-                  onLoadStart={() => setProfileImageLoading(true)}
-                  onLoadEnd={() => setProfileImageLoading(false)}
-                />
+                {isImageFile(profileImage.uri) ? (
+                  <SafeImage 
+                    source={{ uri: profileImage.uri }} 
+                    style={styles.profileImage}
+                    imageType="profileImage"
+                    resizeMode="cover"
+                    onLoadStart={() => setProfileImageLoading(true)}
+                    onLoadEnd={() => setProfileImageLoading(false)}
+                  />
+                ) : (
+                  <View style={styles.profileImageFallback}>
+                    <MaterialIcons 
+                      name={getFileTypeIcon(profileImage.uri)} 
+                      size={32} 
+                      color="#009689" 
+                    />
+                    <Text style={styles.profileImageText}>Profile File</Text>
+                  </View>
+                )}
                 {profileImageLoading && (
                   <View style={styles.profileImageLoadingOverlay}>
                     <ActivityIndicator size="small" color="#009689" />
@@ -1848,6 +1888,8 @@ const CreateProfileScreen = ({ navigation }) => {
           const selectedImage = selectedImages[doc.key]
           const existingDoc = existingDocs[doc.key]
           const hasDocument = isUploaded || existingDoc
+          const isExistingImage = existingDoc && isImageFile(existingDoc)
+          const isExistingPdf = existingDoc && isPdfFile(existingDoc)
           
           return (
             <View key={doc.key} style={styles.documentCardWrapper}>
@@ -1879,12 +1921,28 @@ const CreateProfileScreen = ({ navigation }) => {
                   </View>
                 ) : existingDoc ? (
                   <View style={styles.documentImageWrapper}>
-                    <SafeImage 
-                      source={{ uri: existingDoc }} 
-                      style={styles.documentFullImage}
-                      imageType={doc.key}
-                      resizeMode="cover"
-                    />
+                    {isExistingImage ? (
+                      <SafeImage 
+                        source={{ uri: existingDoc }} 
+                        style={styles.documentFullImage}
+                        imageType={doc.key}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.documentFilePreview}>
+                        <MaterialIcons 
+                          name={getFileTypeIcon(existingDoc)} 
+                          size={48} 
+                          color="#009689" 
+                        />
+                        <Text style={styles.fileTypeText}>
+                          {isPdfFile(existingDoc) ? 'PDF Document' : 'Document'}
+                        </Text>
+                        <Text style={styles.fileNameText} numberOfLines={1}>
+                          {existingDoc.split('/').pop() || 'Document'}
+                        </Text>
+                      </View>
+                    )}
                     <TouchableOpacity 
                       style={styles.editButton}
                       onPress={(e) => {
@@ -2553,6 +2611,27 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     marginTop: 4,
+  },
+  documentFilePreview: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    height: 120,
+    backgroundColor: '#F8F9FA',
+  },
+  fileTypeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#009689',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  fileNameText: {
+    fontSize: 10,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginTop: 4,
+    maxWidth: '90%',
   },
   actionButtonContainer: {
     paddingBottom: 20,
