@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from 'react-native'
 import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -164,101 +165,108 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <MaterialIcons name="arrow-back" size={24} color="#009689" />
-          </TouchableOpacity>
-          {/* <Text style={styles.headerTitle}>Enter Verification Code</Text>
-          <View style={styles.headerBorder} /> */}
-        </View>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+              <MaterialIcons name="arrow-back" size={24} color="#009689" />
+            </TouchableOpacity>
+            {/* <Text style={styles.headerTitle}>Enter Verification Code</Text>
+            <View style={styles.headerBorder} /> */}
+          </View>
 
-        {/* Main Content Container */}
-        <View style={styles.mainContent}>
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Header Section */}
-            <View style={styles.headerSection}>
-              <Text style={styles.illustrationTitle}>
-                Enter Verification Code
-              </Text>
-              <Text style={styles.illustrationSubtitle}>
-                We've sent a 6-digit code to {phoneNumber}
-              </Text>
-            </View>
+          {/* Main Content Container */}
+          <View style={styles.mainContent}>
+            {/* Content */}
+            <View style={styles.content}>
+              {/* Header Section */}
+              <View style={styles.headerSection}>
+                <Text style={styles.illustrationTitle}>
+                  Enter Verification Code
+                </Text>
+                <Text style={styles.illustrationSubtitle}>
+                  We've sent a 6-digit code to {phoneNumber}
+                </Text>
+              </View>
 
-            {/* Input Section */}
-            <View style={styles.inputSection}>
-              <View style={styles.otpContainer}>
-                <View style={styles.otpBoxesContainer}>
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <TextInput
-                      key={index}
-                      ref={(ref) => (inputRefs.current[index] = ref)}
-                      style={[
-                        styles.otpBox,
-                        { 
-                          borderColor: otp[index] ? '#009689' : (focusedIndex === index ? '#009689' : '#E5E5EA'),
-                          backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
-                        }
-                      ]}
-                      value={otp[index]}
-                      onChangeText={(text) => handleOtpChange(text, index)}
-                      onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                      onFocus={() => setFocusedIndex(index)}
-                      placeholder="0"
-                      placeholderTextColor="#8E8E93"
-                      keyboardType="numeric"
-                      maxLength={1}
-                      textAlign="center"
-                      autoFocus={index === 0}
-                    />
-                  ))}
+              {/* Input Section */}
+              <View style={styles.inputSection}>
+                <View style={styles.otpContainer}>
+                  <View style={styles.otpBoxesContainer}>
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => (inputRefs.current[index] = ref)}
+                        style={[
+                          styles.otpBox,
+                          { 
+                            borderColor: otp[index] ? '#009689' : (focusedIndex === index ? '#009689' : '#E5E5EA'),
+                            backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
+                          }
+                        ]}
+                        value={otp[index]}
+                        onChangeText={(text) => handleOtpChange(text, index)}
+                        onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+                        onFocus={() => setFocusedIndex(index)}
+                        placeholder="0"
+                        placeholderTextColor="#8E8E93"
+                        keyboardType="numeric"
+                        maxLength={1}
+                        textAlign="center"
+                        autoFocus={index === 0}
+                      />
+                    ))}
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          {/* Bottom Section */}
-          <View style={styles.bottomSection}>
-            {/* Action Button */}
-            <View style={styles.actionButtonContainer}>
-              <TouchableOpacity 
-                style={[
-                  styles.actionButton, 
-                  otp.join('').length < 6 ? styles.actionButtonDisabled : null
-                ]} 
-                onPress={handleVerifyOtp}
-                disabled={isLoading || otp.join('').length < 6}
-              >
-                {isLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={[styles.actionButtonText, styles.loadingText]}>
-                      Please wait...
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.actionButtonText}>Verify OTP</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            {/* Bottom Section */}
+            <View style={styles.bottomSection}>
+              {/* Action Button */}
+              <View style={styles.actionButtonContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.actionButton, 
+                    otp.join('').length < 6 ? styles.actionButtonDisabled : null
+                  ]} 
+                  onPress={handleVerifyOtp}
+                  disabled={isLoading || otp.join('').length < 6}
+                >
+                  {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={[styles.actionButtonText, styles.loadingText]}>
+                        Please wait...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.actionButtonText}>Verify OTP</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
 
-            {/* Resend OTP Link */}
-            <View style={styles.toggleContainer}>
-              <Text style={styles.toggleText}>
-                Didn't receive the code?
-              </Text>
-              <TouchableOpacity onPress={handleResendOtp} activeOpacity={0.7}>
-                <Text style={styles.toggleButton}>
-                  Resend OTP
+              {/* Resend OTP Link */}
+              <View style={styles.toggleContainer}>
+                <Text style={styles.toggleText}>
+                  Didn't receive the code?
                 </Text>
-              </TouchableOpacity>
+                <TouchableOpacity onPress={handleResendOtp} activeOpacity={0.7}>
+                  <Text style={styles.toggleButton}>
+                    Resend OTP
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
@@ -271,6 +279,13 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    minHeight: '100%',
   },
   mainContent: {
     flex: 1,
@@ -306,17 +321,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    flex: 1,
     paddingHorizontal: 30,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
     justifyContent: 'flex-start',
     minHeight: 120,
-    maxHeight: 200,
   },
   bottomSection: {
-    flexShrink: 0,
     paddingBottom: 20,
+    paddingTop: 5,
   },
   headerSection: {
     alignItems: 'flex-start',
@@ -396,9 +409,9 @@ const styles = StyleSheet.create({
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
-    paddingBottom: 10,
-    paddingTop: 20,
-    marginBottom: 5,
+    paddingBottom: 15,
+    paddingTop: 10,
+    marginBottom: 10,
   },
   actionButton: {
     backgroundColor: '#009689',

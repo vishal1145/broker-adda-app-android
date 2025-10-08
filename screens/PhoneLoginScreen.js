@@ -8,7 +8,8 @@ import {
   TouchableOpacity, 
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from 'react-native'
 import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -146,121 +147,127 @@ const PhoneLoginScreen = ({ navigation }) => {
       <KeyboardAvoidingView 
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#009689" />
-          </TouchableOpacity>
-          {/* <Text style={styles.headerTitle}>Phone Verification</Text>
-          <View style={styles.headerBorder} /> */}
-        </View>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+              <MaterialIcons name="arrow-back" size={24} color="#009689" />
+            </TouchableOpacity>
+            {/* <Text style={styles.headerTitle}>Phone Verification</Text>
+            <View style={styles.headerBorder} /> */}
+          </View>
 
-        {/* Main Content Container */}
-        <View style={styles.mainContent}>
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Header Section */}
-            <View style={styles.headerSection}>
-              <Text style={styles.illustrationTitle}>
-                Login with Phone Number
-              </Text>
-              <Text style={styles.illustrationSubtitle}>
-                Please enter your phone number correctly
-              </Text>
+          {/* Main Content Container */}
+          <View style={styles.mainContent}>
+            {/* Content */}
+            <View style={styles.content}>
+              {/* Header Section */}
+              <View style={styles.headerSection}>
+                <Text style={styles.illustrationTitle}>
+                  Login with Phone Number
+                </Text>
+                <Text style={styles.illustrationSubtitle}>
+                  Please enter your phone number correctly
+                </Text>
+              </View>
+
+              {/* Input Section */}
+              <View style={styles.inputSection}>
+                {/* Phone Number Input */}
+                <View style={styles.phoneInputContainer}>
+                  <View style={styles.inputRow}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.countryCode,
+                        { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
+                      ]}
+                      onPress={toggleCountryDropdown}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
+                      <Text style={styles.dropdownIcon}>▼</Text>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.inputGap} />
+                    
+                    <TextInput
+                      style={[
+                        styles.phoneInput,
+                        { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
+                      ]}
+                      placeholder="Enter your phone number"
+                      value={phoneNumber}
+                      onChangeText={formatPhoneNumber}
+                      placeholderTextColor="#8E8E93"
+                      keyboardType="numeric"
+                      maxLength={10}
+                    />
+                  </View>
+                  
+                  {/* Country Code Dropdown */}
+                  {showCountryDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {countryCodes.map((country, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.dropdownItem}
+                          onPress={() => handleCountryCodeSelect(country.code)}
+                        >
+                          <Text style={styles.dropdownItemText}>{country.code}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
             </View>
 
-            {/* Input Section */}
-            <View style={styles.inputSection}>
-              {/* Phone Number Input */}
-              <View style={styles.phoneInputContainer}>
-                <View style={styles.inputRow}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.countryCode,
-                      { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
-                    ]}
-                    onPress={toggleCountryDropdown}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
-                    <Text style={styles.dropdownIcon}>▼</Text>
-                  </TouchableOpacity>
-                  
-                  <View style={styles.inputGap} />
-                  
-                  <TextInput
-                    style={[
-                      styles.phoneInput,
-                      { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
-                    ]}
-                    placeholder="Enter your phone number"
-                    value={phoneNumber}
-                    onChangeText={formatPhoneNumber}
-                    placeholderTextColor="#8E8E93"
-                    keyboardType="numeric"
-                    maxLength={10}
-                  />
-                </View>
-                
-                {/* Country Code Dropdown */}
-                {showCountryDropdown && (
-                  <View style={styles.dropdownContainer}>
-                    {countryCodes.map((country, index) => (
-                      <TouchableOpacity
-                        key={index}
-                        style={styles.dropdownItem}
-                        onPress={() => handleCountryCodeSelect(country.code)}
-                      >
-                        <Text style={styles.dropdownItemText}>{country.code}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+            {/* Bottom Section */}
+            <View style={styles.bottomSection}>
+              {/* Action Button */}
+              <View style={styles.actionButtonContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.actionButton, 
+                    phoneNumber.length < 10 ? styles.actionButtonDisabled : null
+                  ]} 
+                  onPress={handleSendOtp}
+                  disabled={isLoading || phoneNumber.length < 10}
+                >
+                  {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <Text style={[styles.actionButtonText, styles.loadingText]}>
+                        Please wait...
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.actionButtonText}>Login</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Signup Link */}
+              <View style={styles.toggleContainer}>
+                <Text style={styles.toggleText}>
+                  Don't have an account?
+                </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.7}>
+                  <Text style={styles.toggleButton}>
+                    Sign Up
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
-
-          {/* Bottom Section */}
-          <View style={styles.bottomSection}>
-            {/* Action Button */}
-            <View style={styles.actionButtonContainer}>
-              <TouchableOpacity 
-                style={[
-                  styles.actionButton, 
-                  phoneNumber.length < 10 ? styles.actionButtonDisabled : null
-                ]} 
-                onPress={handleSendOtp}
-                disabled={isLoading || phoneNumber.length < 10}
-              >
-                {isLoading ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={[styles.actionButtonText, styles.loadingText]}>
-                      Please wait...
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={styles.actionButtonText}>Login</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Signup Link */}
-            <View style={styles.toggleContainer}>
-              <Text style={styles.toggleText}>
-                Don't have an account?
-              </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')} activeOpacity={0.7}>
-                <Text style={styles.toggleButton}>
-                  Sign Up
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
@@ -273,6 +280,13 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    minHeight: '100%',
   },
   mainContent: {
     flex: 1,
@@ -308,17 +322,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    flex: 1,
     paddingHorizontal: 30,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
     justifyContent: 'flex-start',
     minHeight: 120,
-    maxHeight: 200,
   },
   bottomSection: {
-    flexShrink: 0,
     paddingBottom: 20,
+    paddingTop: 5,
   },
   headerSection: {
     alignItems: 'flex-start',
@@ -482,9 +494,9 @@ const styles = StyleSheet.create({
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
-    paddingBottom: 10,
-    paddingTop: 20,
-    marginBottom: 5,
+    paddingBottom: 15,
+    paddingTop: 10,
+    marginBottom: 10,
   },
   actionButton: {
     backgroundColor: '#009689',
