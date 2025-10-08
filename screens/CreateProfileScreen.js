@@ -20,6 +20,7 @@ import {
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
+import DocumentPicker from 'react-native-document-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI, placesAPI } from '../services/api'
@@ -978,14 +979,14 @@ const CreateProfileScreen = ({ navigation }) => {
   // Show image picker options
   const showImagePickerOptions = (docType) => {
     if (Platform.OS === 'ios') {
-    const options = ['Camera', 'Gallery', 'Cancel']
-    const cancelButtonIndex = 2
+    const options = ['Camera', 'Gallery', 'Documents', 'Cancel']
+    const cancelButtonIndex = 3
 
     ActionSheetIOS.showActionSheetWithOptions(
       {
         options,
         cancelButtonIndex,
-        title: `Select ${docType} Image`
+        title: `Select ${docType}`
       },
       (buttonIndex) => {
         if (buttonIndex === 0) {
@@ -994,13 +995,16 @@ const CreateProfileScreen = ({ navigation }) => {
         } else if (buttonIndex === 1) {
           // Gallery
           handleImageSelection(docType, 'gallery')
+        } else if (buttonIndex === 2) {
+          // Documents
+          handleImageSelection(docType, 'documents')
         }
       }
     )
     } else {
       // For Android, show action sheet using Alert
       Alert.alert(
-        `Select ${docType} Image`,
+        `Select ${docType}`,
         'Choose an option',
         [
           {
@@ -1010,6 +1014,10 @@ const CreateProfileScreen = ({ navigation }) => {
           {
             text: 'Gallery',
             onPress: () => handleImageSelection(docType, 'gallery')
+          },
+          {
+            text: 'Documents',
+            onPress: () => handleImageSelection(docType, 'documents')
           },
           {
             text: 'Cancel',
@@ -1030,53 +1038,106 @@ const CreateProfileScreen = ({ navigation }) => {
       }
     }
 
-    const options = {
-      mediaType: 'photo',
-      quality: 0.8,
-      maxWidth: 2000,
-      maxHeight: 2000,
-      includeBase64: false,
-    }
+    let options, callback
 
-    const callback = (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker')
-      } else if (response.errorMessage) {
-        console.log('ImagePicker Error: ', response.errorMessage)
-        Snackbar.showError('Error', 'Failed to select image')
-      } else if (response.assets && response.assets[0]) {
-        const asset = response.assets[0]
-        console.log('Selected asset for', docType, ':', asset)
-        
-        // Ensure the asset has the correct structure for FormData
-        const formattedAsset = {
-          uri: asset.uri,
-          type: asset.type || 'image/jpeg',
-          fileName: asset.fileName || asset.name || `${docType}.jpg`,
-          name: asset.fileName || asset.name || `${docType}.jpg`
-        }
-        
-        setSelectedImages(prev => ({
-          ...prev,
-          [docType]: formattedAsset
-        }))
-        setUploadedDocs(prev => ({
-          ...prev,
-          [docType]: true
-        }))
-        // Clear existing document when new one is selected
-        setExistingDocs(prev => ({
-          ...prev,
-          [docType]: null
-        }))
-        Snackbar.showSuccess('Success', `${docType} image selected successfully!`)
+    if (source === 'documents') {
+      // For document selection, use proper document picker
+      const documentOptions = {
+        type: [DocumentPicker.types.allFiles],
+        allowMultiSelection: false,
       }
-    }
 
-    if (source === 'camera') {
-      launchCamera(options, callback)
+      try {
+        DocumentPicker.pick(documentOptions).then((response) => {
+          if (response && response.length > 0) {
+            const asset = response[0]
+            console.log('Selected document for', docType, ':', asset)
+            
+            // Ensure the asset has the correct structure for FormData
+            const formattedAsset = {
+              uri: asset.uri,
+              type: asset.type || 'application/pdf',
+              fileName: asset.name || `${docType}.pdf`,
+              name: asset.name || `${docType}.pdf`
+            }
+            
+            setSelectedImages(prev => ({
+              ...prev,
+              [docType]: formattedAsset
+            }))
+            setUploadedDocs(prev => ({
+              ...prev,
+              [docType]: true
+            }))
+            // Clear existing document when new one is selected
+            setExistingDocs(prev => ({
+              ...prev,
+              [docType]: null
+            }))
+            Snackbar.showSuccess('Success', `${docType} document selected successfully!`)
+          }
+        }).catch((err) => {
+          if (DocumentPicker.isCancel(err)) {
+            console.log('User cancelled document picker')
+          } else {
+            console.log('DocumentPicker Error: ', err)
+            Snackbar.showError('Error', 'Failed to select document')
+          }
+        })
+      } catch (error) {
+        console.log('DocumentPicker Error: ', error)
+        Snackbar.showError('Error', 'Failed to select document')
+      }
     } else {
-      launchImageLibrary(options, callback)
+      // For camera and gallery, use image picker
+      options = {
+        mediaType: 'photo',
+        quality: 0.8,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        includeBase64: false,
+      }
+
+      callback = (response) => {
+        if (response.didCancel) {
+          console.log('User cancelled image picker')
+        } else if (response.errorMessage) {
+          console.log('ImagePicker Error: ', response.errorMessage)
+          Snackbar.showError('Error', 'Failed to select image')
+        } else if (response.assets && response.assets[0]) {
+          const asset = response.assets[0]
+          console.log('Selected asset for', docType, ':', asset)
+          
+          // Ensure the asset has the correct structure for FormData
+          const formattedAsset = {
+            uri: asset.uri,
+            type: asset.type || 'image/jpeg',
+            fileName: asset.fileName || asset.name || `${docType}.jpg`,
+            name: asset.fileName || asset.name || `${docType}.jpg`
+          }
+          
+          setSelectedImages(prev => ({
+            ...prev,
+            [docType]: formattedAsset
+          }))
+          setUploadedDocs(prev => ({
+            ...prev,
+            [docType]: true
+          }))
+          // Clear existing document when new one is selected
+          setExistingDocs(prev => ({
+            ...prev,
+            [docType]: null
+          }))
+          Snackbar.showSuccess('Success', `${docType} image selected successfully!`)
+        }
+      }
+
+      if (source === 'camera') {
+        launchCamera(options, callback)
+      } else {
+        launchImageLibrary(options, callback)
+      }
     }
   }
 
