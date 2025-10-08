@@ -26,6 +26,12 @@
     },
     "web": {
       "favicon": "./assets/logo.png"
+    },
+    "updates": {
+      "enabled": false
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }

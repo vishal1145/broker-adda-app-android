@@ -20,7 +20,7 @@ import {
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
-import { pick, types } from '@react-native-documents/picker'
+import * as DocumentPicker from 'expo-document-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI, placesAPI } from '../services/api'
@@ -792,6 +792,18 @@ const CreateProfileScreen = ({ navigation }) => {
     fetchProfileData()
   }, [])
 
+  // Debug effect to track document states
+  useEffect(() => {
+    console.log('Document states updated:', {
+      uploadedDocs,
+      selectedImages: Object.keys(selectedImages).reduce((acc, key) => {
+        acc[key] = selectedImages[key] ? selectedImages[key].uri : null
+        return acc
+      }, {}),
+      existingDocs
+    })
+  }, [uploadedDocs, selectedImages, existingDocs])
+
   // Load nearby regions when in nearby mode and no regions are loaded
   // Only fetch if we have address coordinates, not current location
   useEffect(() => {
@@ -1037,16 +1049,16 @@ const CreateProfileScreen = ({ navigation }) => {
     let options, callback
 
     if (source === 'documents') {
-      // For document selection, use proper document picker
+      // For document selection, use Expo document picker
       const documentOptions = {
-        type: [types.allFiles],
-        allowMultiSelection: false,
+        type: '*/*',
+        copyToCacheDirectory: true,
       }
 
       try {
-        pick(documentOptions).then((response) => {
-          if (response && response.length > 0) {
-            const asset = response[0]
+        DocumentPicker.getDocumentAsync(documentOptions).then((response) => {
+          if (response && !response.canceled && response.assets && response.assets.length > 0) {
+            const asset = response.assets[0]
             console.log('Selected document for', docType, ':', asset)
             
             // Ensure the asset has the correct structure for FormData
@@ -1057,6 +1069,7 @@ const CreateProfileScreen = ({ navigation }) => {
               name: asset.name || `${docType}.pdf`
             }
             
+            // Update all states properly
             setSelectedImages(prev => ({
               ...prev,
               [docType]: formattedAsset
@@ -1070,10 +1083,17 @@ const CreateProfileScreen = ({ navigation }) => {
               ...prev,
               [docType]: null
             }))
+            
+            console.log('Document states updated for', docType, ':', {
+              selectedImage: formattedAsset,
+              uploaded: true,
+              existing: null
+            })
+            
             Snackbar.showSuccess('Success', `${docType} document selected successfully!`)
           }
         }).catch((err) => {
-          if (err.code === 'DOCUMENT_PICKER_CANCELED') {
+          if (err.message && err.message.includes('cancelled')) {
             console.log('User cancelled document picker')
           } else {
             console.log('DocumentPicker Error: ', err)
@@ -1112,6 +1132,7 @@ const CreateProfileScreen = ({ navigation }) => {
             name: asset.fileName || asset.name || `${docType}.jpg`
           }
           
+          // Update all states properly
           setSelectedImages(prev => ({
             ...prev,
             [docType]: formattedAsset
@@ -1125,6 +1146,13 @@ const CreateProfileScreen = ({ navigation }) => {
             ...prev,
             [docType]: null
           }))
+          
+          console.log('Image states updated for', docType, ':', {
+            selectedImage: formattedAsset,
+            uploaded: true,
+            existing: null
+          })
+          
           Snackbar.showSuccess('Success', `${docType} image selected successfully!`)
         }
       }
@@ -1166,6 +1194,8 @@ const CreateProfileScreen = ({ navigation }) => {
       ...prev,
       [docType]: null
     }))
+    
+    console.log(`Document ${docType} removed - all states cleared`)
     
     Snackbar.showSuccess('Document Removed', `${docType} has been removed successfully`)
   }
@@ -1947,6 +1977,19 @@ const CreateProfileScreen = ({ navigation }) => {
           const hasDocument = isUploaded || existingDoc
           const isExistingImage = existingDoc && isImageFile(existingDoc)
           const isExistingPdf = existingDoc && isPdfFile(existingDoc)
+          const isSelectedImage = selectedImage && selectedImage.uri
+          const isSelectedImageFile = selectedImage && isImageFile(selectedImage.uri)
+          const isSelectedPdfFile = selectedImage && isPdfFile(selectedImage.uri)
+          
+          console.log(`Document ${doc.key} state:`, {
+            isUploaded,
+            selectedImage: selectedImage?.uri,
+            existingDoc,
+            hasDocument,
+            isSelectedImage,
+            isSelectedImageFile,
+            isSelectedPdfFile
+          })
           
           return (
             <View key={doc.key} style={styles.documentCardWrapper}>
@@ -1958,14 +2001,30 @@ const CreateProfileScreen = ({ navigation }) => {
                 onPress={() => handleDocumentUpload(doc.key)}
                 activeOpacity={0.8}
               >
-                {selectedImage ? (
+                {isSelectedImage ? (
                   <View style={styles.documentImageWrapper}>
-                    <SafeImage 
-                      source={{ uri: selectedImage.uri }} 
-                      style={styles.documentFullImage}
-                      imageType={doc.key}
-                      resizeMode="cover"
-                    />
+                    {isSelectedImageFile ? (
+                      <SafeImage 
+                        source={{ uri: selectedImage.uri }} 
+                        style={styles.documentFullImage}
+                        imageType={doc.key}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={styles.documentFilePreview}>
+                        <MaterialIcons 
+                          name={getFileTypeIcon(selectedImage.uri)} 
+                          size={48} 
+                          color="#009689" 
+                        />
+                        <Text style={styles.fileTypeText}>
+                          {isSelectedPdfFile ? 'PDF Document' : 'Document'}
+                        </Text>
+                        <Text style={styles.fileNameText} numberOfLines={1}>
+                          {selectedImage.fileName || selectedImage.name || 'Document'}
+                        </Text>
+                      </View>
+                    )}
                     <TouchableOpacity 
                       style={styles.editButton}
                       onPress={(e) => {
@@ -1993,7 +2052,7 @@ const CreateProfileScreen = ({ navigation }) => {
                           color="#009689" 
                         />
                         <Text style={styles.fileTypeText}>
-                          {isPdfFile(existingDoc) ? 'PDF Document' : 'Document'}
+                          {isExistingPdf ? 'PDF Document' : 'Document'}
                         </Text>
                         <Text style={styles.fileNameText} numberOfLines={1}>
                           {existingDoc.split('/').pop() || 'Document'}
