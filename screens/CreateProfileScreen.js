@@ -2093,7 +2093,7 @@ const CreateProfileScreen = ({ navigation }) => {
     if (field === 'specializations') {
       return (
         <Modal visible={isVisible} transparent animationType="fade" statusBarTranslucent>
-          <View style={styles.modalOverlay}>
+          <SafeAreaView style={styles.modalOverlay} edges={['bottom']}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{title}</Text>
@@ -2132,7 +2132,7 @@ const CreateProfileScreen = ({ navigation }) => {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </SafeAreaView>
         </Modal>
       )
     }
@@ -2140,7 +2140,7 @@ const CreateProfileScreen = ({ navigation }) => {
     // Regular single-select modal
     return (
       <Modal visible={isVisible} transparent animationType="fade" statusBarTranslucent>
-        <View style={styles.modalOverlay}>
+        <SafeAreaView style={styles.modalOverlay} edges={['bottom']}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{title}</Text>
@@ -2191,7 +2191,7 @@ const CreateProfileScreen = ({ navigation }) => {
               ))}
             </ScrollView>
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
     )
   }
@@ -2791,15 +2791,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
-    paddingBottom: 0,
     paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: Dimensions.get('window').height * 0.6,
+    maxHeight: Dimensions.get('window').height * 0.5, // Reduced from 0.6 to leave more space
     marginBottom: 0,
+    marginTop: 'auto', // Ensure it stays at bottom
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2815,7 +2815,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   modalList: {
-    maxHeight: Dimensions.get('window').height * 0.4,
+    maxHeight: Dimensions.get('window').height * 0.3, // Reduced to ensure it fits above navigation
     paddingBottom: 0,
   },
   modalItem: {
@@ -2911,7 +2911,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    maxHeight: Dimensions.get('window').height * 0.25,
+    maxHeight: Dimensions.get('window').height * 0.2, // Reduced to ensure it fits above navigation
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
@@ -2923,7 +2923,7 @@ const styles = StyleSheet.create({
     zIndex: 1001,
   },
   addressSuggestionsList: {
-    maxHeight: Dimensions.get('window').height * 0.25,
+    maxHeight: Dimensions.get('window').height * 0.2, // Reduced to ensure it fits above navigation
   },
   addressSuggestionItem: {
     paddingVertical: 12,
