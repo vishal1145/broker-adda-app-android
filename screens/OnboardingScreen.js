@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -7,10 +7,15 @@ import { responsive } from '../utils/responsive'
 const OnboardingScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
   
-  const screenWidth = responsive.width
+  const screenWidth = Dimensions.get('window').width
   const translateX = useRef(new Animated.Value(0)).current
   const panRef = useRef()
   const isAnimating = useRef(false)
+
+  // Initialize translateX value when component mounts
+  useEffect(() => {
+    translateX.setValue(0)
+  }, [])
 
   const animateToStep = (step, velocity = 0) => {
     if (isAnimating.current) return
@@ -18,28 +23,16 @@ const OnboardingScreen = ({ navigation }) => {
     
     const targetValue = -screenWidth * (step - 1)
     
-    // Use different animation based on velocity for more natural feel
-    if (Math.abs(velocity) > 1000) {
-      // High velocity - use timing animation for snappy feel
-      Animated.timing(translateX, {
-        toValue: targetValue,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => {
-        isAnimating.current = false
-      })
-    } else {
-      // Normal velocity - use spring animation
-      Animated.spring(translateX, {
-        toValue: targetValue,
-        useNativeDriver: true,
-        tension: 300,
-        friction: 30,
-        velocity: velocity,
-      }).start(() => {
-        isAnimating.current = false
-      })
-    }
+    // Use spring animation for smooth transitions
+    Animated.spring(translateX, {
+      toValue: targetValue,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 30,
+      velocity: velocity * 0.1, // Scale down velocity for smoother animation
+    }).start(() => {
+      isAnimating.current = false
+    })
   }
 
   const handleSwipe = (direction) => {
@@ -66,18 +59,20 @@ const OnboardingScreen = ({ navigation }) => {
     }
   }
 
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX } }],
-    { 
-      useNativeDriver: true,
-      listener: (event) => {
-        // Prevent gesture when animating
-        if (isAnimating.current) {
-          return
-        }
-      }
-    }
-  )
+  const onGestureEvent = (event) => {
+    if (isAnimating.current) return
+    
+    const { translationX } = event.nativeEvent
+    const currentPosition = -screenWidth * (currentStep - 1)
+    const newTranslation = currentPosition + translationX
+    
+    // Clamp the translation to prevent over-scrolling
+    const minTranslation = -screenWidth * 3 // Step 4
+    const maxTranslation = 0 // Step 1
+    const clampedTranslation = Math.max(minTranslation, Math.min(maxTranslation, newTranslation))
+    
+    translateX.setValue(clampedTranslation)
+  }
 
   const onHandlerStateChange = (event) => {
     if (event.nativeEvent.state === State.ACTIVE) {
@@ -89,15 +84,17 @@ const OnboardingScreen = ({ navigation }) => {
       if (isAnimating.current) return
       
       const { translationX, velocityX } = event.nativeEvent
-      const currentPosition = -screenWidth * (currentStep - 1)
       
-      // More sensitive thresholds for better responsiveness
+      // Swipe thresholds - more sensitive
       const swipeThreshold = 30
       const velocityThreshold = 300
+      
+      console.log('Swipe detected:', { translationX, velocityX, currentStep })
       
       // Determine swipe direction based on translation and velocity
       if (translationX > swipeThreshold || velocityX > velocityThreshold) {
         // Swipe right - go to previous step
+        console.log('Swipe right detected')
         if (currentStep > 1) {
           const newStep = currentStep - 1
           setCurrentStep(newStep)
@@ -108,6 +105,7 @@ const OnboardingScreen = ({ navigation }) => {
         }
       } else if (translationX < -swipeThreshold || velocityX < -velocityThreshold) {
         // Swipe left - go to next step
+        console.log('Swipe left detected')
         if (currentStep < 4) {
           const newStep = currentStep + 1
           setCurrentStep(newStep)
@@ -118,6 +116,7 @@ const OnboardingScreen = ({ navigation }) => {
         }
       } else {
         // Snap back to current position
+        console.log('Snap back to current position')
         animateToStep(currentStep, 0)
       }
     }
@@ -313,10 +312,11 @@ const OnboardingScreen = ({ navigation }) => {
           ref={panRef}
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
-          activeOffsetX={[-5, 5]}
-          failOffsetY={[-10, 10]}
+          activeOffsetX={[-20, 20]}
+          failOffsetY={[-50, 50]}
           minPointers={1}
           maxPointers={1}
+          shouldCancelWhenOutside={true}
         >
           <Animated.View style={[styles.sliderContainer, { transform: [{ translateX }] }]}>
             {renderStep(1)}
@@ -353,10 +353,10 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flex: 1,
     flexDirection: 'row',
-    width: '400%', // 4 steps * 100%
+    width: Dimensions.get('window').width * 4, // 4 steps * screen width
   },
   stepContainer: {
-    width: '25%', // 100% / 4 steps
+    width: Dimensions.get('window').width, // Each step takes full screen width
     flex: 1,
     flexDirection: 'column',
     paddingBottom: responsive.verticalScale(20),
