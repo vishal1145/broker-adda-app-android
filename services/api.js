@@ -197,6 +197,45 @@ export const authAPI = {
   }
 };
 
+// Leads API functions
+export const leadsAPI = {
+  // Get leads with pagination
+  getLeads: async (page = 1, limit = 5, token, brokerId) => {
+    try {
+      console.log('Fetching leads:', { page, limit, brokerId });
+      const response = await api.get(`/api/leads?page=${page}&limit=${limit}&createdBy=68c90abe69abbf08dec89b7b`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Leads fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get leads error:', error);
+      throw error;
+    }
+  },
+
+  // Delete lead
+  deleteLead: async (leadId, token) => {
+    try {
+      console.log('Deleting lead:', leadId);
+      const response = await api.delete(`/api/leads/${leadId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Lead deleted successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Delete lead error:', error);
+      throw error;
+    }
+  }
+};
+
 // Google Places API functions
 export const placesAPI = {
   // Google Places API key from environment
