@@ -2268,8 +2268,8 @@ const CreateProfileScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header with Title */}
-      <View style={styles.headerWithTitle}>
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => {
           if (currentStep > 1) {
             goToPreviousStep()
@@ -2279,16 +2279,7 @@ const CreateProfileScreen = ({ navigation }) => {
         }}>
           <MaterialIcons name="arrow-back" size={24} color="#009689" />
         </TouchableOpacity>
-        <Text style={styles.title}>{getStepTitle()}</Text>
-        <View style={styles.headerSpacer} />
       </View>
-
-      {/* Step Description - Only show if there's content */}
-      {getStepDescription() && (
-        <View style={styles.stepDescriptionContainer}>
-          <Text style={styles.stepDescription}>{getStepDescription()}</Text>
-        </View>
-      )}
 
       {/* Content */}
       <ScrollView ref={scrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
@@ -2299,6 +2290,11 @@ const CreateProfileScreen = ({ navigation }) => {
           </View>
         ) : (
           <View style={styles.singlePageForm}>
+            {/* Title Section */}
+            <View style={styles.titleSection}>
+              <Text style={styles.title}>{getStepTitle()}</Text>
+            </View>
+            
             {renderStepContent()}
 
             {/* Action Button */}
@@ -2351,9 +2347,7 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  headerWithTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  header: {
     paddingTop: 40,
     paddingHorizontal: 20,
     paddingBottom: 20,
@@ -2368,15 +2362,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
   },
+  titleSection: {
+    alignItems: 'flex-start',
+    marginBottom: 25,
+    paddingHorizontal: 0,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: '#000000',
-    textAlign: 'center',
-    flex: 1,
-  },
-  headerSpacer: {
-    width: 40,
+    textAlign: 'left',
+    marginBottom: 15,
+    lineHeight: 30,
   },
   stepDescriptionContainer: {
     paddingHorizontal: 30,
@@ -2493,7 +2490,8 @@ const styles = StyleSheet.create({
   },
   singlePageForm: {
     paddingHorizontal: 30,
-    paddingBottom: 20,
+    paddingBottom: 0,
+    paddingTop: 0,
   },
   content: {
     flex: 1,
@@ -2750,9 +2748,10 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   actionButtonContainer: {
-    paddingBottom: 20,
+    paddingBottom: 40,
     paddingTop: 20,
     marginTop: 20,
+    paddingHorizontal: 0,
   },
   actionButton: {
     backgroundColor: '#009689',
