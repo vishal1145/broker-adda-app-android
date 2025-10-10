@@ -125,6 +125,14 @@ const CreateProfileScreen = ({ navigation }) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // Handle keyboard events to scroll to focused input
+  const handleInputFocus = () => {
+    // Small delay to ensure the keyboard is fully open
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true })
+    }, 100)
+  }
+
   // WhatsApp number validation
   const validateWhatsAppNumber = (number) => {
     if (!number || number.trim() === '') {
@@ -1591,6 +1599,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.input}
           value={formData.fullName}
           onChangeText={(text) => updateFormData('fullName', text)}
+          onFocus={handleInputFocus}
           placeholder="Enter your full name"
           placeholderTextColor="#8E8E93"
         />
@@ -1615,6 +1624,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.input}
           value={formData.email}
           onChangeText={(text) => updateFormData('email', text)}
+          onFocus={handleInputFocus}
           placeholder="Enter your email"
           placeholderTextColor="#8E8E93"
           keyboardType="email-address"
@@ -1639,6 +1649,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.input}
           value={formData.firmName}
           onChangeText={(text) => updateFormData('firmName', text)}
+          onFocus={handleInputFocus}
           placeholder="Enter firm name"
           placeholderTextColor="#8E8E93"
         />
@@ -1665,6 +1676,7 @@ const CreateProfileScreen = ({ navigation }) => {
           ]}
           value={formData.whatsappNumber}
           onChangeText={handleWhatsAppNumberChange}
+          onFocus={handleInputFocus}
           placeholder="Enter WhatsApp number"
           placeholderTextColor="#8E8E93"
           keyboardType="numeric"
@@ -1731,6 +1743,7 @@ const CreateProfileScreen = ({ navigation }) => {
               style={styles.addressInput}
               value={formData.address}
               onChangeText={handleAddressChange}
+              onFocus={handleInputFocus}
               placeholder="Enter your address"
               placeholderTextColor="#8E8E93"
               multiline
@@ -2268,21 +2281,31 @@ const CreateProfileScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => {
-          if (currentStep > 1) {
-            goToPreviousStep()
-          } else {
-            navigation.goBack()
-          }
-        }}>
-          <MaterialIcons name="arrow-back" size={24} color="#009689" />
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView 
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => {
+            if (currentStep > 1) {
+              goToPreviousStep()
+            } else {
+              navigation.goBack()
+            }
+          }}>
+            <MaterialIcons name="arrow-back" size={24} color="#009689" />
+          </TouchableOpacity>
+        </View>
 
-      {/* Content */}
-      <ScrollView ref={scrollViewRef} style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Content */}
+        <ScrollView 
+          ref={scrollViewRef} 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#009689" />
@@ -2329,12 +2352,13 @@ const CreateProfileScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      {/* Modals */}
-      {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
-      {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
-      {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
-      {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
-      {renderModal('Select Regions', manualRegionsList.length > 0 ? manualRegionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
+        {/* Modals */}
+        {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
+        {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
+        {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
+        {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
+        {renderModal('Select Regions', manualRegionsList.length > 0 ? manualRegionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
