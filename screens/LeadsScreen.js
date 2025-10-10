@@ -12,7 +12,8 @@ import {
   RefreshControl,
   Image,
   Alert,
-  TextInput
+  TextInput,
+  Modal
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
@@ -93,8 +94,10 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 }
 
 const LeadsScreen = ({ navigation }) => {
-  const [selectedFilter, setSelectedFilter] = useState('all')
+  const [selectedStatus, setSelectedStatus] = useState('all')
   const [showTransferredLeads, setShowTransferredLeads] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false)
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -165,7 +168,7 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
-  const fetchLeads = async (page = 1, refresh = false, searchTerm = '') => {
+  const fetchLeads = async (page = 1, refresh = false, searchTerm = '', status = 'all') => {
     try {
       if (refresh) {
         setIsRefreshing(true)
@@ -188,8 +191,8 @@ const LeadsScreen = ({ navigation }) => {
       }
 
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchTerm)
-        : await leadsAPI.getLeads(page, pagination.limit, token, userId, searchTerm)
+        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchTerm, status)
+        : await leadsAPI.getLeads(page, pagination.limit, token, userId, searchTerm, status)
       
       if (response.success && response.data) {
         const mappedLeads = response.data.items.map(lead => {
@@ -271,7 +274,9 @@ const LeadsScreen = ({ navigation }) => {
       
       if (response.success) {
         // Refresh the leads list from server
-        await fetchLeads(pagination.page, false)
+        const statusOption = statusOptions.find(option => option.key === selectedStatus)
+        const apiStatus = statusOption ? statusOption.apiValue : 'all'
+        await fetchLeads(pagination.page, false, searchQuery, apiStatus)
         
         Snackbar.showSuccess('Success', response.message || 'Lead deleted successfully')
       } else {
@@ -307,9 +312,17 @@ const LeadsScreen = ({ navigation }) => {
   // Handle toggle between all leads and transferred leads
   const handleToggleChange = async (value) => {
     setShowTransferredLeads(value)
-    setSelectedFilter('all') // Reset filter when switching data source
+    setSelectedStatus('all') // Reset status when switching data source
     setLeadsData([]) // Clear current data to show loading state
     setSearchQuery('') // Clear search when switching
+    setPagination({
+      page: 1,
+      limit: 5,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false
+    })
     // Don't call fetchLeads here as useEffect will handle it
   }
 
@@ -324,10 +337,23 @@ const LeadsScreen = ({ navigation }) => {
     
     // Set new timeout for debounced search
     searchTimeoutRef.current = setTimeout(() => {
+      const statusOption = statusOptions.find(option => option.key === selectedStatus)
+      const apiStatus = statusOption ? statusOption.apiValue : 'all'
+      
+      // Reset pagination when searching
+      setPagination({
+        page: 1,
+        limit: 5,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false
+      })
+      
       if (text.trim()) {
-        fetchLeads(1, false, text.trim())
+        fetchLeads(1, false, text.trim(), apiStatus)
       } else {
-        fetchLeads(1, false, '')
+        fetchLeads(1, false, '', apiStatus)
         // Hide search bar when search is empty
         setIsSearchVisible(false)
       }
@@ -340,15 +366,45 @@ const LeadsScreen = ({ navigation }) => {
     if (isSearchVisible) {
       // Clear search when hiding search bar
       setSearchQuery('')
-      fetchLeads(1, false, '')
+      const statusOption = statusOptions.find(option => option.key === selectedStatus)
+      const apiStatus = statusOption ? statusOption.apiValue : 'all'
+      fetchLeads(1, false, '', apiStatus)
     }
   }
 
   // Clear search
   const clearSearch = () => {
     setSearchQuery('')
-    fetchLeads(1, false, '')
+    setPagination({
+      page: 1,
+      limit: 5,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false
+    })
+    const statusOption = statusOptions.find(option => option.key === selectedStatus)
+    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+    fetchLeads(1, false, '', apiStatus)
     setIsSearchVisible(false) // Hide search bar when clearing
+  }
+
+  // Handle status change
+  const handleStatusChange = (statusKey) => {
+    setSelectedStatus(statusKey)
+    setShowStatusDropdown(false)
+    setLeadsData([]) // Clear current data to show loading state
+    setPagination({
+      page: 1,
+      limit: 5,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false
+    })
+    const statusOption = statusOptions.find(option => option.key === statusKey)
+    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+    fetchLeads(1, false, searchQuery, apiStatus)
   }
 
   // Load leads and metrics on component mount
@@ -356,7 +412,7 @@ const LeadsScreen = ({ navigation }) => {
     const loadData = async () => {
       await Promise.all([
         fetchMetrics(),
-        fetchLeads(1)
+        fetchLeads(1, false, '', 'all')
       ])
     }
     loadData()
@@ -365,8 +421,20 @@ const LeadsScreen = ({ navigation }) => {
   // Refetch leads when toggle state changes
   useEffect(() => {
     // Always refetch when toggle state changes, regardless of current data
-    fetchLeads(1, false)
+    const statusOption = statusOptions.find(option => option.key === selectedStatus)
+    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+    fetchLeads(1, false, searchQuery, apiStatus)
   }, [showTransferredLeads])
+
+  // Status options for dropdown
+  const statusOptions = [
+    { key: 'all', label: 'All Leads', apiValue: 'all' },
+    { key: 'new', label: 'New', apiValue: 'New' },
+    { key: 'assigned', label: 'Assigned', apiValue: 'Assigned' },
+    { key: 'in-progress', label: 'In Progress', apiValue: 'In Progress' },
+    { key: 'rejected', label: 'Rejected', apiValue: 'Rejected' },
+    { key: 'closed', label: 'Closed', apiValue: 'Closed' }
+  ]
 
   // Cleanup search timeout on unmount
   useEffect(() => {
@@ -376,15 +444,6 @@ const LeadsScreen = ({ navigation }) => {
       }
     }
   }, [])
-
-  const filterOptions = useMemo(() => [
-    { key: 'all', label: showTransferredLeads ? 'All Transferred' : 'All Leads', count: leadsData.length },
-    { key: 'new', label: 'New', count: leadsData.filter(lead => lead.status === 'new').length },
-    { key: 'assigned', label: 'Assigned', count: leadsData.filter(lead => lead.status === 'assigned').length },
-    { key: 'in-progress', label: 'In Progress', count: leadsData.filter(lead => lead.status === 'in-progress').length },
-    { key: 'rejected', label: 'Rejected', count: leadsData.filter(lead => lead.status === 'rejected').length },
-    { key: 'closed', label: 'Closed', count: leadsData.filter(lead => lead.status === 'closed').length }
-  ], [leadsData, showTransferredLeads])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -417,9 +476,7 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
-  const filteredLeads = selectedFilter === 'all' 
-    ? leadsData 
-    : leadsData.filter(lead => lead.status === selectedFilter)
+  const filteredLeads = leadsData
 
   const LeadCard = ({ lead }) => {
     const [pressedButton, setPressedButton] = useState(null)
@@ -457,16 +514,16 @@ const LeadsScreen = ({ navigation }) => {
                   source={{ uri: getSecureImageUrl(lead.avatar) }}
                   style={styles.leadAvatarImage}
                   imageType="lead-avatar"
-                  fallbackText={lead.name.split(' ').map(n => n[0]).join('')}
+                  fallbackText={lead.name ? lead.name.split(' ').map(n => n[0]).join('') : 'N/A'}
                 />
               ) : (
-                <Text style={styles.leadAvatarText}>{lead.name.split(' ').map(n => n[0]).join('')}</Text>
+                <Text style={styles.leadAvatarText}>{lead.name ? lead.name.split(' ').map(n => n[0]).join('') : 'N/A'}</Text>
               )}
             </View>
           </View>
           <View style={styles.leadInfo}>
-            <Text style={styles.leadName}>{lead.name}</Text>
-            <Text style={styles.leadEmail}>{lead.email}</Text>
+            <Text style={styles.leadName}>{lead.name || 'Unknown Lead'}</Text>
+            <Text style={styles.leadEmail}>{lead.email || 'No email'}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(lead.status) }]}>
             <Text style={styles.statusText}>
@@ -482,7 +539,7 @@ const LeadsScreen = ({ navigation }) => {
               <MaterialIcons name="trending-up" size={16} color="#009689" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REQUIREMENT</Text>
-                <Text style={styles.detailValue}>{lead.requirement}</Text>
+                <Text style={styles.detailValue}>{lead.requirement || 'Not specified'}</Text>
               </View>
             </View>
           </View>
@@ -491,7 +548,7 @@ const LeadsScreen = ({ navigation }) => {
               <MaterialIcons name="home" size={16} color="#009689" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>PROPERTY TYPE</Text>
-                <Text style={styles.detailValue}>{lead.propertyType}</Text>
+                <Text style={styles.detailValue}>{lead.propertyType || 'Not specified'}</Text>
               </View>
             </View>
           </View>
@@ -509,7 +566,7 @@ const LeadsScreen = ({ navigation }) => {
               <MaterialIcons name="location-on" size={16} color="#009689" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REGION(S)</Text>
-                <Text style={styles.detailValue}>{lead.region}</Text>
+                <Text style={styles.detailValue}>{lead.region || 'Not specified'}</Text>
               </View>
             </View>
           </View>
@@ -530,10 +587,10 @@ const LeadsScreen = ({ navigation }) => {
                       source={{ uri: getSecureImageUrl(person.avatar) }}
                       style={styles.sharedAvatarImage}
                       imageType="shared-avatar"
-                      fallbackText={person.name.split(' ').map(n => n[0]).join('')}
+                      fallbackText={person.name ? person.name.split(' ').map(n => n[0]).join('') : 'N/A'}
                     />
                   ) : (
-                    <Text style={styles.sharedAvatarText}>{person.name.split(' ').map(n => n[0]).join('')}</Text>
+                    <Text style={styles.sharedAvatarText}>{person.name ? person.name.split(' ').map(n => n[0]).join('') : 'N/A'}</Text>
                   )}
                 </View>
               ))}
@@ -601,9 +658,11 @@ const LeadsScreen = ({ navigation }) => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={async () => {
+              const statusOption = statusOptions.find(option => option.key === selectedStatus)
+              const apiStatus = statusOption ? statusOption.apiValue : 'all'
               await Promise.all([
                 fetchMetrics(),
-                fetchLeads(1, true)
+                fetchLeads(1, true, searchQuery, apiStatus)
               ])
             }}
             colors={['#009689']}
@@ -717,38 +776,58 @@ const LeadsScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Filter Tabs */}
+        {/* Status Filter Dropdown */}
         <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {filterOptions.map((filter) => (
+          <View style={styles.filterRow}>
+            <View style={styles.dropdownContainer}>
               <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.filterTab,
-                  selectedFilter === filter.key && styles.filterTabActive
-                ]}
-                onPress={() => setSelectedFilter(filter.key)}
+                style={styles.dropdownButton}
+                onPress={() => setShowStatusDropdown(!showStatusDropdown)}
               >
-                <Text style={[
-                  styles.filterTabText,
-                  selectedFilter === filter.key && styles.filterTabTextActive
-                ]}>
-                  {filter.label}
+                <Text style={styles.dropdownButtonText}>
+                  {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
                 </Text>
-                <View style={[
-                  styles.filterBadge,
-                  selectedFilter === filter.key && styles.filterBadgeActive
-                ]}>
-                  <Text style={[
-                    styles.filterBadgeText,
-                    selectedFilter === filter.key && styles.filterBadgeTextActive
-                  ]}>
-                    {filter.count}
-                  </Text>
-                </View>
+                <MaterialIcons 
+                  name={showStatusDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                  size={24} 
+                  color="#6B7280" 
+                />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              
+              {showStatusDropdown && (
+                <View style={styles.dropdownMenu}>
+                  {statusOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.key}
+                      style={[
+                        styles.dropdownItem,
+                        selectedStatus === option.key && styles.dropdownItemActive
+                      ]}
+                      onPress={() => handleStatusChange(option.key)}
+                    >
+                      <Text style={[
+                        styles.dropdownItemText,
+                        selectedStatus === option.key && styles.dropdownItemTextActive
+                      ]}>
+                        {option.label}
+                      </Text>
+                      {selectedStatus === option.key && (
+                        <MaterialIcons name="check" size={20} color="#009689" />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.advancedFilterButton}
+              onPress={() => setShowAdvancedFilter(true)}
+            >
+              <MaterialIcons name="tune" size={20} color="#009689" />
+              <Text style={styles.advancedFilterText}>Advanced</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Leads List */}
@@ -782,7 +861,11 @@ const LeadsScreen = ({ navigation }) => {
               <Text style={styles.errorMessage}>{error}</Text>
               <TouchableOpacity 
                 style={styles.retryButton}
-                onPress={() => fetchLeads(1)}
+                onPress={() => {
+                  const statusOption = statusOptions.find(option => option.key === selectedStatus)
+                  const apiStatus = statusOption ? statusOption.apiValue : 'all'
+                  fetchLeads(1, false, searchQuery, apiStatus)
+                }}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
@@ -792,11 +875,11 @@ const LeadsScreen = ({ navigation }) => {
               <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
               <Text style={styles.emptyTitle}>No Leads Found</Text>
               <Text style={styles.emptyMessage}>
-                {selectedFilter === 'all' 
+                {selectedStatus === 'all' 
                   ? (showTransferredLeads 
                       ? 'No transferred leads available at the moment' 
                       : 'No leads available at the moment')
-                  : `No ${selectedFilter} leads found`}
+                  : `No ${statusOptions.find(option => option.key === selectedStatus)?.label.toLowerCase() || 'leads'} found`}
               </Text>
             </View>
           ) : (
@@ -814,7 +897,13 @@ const LeadsScreen = ({ navigation }) => {
             <View style={styles.paginationContainer}>
               <TouchableOpacity 
                 style={[styles.paginationButton, !pagination.hasPrevPage && styles.paginationButtonDisabled]}
-                onPress={() => pagination.hasPrevPage && fetchLeads(pagination.page - 1)}
+                onPress={() => {
+                  if (pagination.hasPrevPage) {
+                    const statusOption = statusOptions.find(option => option.key === selectedStatus)
+                    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+                    fetchLeads(pagination.page - 1, false, searchQuery, apiStatus)
+                  }
+                }}
                 disabled={!pagination.hasPrevPage}
               >
                 <MaterialIcons name="chevron-left" size={20} color={pagination.hasPrevPage ? "#009689" : "#9CA3AF"} />
@@ -834,7 +923,13 @@ const LeadsScreen = ({ navigation }) => {
 
               <TouchableOpacity 
                 style={[styles.paginationButton, !pagination.hasNextPage && styles.paginationButtonDisabled]}
-                onPress={() => pagination.hasNextPage && fetchLeads(pagination.page + 1)}
+                onPress={() => {
+                  if (pagination.hasNextPage) {
+                    const statusOption = statusOptions.find(option => option.key === selectedStatus)
+                    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+                    fetchLeads(pagination.page + 1, false, searchQuery, apiStatus)
+                  }
+                }}
                 disabled={!pagination.hasNextPage}
               >
                 <Text style={[styles.paginationButtonText, !pagination.hasNextPage && styles.paginationButtonTextDisabled]}>
@@ -846,6 +941,44 @@ const LeadsScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Advanced Filter Modal */}
+      <Modal
+        visible={showAdvancedFilter}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAdvancedFilter(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Advanced Filters</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowAdvancedFilter(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.modalSubtitle}>Filter options will be available here</Text>
+              <Text style={styles.modalDescription}>
+                This feature is coming soon. You'll be able to filter by date range, property type, budget range, and more.
+              </Text>
+            </View>
+            
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setShowAdvancedFilter(false)}
+              >
+                <Text style={styles.modalButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -1029,51 +1162,89 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 24,
   },
-  filterScroll: {
-    flexDirection: 'row',
-  },
-  filterTab: {
+  filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
+  },
+  dropdownContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  filterTabActive: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
-  },
-  filterTabText: {
-    fontSize: 14,
+  dropdownButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#6B7280',
-    marginRight: 8,
+    color: '#1F2937',
   },
-  filterTabTextActive: {
-    color: '#FFFFFF',
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    marginTop: 4,
   },
-  filterBadge: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
+  dropdownItem: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  filterBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  dropdownItemActive: {
+    backgroundColor: '#F0FDFA',
   },
-  filterBadgeText: {
-    fontSize: 12,
+  dropdownItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  dropdownItemTextActive: {
+    color: '#009689',
     fontWeight: '600',
-    color: '#6B7280',
   },
-  filterBadgeTextActive: {
-    color: '#FFFFFF',
+  advancedFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDFA',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    gap: 8,
+  },
+  advancedFilterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#009689',
   },
 
   // Leads Section
@@ -1410,6 +1581,70 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBody: {
+    flex: 1,
+    paddingVertical: 20,
+  },
+  modalSubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  modalDescription: {
+    fontSize: 16,
+    color: '#6B7280',
+    lineHeight: 24,
+  },
+  modalFooter: {
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  modalButton: {
+    backgroundColor: '#009689',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 })
 

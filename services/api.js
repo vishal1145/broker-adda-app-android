@@ -199,13 +199,17 @@ export const authAPI = {
 
 // Leads API functions
 export const leadsAPI = {
-  // Get leads with pagination and search
-  getLeads: async (page = 1, limit = 5, token, userId, search = '') => {
+  // Get leads with pagination, search and status filter
+  getLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all') => {
     try {
-      console.log('Fetching leads:', { page, limit, userId, search });
+      console.log('Fetching leads:', { page, limit, userId, search, status });
       let url = `/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`;
       if (search && search.trim()) {
         url += `&search=${encodeURIComponent(search.trim())}`;
+      }
+      // Only add status parameter if it's not 'all' - API returns all data by default
+      if (status && status !== 'all') {
+        url += `&status=${encodeURIComponent(status)}`;
       }
       const response = await api.get(url, {
         headers: {
@@ -257,13 +261,17 @@ export const leadsAPI = {
     }
   },
 
-  // Get transferred leads with search
-  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '') => {
+  // Get transferred leads with search and status filter
+  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all') => {
     try {
-      console.log('Fetching transferred leads:', { page, limit, userId, search });
+      console.log('Fetching transferred leads:', { page, limit, userId, search, status });
       let url = `/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`;
       if (search && search.trim()) {
         url += `&search=${encodeURIComponent(search.trim())}`;
+      }
+      // Only add status parameter if it's not 'all' - API returns all data by default
+      if (status && status !== 'all') {
+        url += `&status=${encodeURIComponent(status)}`;
       }
       const response = await api.get(url, {
         headers: {
