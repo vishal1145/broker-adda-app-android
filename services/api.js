@@ -233,6 +233,24 @@ export const leadsAPI = {
       console.error('Delete lead error:', error);
       throw error;
     }
+  },
+
+  // Get leads metrics
+  getMetrics: async (userId, token) => {
+    try {
+      console.log('Fetching leads metrics for user:', userId);
+      const response = await api.get(`/api/leads/metrics?createdBy=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Leads metrics fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get leads metrics error:', error);
+      throw error;
+    }
   }
 };
 

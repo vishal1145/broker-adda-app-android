@@ -100,6 +100,15 @@ const LeadsScreen = ({ navigation }) => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState(null)
   const [deletingLeadId, setDeletingLeadId] = useState(null)
+  const [metrics, setMetrics] = useState({
+    totalLeads: 0,
+    newLeadsToday: 0,
+    convertedLeads: 0,
+    averageDealSize: 0,
+    transfersToMe: 0,
+    transfersByMe: 0
+  })
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 5,
@@ -110,6 +119,44 @@ const LeadsScreen = ({ navigation }) => {
   })
 
   // API functions
+  const fetchMetrics = async () => {
+    try {
+      setIsLoadingMetrics(true)
+      setError(null)
+
+      const token = await storage.getToken()
+      const userId = await storage.getUserId()
+      
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+      
+      if (!userId) {
+        throw new Error('No user ID found')
+      }
+
+      const response = await leadsAPI.getMetrics(userId, token)
+      
+      if (response.success && response.data) {
+        setMetrics({
+          totalLeads: response.data.totalLeads || 0,
+          newLeadsToday: response.data.newLeadsToday || 0,
+          convertedLeads: response.data.convertedLeads || 0,
+          averageDealSize: response.data.averageDealSize || 0,
+          transfersToMe: response.data.transfersToMe || 0,
+          transfersByMe: response.data.transfersByMe || 0
+        })
+      } else {
+        throw new Error(response.message || 'Failed to fetch metrics')
+      }
+    } catch (err) {
+      console.error('Error fetching metrics:', err)
+      setError(err.message || 'Failed to fetch metrics')
+    } finally {
+      setIsLoadingMetrics(false)
+    }
+  }
+
   const fetchLeads = async (page = 1, refresh = false) => {
     try {
       if (refresh) {
@@ -231,9 +278,15 @@ const LeadsScreen = ({ navigation }) => {
     )
   }
 
-  // Load leads on component mount
+  // Load leads and metrics on component mount
   useEffect(() => {
-    fetchLeads(1)
+    const loadData = async () => {
+      await Promise.all([
+        fetchMetrics(),
+        fetchLeads(1)
+      ])
+    }
+    loadData()
   }, [])
 
   const filterOptions = [
@@ -454,7 +507,12 @@ const LeadsScreen = ({ navigation }) => {
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={() => fetchLeads(1, true)}
+            onRefresh={async () => {
+              await Promise.all([
+                fetchMetrics(),
+                fetchLeads(1, true)
+              ])
+            }}
             colors={['#009689']}
             tintColor="#009689"
           />
@@ -496,7 +554,9 @@ const LeadsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <MaterialIcons name="people" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>{leadsData.length}</Text>
+                <Text style={styles.statValue}>
+                  {isLoadingMetrics ? '...' : metrics.totalLeads}
+                </Text>
                 <Text style={styles.statLabel}>Total Leads</Text>
               </LinearGradient>
             </View>
@@ -509,7 +569,9 @@ const LeadsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <MaterialIcons name="share" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>8</Text>
+                <Text style={styles.statValue}>
+                  {isLoadingMetrics ? '...' : metrics.transfersToMe}
+                </Text>
                 <Text style={styles.statLabel}>Share with me</Text>
               </LinearGradient>
             </View>
@@ -522,7 +584,9 @@ const LeadsScreen = ({ navigation }) => {
                 end={{ x: 1, y: 1 }}
               >
                 <MaterialIcons name="send" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>5</Text>
+                <Text style={styles.statValue}>
+                  {isLoadingMetrics ? '...' : metrics.transfersByMe}
+                </Text>
                 <Text style={styles.statLabel}>Share by me</Text>
               </LinearGradient>
             </View>
