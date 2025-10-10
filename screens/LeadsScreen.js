@@ -323,7 +323,8 @@ const LeadsScreen = ({ navigation }) => {
     { key: 'all', label: showTransferredLeads ? 'All Transferred' : 'All Leads', count: leadsData.length },
     { key: 'new', label: 'New', count: leadsData.filter(lead => lead.status === 'new').length },
     { key: 'assigned', label: 'Assigned', count: leadsData.filter(lead => lead.status === 'assigned').length },
-    { key: 'qualified', label: 'Qualified', count: leadsData.filter(lead => lead.status === 'qualified').length },
+    { key: 'in-progress', label: 'In Progress', count: leadsData.filter(lead => lead.status === 'in-progress').length },
+    { key: 'rejected', label: 'Rejected', count: leadsData.filter(lead => lead.status === 'rejected').length },
     { key: 'closed', label: 'Closed', count: leadsData.filter(lead => lead.status === 'closed').length }
   ], [leadsData, showTransferredLeads])
 
@@ -331,8 +332,8 @@ const LeadsScreen = ({ navigation }) => {
     switch (status) {
       case 'new': return '#3B82F6'
       case 'assigned': return '#F59E0B'
-      case 'in-progress': return '#F59E0B'
-      case 'qualified': return '#10B981'
+      case 'in-progress': return '#8B5CF6'
+      case 'rejected': return '#EF4444'
       case 'closed': return '#6B7280'
       default: return '#6B7280'
     }
@@ -350,8 +351,9 @@ const LeadsScreen = ({ navigation }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'new': return 'fiber-new'
+      case 'assigned': return 'assignment'
       case 'in-progress': return 'trending-up'
-      case 'qualified': return 'check-circle'
+      case 'rejected': return 'cancel'
       case 'closed': return 'done'
       default: return 'help'
     }
