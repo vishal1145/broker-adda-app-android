@@ -199,11 +199,15 @@ export const authAPI = {
 
 // Leads API functions
 export const leadsAPI = {
-  // Get leads with pagination
-  getLeads: async (page = 1, limit = 5, token, userId) => {
+  // Get leads with pagination and search
+  getLeads: async (page = 1, limit = 5, token, userId, search = '') => {
     try {
-      console.log('Fetching leads:', { page, limit, userId });
-      const response = await api.get(`/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`, {
+      console.log('Fetching leads:', { page, limit, userId, search });
+      let url = `/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`;
+      if (search && search.trim()) {
+        url += `&search=${encodeURIComponent(search.trim())}`;
+      }
+      const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
@@ -253,11 +257,15 @@ export const leadsAPI = {
     }
   },
 
-  // Get transferred leads
-  getTransferredLeads: async (page = 1, limit = 5, token, userId) => {
+  // Get transferred leads with search
+  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '') => {
     try {
-      console.log('Fetching transferred leads:', { page, limit, userId });
-      const response = await api.get(`/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`, {
+      console.log('Fetching transferred leads:', { page, limit, userId, search });
+      let url = `/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`;
+      if (search && search.trim()) {
+        url += `&search=${encodeURIComponent(search.trim())}`;
+      }
+      const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'

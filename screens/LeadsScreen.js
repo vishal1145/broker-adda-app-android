@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
@@ -95,6 +96,12 @@ const LeadsScreen = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all')
   const [showTransferredLeads, setShowTransferredLeads] = useState(false)
   
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchVisible, setIsSearchVisible] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const searchTimeoutRef = useRef(null)
+  
   // API state management
   const [leadsData, setLeadsData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -158,10 +165,12 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
-  const fetchLeads = async (page = 1, refresh = false) => {
+  const fetchLeads = async (page = 1, refresh = false, searchTerm = '') => {
     try {
       if (refresh) {
         setIsRefreshing(true)
+      } else if (searchTerm) {
+        setIsSearching(true)
       } else {
         setIsLoading(true)
       }
@@ -179,8 +188,8 @@ const LeadsScreen = ({ navigation }) => {
       }
 
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId)
-        : await leadsAPI.getLeads(page, pagination.limit, token, userId)
+        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchTerm)
+        : await leadsAPI.getLeads(page, pagination.limit, token, userId, searchTerm)
       
       if (response.success && response.data) {
         const mappedLeads = response.data.items.map(lead => {
@@ -244,6 +253,7 @@ const LeadsScreen = ({ navigation }) => {
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
+      setIsSearching(false)
     }
   }
 
@@ -299,7 +309,46 @@ const LeadsScreen = ({ navigation }) => {
     setShowTransferredLeads(value)
     setSelectedFilter('all') // Reset filter when switching data source
     setLeadsData([]) // Clear current data to show loading state
+    setSearchQuery('') // Clear search when switching
     // Don't call fetchLeads here as useEffect will handle it
+  }
+
+  // Handle search input change with debouncing
+  const handleSearchChange = (text) => {
+    setSearchQuery(text)
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+    
+    // Set new timeout for debounced search
+    searchTimeoutRef.current = setTimeout(() => {
+      if (text.trim()) {
+        fetchLeads(1, false, text.trim())
+      } else {
+        fetchLeads(1, false, '')
+        // Hide search bar when search is empty
+        setIsSearchVisible(false)
+      }
+    }, 500) // 500ms delay
+  }
+
+  // Handle search toggle
+  const handleSearchToggle = () => {
+    setIsSearchVisible(!isSearchVisible)
+    if (isSearchVisible) {
+      // Clear search when hiding search bar
+      setSearchQuery('')
+      fetchLeads(1, false, '')
+    }
+  }
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchQuery('')
+    fetchLeads(1, false, '')
+    setIsSearchVisible(false) // Hide search bar when clearing
   }
 
   // Load leads and metrics on component mount
@@ -318,6 +367,15 @@ const LeadsScreen = ({ navigation }) => {
     // Always refetch when toggle state changes, regardless of current data
     fetchLeads(1, false)
   }, [showTransferredLeads])
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const filterOptions = useMemo(() => [
     { key: 'all', label: showTransferredLeads ? 'All Transferred' : 'All Leads', count: leadsData.length },
@@ -571,12 +629,43 @@ const LeadsScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.headerButton}>
                 <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton}>
+              <TouchableOpacity 
+                style={[styles.headerButton, isSearchVisible && styles.headerButtonActive]}
+                onPress={handleSearchToggle}
+              >
                 <MaterialIcons name="search" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
         </View>
+
+        {/* Search Bar */}
+        {isSearchVisible && (
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search leads..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+                autoFocus={true}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                  <MaterialIcons name="clear" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
+              )}
+            </View>
+            {isSearching && (
+              <View style={styles.searchLoadingContainer}>
+                <ActivityIndicator size="small" color="#009689" />
+                <Text style={styles.searchLoadingText}>Searching...</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Stats Overview */}
         <View style={styles.statsSection}>
@@ -848,6 +937,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  headerButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+
+  // Search Styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1F2937',
+    paddingVertical: 0,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  searchLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  searchLoadingText: {
+    fontSize: 14,
+    color: '#6B7280',
   },
 
   // Stats Section
