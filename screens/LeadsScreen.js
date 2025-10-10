@@ -180,29 +180,42 @@ const LeadsScreen = ({ navigation }) => {
       const response = await leadsAPI.getLeads(page, pagination.limit, token, userId)
       
       if (response.success && response.data) {
-        const mappedLeads = response.data.items.map(lead => ({
-          id: lead._id,
-          name: lead.customerName,
-          email: lead.customerEmail,
-          phone: lead.customerPhone,
-          requirement: lead.requirement,
-          propertyType: lead.propertyType,
-          budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
-          region: lead.primaryRegion?.name || lead.region?.name || 'Not specified',
-          status: lead.status.toLowerCase().replace(' ', '-'),
-          priority: 'medium', // Default priority as not in API
-          source: 'API', // Default source as not in API
-          createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
-          lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
-          notes: lead.notes || '',
-          avatar: lead.createdBy?.brokerImage || null,
-          sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
-            id: t.toBroker._id,
-            name: t.toBroker.name,
-            avatar: t.toBroker.brokerImage
-          })) || [],
-          additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
-        }))
+        const mappedLeads = response.data.items.map(lead => {
+          // Build region string with both primary and secondary regions
+          let regionString = 'Not specified'
+          if (lead.primaryRegion?.name) {
+            regionString = lead.primaryRegion.name
+            if (lead.secondaryRegion?.name) {
+              regionString += `, ${lead.secondaryRegion.name}`
+            }
+          } else if (lead.region?.name) {
+            regionString = lead.region.name
+          }
+
+          return {
+            id: lead._id,
+            name: lead.customerName,
+            email: lead.customerEmail,
+            phone: lead.customerPhone,
+            requirement: lead.requirement,
+            propertyType: lead.propertyType,
+            budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
+            region: regionString,
+            status: lead.status.toLowerCase().replace(' ', '-'),
+            priority: 'medium', // Default priority as not in API
+            source: 'API', // Default source as not in API
+            createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
+            lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
+            notes: lead.notes || '',
+            avatar: lead.createdBy?.brokerImage || null,
+            sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
+              id: t.toBroker._id,
+              name: t.toBroker.name,
+              avatar: t.toBroker.brokerImage
+            })) || [],
+            additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
+          }
+        })
 
         if (refresh) {
           setLeadsData(mappedLeads)
