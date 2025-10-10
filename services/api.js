@@ -183,6 +183,19 @@ export const authAPI = {
     }
   },
 
+  // Get all regions for filter dropdown
+  getAllRegions: async () => {
+    try {
+      console.log('Fetching all regions for filter');
+      const response = await api.get('/api/regions');
+      console.log('All regions fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get all regions error:', error);
+      throw error;
+    }
+  },
+
   // Check if email is already in use
   checkEmail: async (email, userId) => {
     try {
@@ -283,6 +296,46 @@ export const leadsAPI = {
       return response.data;
     } catch (error) {
       console.error('Get transferred leads error:', error);
+      throw error;
+    }
+  },
+
+  // Get leads with advanced filters
+  getLeadsWithFilters: async (page = 1, limit = 5, token, userId, filters = {}) => {
+    try {
+      console.log('Fetching leads with filters:', { page, limit, userId, filters });
+      let url = `/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`;
+      
+      // Add filter parameters
+      if (filters.regionId) {
+        url += `&regionId=${filters.regionId}`;
+      }
+      if (filters.propertyType && filters.propertyType !== 'All') {
+        url += `&propertyType=${encodeURIComponent(filters.propertyType)}`;
+      }
+      if (filters.requirement && filters.requirement !== 'All') {
+        url += `&requirement=${encodeURIComponent(filters.requirement)}`;
+      }
+      if (filters.budgetMax) {
+        url += `&budgetMax=${filters.budgetMax}`;
+      }
+      if (filters.search && filters.search.trim()) {
+        url += `&search=${encodeURIComponent(filters.search.trim())}`;
+      }
+      if (filters.status && filters.status !== 'all') {
+        url += `&status=${encodeURIComponent(filters.status)}`;
+      }
+      
+      const response = await api.get(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Filtered leads fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get filtered leads error:', error);
       throw error;
     }
   }
