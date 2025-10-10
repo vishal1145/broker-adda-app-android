@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -93,6 +93,7 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 
 const LeadsScreen = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState('all')
+  const [showTransferredLeads, setShowTransferredLeads] = useState(false)
   
   // API state management
   const [leadsData, setLeadsData] = useState([])
@@ -177,7 +178,9 @@ const LeadsScreen = ({ navigation }) => {
         throw new Error('No user ID found')
       }
 
-      const response = await leadsAPI.getLeads(page, pagination.limit, token, userId)
+      const response = showTransferredLeads 
+        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId)
+        : await leadsAPI.getLeads(page, pagination.limit, token, userId)
       
       if (response.success && response.data) {
         const mappedLeads = response.data.items.map(lead => {
@@ -291,6 +294,14 @@ const LeadsScreen = ({ navigation }) => {
     )
   }
 
+  // Handle toggle between all leads and transferred leads
+  const handleToggleChange = async (value) => {
+    setShowTransferredLeads(value)
+    setSelectedFilter('all') // Reset filter when switching data source
+    setLeadsData([]) // Clear current data to show loading state
+    // Don't call fetchLeads here as useEffect will handle it
+  }
+
   // Load leads and metrics on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -302,13 +313,19 @@ const LeadsScreen = ({ navigation }) => {
     loadData()
   }, [])
 
-  const filterOptions = [
-    { key: 'all', label: 'All Leads', count: leadsData.length },
+  // Refetch leads when toggle state changes
+  useEffect(() => {
+    // Always refetch when toggle state changes, regardless of current data
+    fetchLeads(1, false)
+  }, [showTransferredLeads])
+
+  const filterOptions = useMemo(() => [
+    { key: 'all', label: showTransferredLeads ? 'All Transferred' : 'All Leads', count: leadsData.length },
     { key: 'new', label: 'New', count: leadsData.filter(lead => lead.status === 'new').length },
     { key: 'assigned', label: 'Assigned', count: leadsData.filter(lead => lead.status === 'assigned').length },
     { key: 'qualified', label: 'Qualified', count: leadsData.filter(lead => lead.status === 'qualified').length },
     { key: 'closed', label: 'Closed', count: leadsData.filter(lead => lead.status === 'closed').length }
-  ]
+  ], [leadsData, showTransferredLeads])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -487,23 +504,26 @@ const LeadsScreen = ({ navigation }) => {
               <MaterialIcons name="send" size={18} color={getActionIconColor('share')} />
               <Text style={getActionButtonTextStyle('share')}>Share</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={getActionButtonStyle('delete')}
-              onPressIn={() => setPressedButton('delete')}
-              onPressOut={() => setPressedButton(null)}
-              onPress={() => handleDeletePress(lead.id, lead.name)}
-              activeOpacity={0.7}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <ActivityIndicator size="small" color="#EF4444" />
-              ) : (
-                <MaterialIcons name="delete" size={18} color={getActionIconColor('delete')} />
-              )}
-              <Text style={getActionButtonTextStyle('delete')}>
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Text>
-            </TouchableOpacity>
+            {/* Only show delete button if lead is not shared with anyone */}
+            {lead.sharedWith.length === 0 && (
+              <TouchableOpacity 
+                style={getActionButtonStyle('delete')}
+                onPressIn={() => setPressedButton('delete')}
+                onPressOut={() => setPressedButton(null)}
+                onPress={() => handleDeletePress(lead.id, lead.name)}
+                activeOpacity={0.7}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#EF4444" />
+                ) : (
+                  <MaterialIcons name="delete" size={18} color={getActionIconColor('delete')} />
+                )}
+                <Text style={getActionButtonTextStyle('delete')}>
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -643,11 +663,20 @@ const LeadsScreen = ({ navigation }) => {
         {/* Leads List */}
         <View style={styles.leadsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Leads ({filteredLeads.length})</Text>
-            <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#009689" />
-              <Text style={styles.sortText}>Sort</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>
+              {showTransferredLeads ? 'Transferred Leads' : 'Leads'} ({filteredLeads.length})
+            </Text>
+            <View style={styles.toggleContainer}>
+              <Text style={styles.toggleLabel}>All</Text>
+              <TouchableOpacity 
+                style={[styles.toggleButton, showTransferredLeads && styles.toggleButtonActive]}
+                onPress={() => handleToggleChange(!showTransferredLeads)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.toggleThumb, showTransferredLeads && styles.toggleThumbActive]} />
+              </TouchableOpacity>
+              <Text style={styles.toggleLabel}>Transferred</Text>
+            </View>
           </View>
           
           {isLoading ? (
@@ -673,7 +702,9 @@ const LeadsScreen = ({ navigation }) => {
               <Text style={styles.emptyTitle}>No Leads Found</Text>
               <Text style={styles.emptyMessage}>
                 {selectedFilter === 'all' 
-                  ? 'No leads available at the moment' 
+                  ? (showTransferredLeads 
+                      ? 'No transferred leads available at the moment' 
+                      : 'No leads available at the moment')
                   : `No ${selectedFilter} leads found`}
               </Text>
             </View>
@@ -923,21 +954,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
-  sortButton: {
+  // Toggle Button Styles
+  toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0FDFA',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 20,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: '#A7F3D0',
   },
-  sortText: {
-    fontSize: 14,
+  toggleButton: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    marginHorizontal: 8,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#009689',
+  },
+  toggleThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  toggleThumbActive: {
+    transform: [{ translateX: 20 }],
+  },
+  toggleLabel: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#009689',
-    marginLeft: 4,
+    color: '#6B7280',
   },
 
   // Lead Card Styles

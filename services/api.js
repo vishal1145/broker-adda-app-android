@@ -251,6 +251,24 @@ export const leadsAPI = {
       console.error('Get leads metrics error:', error);
       throw error;
     }
+  },
+
+  // Get transferred leads
+  getTransferredLeads: async (page = 1, limit = 5, token, userId) => {
+    try {
+      console.log('Fetching transferred leads:', { page, limit, userId });
+      const response = await api.get(`/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Transferred leads fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get transferred leads error:', error);
+      throw error;
+    }
   }
 };
 
