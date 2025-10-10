@@ -200,10 +200,10 @@ export const authAPI = {
 // Leads API functions
 export const leadsAPI = {
   // Get leads with pagination
-  getLeads: async (page = 1, limit = 5, token, brokerId) => {
+  getLeads: async (page = 1, limit = 5, token, userId) => {
     try {
-      console.log('Fetching leads:', { page, limit, brokerId });
-      const response = await api.get(`/api/leads?page=${page}&limit=${limit}&createdBy=68c90abe69abbf08dec89b7b`, {
+      console.log('Fetching leads:', { page, limit, userId });
+      const response = await api.get(`/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'

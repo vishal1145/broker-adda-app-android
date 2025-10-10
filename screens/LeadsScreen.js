@@ -120,17 +120,17 @@ const LeadsScreen = ({ navigation }) => {
       setError(null)
 
       const token = await storage.getToken()
-      const brokerId = await storage.getBrokerId()
+      const userId = await storage.getUserId()
       
       if (!token) {
         throw new Error('No authentication token found')
       }
       
-      if (!brokerId) {
-        throw new Error('No broker ID found')
+      if (!userId) {
+        throw new Error('No user ID found')
       }
 
-      const response = await leadsAPI.getLeads(page, pagination.limit, token, brokerId)
+      const response = await leadsAPI.getLeads(page, pagination.limit, token, userId)
       
       if (response.success && response.data) {
         const mappedLeads = response.data.items.map(lead => ({

@@ -127,6 +127,12 @@ const HomeScreen = ({ navigation }) => {
           const name = broker.name || broker.userId?.name || 'User'
           setUserName(name)
           
+          // Save broker _id as userId
+          if (broker._id) {
+            await storage.saveUserId(broker._id)
+            console.log('User ID saved:', broker._id)
+          }
+          
           // Set profile image if available with secure URL
           if (broker.brokerImage) {
             const secureImageUrl = getSecureImageUrl(broker.brokerImage)

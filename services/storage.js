@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth_token',
   BROKER_ID: 'broker_id',
-  PHONE: 'phone'
+  PHONE: 'phone',
+  USER_ID: 'user_id'
 }
 
 export const storage = {
@@ -56,13 +57,36 @@ export const storage = {
     }
   },
 
+  // Save user ID
+  saveUserId: async (userId) => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_ID, userId)
+      console.log('User ID saved successfully')
+    } catch (error) {
+      console.error('Error saving user ID:', error)
+      throw error
+    }
+  },
+
+  // Get user ID
+  getUserId: async () => {
+    try {
+      const userId = await AsyncStorage.getItem(STORAGE_KEYS.USER_ID)
+      return userId
+    } catch (error) {
+      console.error('Error getting user ID:', error)
+      return null
+    }
+  },
+
   // Clear all authentication data
   clearAuthData: async () => {
     try {
       await AsyncStorage.multiRemove([
         STORAGE_KEYS.AUTH_TOKEN,
         STORAGE_KEYS.BROKER_ID,
-        STORAGE_KEYS.PHONE
+        STORAGE_KEYS.PHONE,
+        STORAGE_KEYS.USER_ID
       ])
       console.log('Auth data cleared successfully')
     } catch (error) {
