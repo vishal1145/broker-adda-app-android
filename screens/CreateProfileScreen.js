@@ -112,6 +112,7 @@ const CreateProfileScreen = ({ navigation }) => {
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false)
   const [addressLoading, setAddressLoading] = useState(false)
   const [addressDebounceTimer, setAddressDebounceTimer] = useState(null)
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false)
   const [showManualRegionSelection, setShowManualRegionSelection] = useState(false)
   const [selectedRegionId, setSelectedRegionId] = useState('')
   const [locationLoading, setLocationLoading] = useState(false)
@@ -435,6 +436,7 @@ const CreateProfileScreen = ({ navigation }) => {
       console.log('Address selection triggered:', { placeId, description })
       setAddressLoading(true)
       setShowAddressSuggestions(false)
+      setShowAllSuggestions(false)
       
       // Fetch place details using API
       const result = await placesAPI.getPlaceDetails(placeId)
@@ -530,6 +532,7 @@ const CreateProfileScreen = ({ navigation }) => {
     } else {
       setAddressSuggestions([])
       setShowAddressSuggestions(false)
+      setShowAllSuggestions(false)
     }
   }
 
@@ -1757,6 +1760,7 @@ const CreateProfileScreen = ({ navigation }) => {
                 updateFormData('address', '')
                 setAddressSuggestions([])
                 setShowAddressSuggestions(false)
+                setShowAllSuggestions(false)
               }}>
                 <MaterialIcons name="clear" size={20} color="#8E8E93" style={styles.addressInputIcon} />
               </TouchableOpacity>
@@ -1766,12 +1770,19 @@ const CreateProfileScreen = ({ navigation }) => {
           {/* Address Suggestions Dropdown */}
           {showAddressSuggestions && addressSuggestions.length > 0 && (
             <View style={styles.addressSuggestionsContainer}>
-              <ScrollView style={styles.addressSuggestionsList} nestedScrollEnabled>
-                {addressSuggestions.map((suggestion, index) => (
+              <ScrollView 
+                style={styles.addressSuggestionsList} 
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+                bounces={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {(showAllSuggestions ? addressSuggestions : addressSuggestions.slice(0, 5)).map((suggestion, index) => (
                   <TouchableOpacity
                     key={suggestion.place_id || index}
                     style={styles.addressSuggestionItem}
                     onPress={() => handleAddressSelect(suggestion.place_id, suggestion.description)}
+                    activeOpacity={0.7}
                   >
                     <MaterialIcons name="location-on" size={16} color="#8E8E93" style={styles.suggestionIcon} />
                     <Text style={styles.suggestionText} numberOfLines={2}>
@@ -1779,6 +1790,18 @@ const CreateProfileScreen = ({ navigation }) => {
                     </Text>
                   </TouchableOpacity>
                 ))}
+                {addressSuggestions.length > 5 && !showAllSuggestions && (
+                  <TouchableOpacity
+                    style={[styles.addressSuggestionItem, styles.showMoreItem]}
+                    onPress={() => setShowAllSuggestions(true)}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="expand-more" size={16} color="#009689" style={styles.suggestionIcon} />
+                    <Text style={[styles.suggestionText, styles.showMoreText]}>
+                      Show {addressSuggestions.length - 5} more suggestions
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </ScrollView>
             </View>
           )}
@@ -2934,7 +2957,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    maxHeight: Dimensions.get('window').height * 0.2, // Reduced to ensure it fits above navigation
+    maxHeight: Dimensions.get('window').height * 0.4, // Increased height to show more options
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
@@ -2946,15 +2969,16 @@ const styles = StyleSheet.create({
     zIndex: 1001,
   },
   addressSuggestionsList: {
-    maxHeight: Dimensions.get('window').height * 0.2, // Reduced to ensure it fits above navigation
+    maxHeight: Dimensions.get('window').height * 0.4, // Increased height to show more options
   },
   addressSuggestionItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 50,
   },
   suggestionIcon: {
     marginRight: 12,
@@ -2963,6 +2987,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000000',
     flex: 1,
+  },
+  showMoreItem: {
+    backgroundColor: '#F8F9FA',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  showMoreText: {
+    color: '#009689',
+    fontWeight: '600',
   },
   // Region Cards Styles
   regionCardsContainer: {
