@@ -53,8 +53,8 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
       
       setIsLoading(false)
       
-      // Navigate directly to home page without alert
-      console.log('OTP verified successfully, navigating to home...')
+      // Navigate directly to main tabs after successful OTP verification
+      console.log('OTP verified successfully, navigating to main tabs...')
       onOtpVerified()
       
       console.log('OTP Verification Response:', response)

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, Animated, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { responsive } from '../utils/responsive'
+import { storage } from '../services/storage'
 
 const SplashScreen = ({ navigation }) => {
   const fadeAnim = new Animated.Value(0)
@@ -28,12 +29,32 @@ const SplashScreen = ({ navigation }) => {
       }),
     ]).start()
 
-    // Show splash screen for 3 seconds, then navigate to onboarding
-    const timer = setTimeout(() => {
-      navigation.replace('Onboarding')
-    }, 3000)
+    // Check authentication status and navigate accordingly
+    const checkAuthAndNavigate = async () => {
+      try {
+        const token = await storage.getToken()
+        const brokerId = await storage.getBrokerId()
+        
+        // Show splash screen for 3 seconds
+        setTimeout(() => {
+          if (token && brokerId) {
+            // User is logged in, go directly to main tabs
+            navigation.replace('MainTabs')
+          } else {
+            // User is not logged in, go to onboarding
+            navigation.replace('Onboarding')
+          }
+        }, 3000)
+      } catch (error) {
+        console.error('Error checking auth status:', error)
+        // On error, go to onboarding
+        setTimeout(() => {
+          navigation.replace('Onboarding')
+        }, 3000)
+      }
+    }
 
-    return () => clearTimeout(timer)
+    checkAuthAndNavigate()
   }, [navigation])
 
   return (

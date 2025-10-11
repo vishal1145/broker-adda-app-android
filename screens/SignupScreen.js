@@ -94,8 +94,8 @@ const SignupScreen = ({ navigation }) => {
   }
 
   const handleOtpVerified = () => {
-    // Navigate to create profile screen after successful signup
-    navigation.navigate('CreateProfile')
+    // Navigate to main tabs after successful signup
+    navigation.navigate('MainTabs')
   }
 
   const handleResendOtp = async () => {
