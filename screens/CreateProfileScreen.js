@@ -2301,7 +2301,7 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView style={styles.container} edges={['top','bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <KeyboardAvoidingView 
@@ -2328,6 +2328,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.content} 
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
         >
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -2395,9 +2396,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingTop: 40,
+    paddingTop: 10,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 10,
   },
   backButton: {
     width: 40,
@@ -2411,7 +2412,7 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     alignItems: 'flex-start',
-    marginBottom: 25,
+    marginBottom: 20,
     paddingHorizontal: 0,
   },
   title: {
@@ -2419,7 +2420,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000000',
     textAlign: 'left',
-    marginBottom: 15,
+    marginBottom: 5,
     lineHeight: 30,
   },
   stepDescriptionContainer: {
@@ -2434,17 +2435,14 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 32,
+    paddingVertical: 8,
+    marginBottom: 15,
   },
   profileImageButton: {
     width: 120,
     height: 120,
     borderRadius: 60,
     backgroundColor: '#F8F9FA',
-    borderWidth: 2,
-    borderColor: '#E5E5EA',
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -2536,15 +2534,16 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   singlePageForm: {
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingBottom: 0,
     paddingTop: 0,
+    flex: 1,
   },
   content: {
     flex: 1,
   },
   sectionContainer: {
-    marginBottom: 32,
+    marginBottom: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -2795,10 +2794,11 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   actionButtonContainer: {
-    paddingBottom: 40,
+    paddingBottom: 0,
     paddingTop: 20,
     marginTop: 20,
     paddingHorizontal: 0,
+    marginBottom: 0,
   },
   actionButton: {
     backgroundColor: '#009689',
