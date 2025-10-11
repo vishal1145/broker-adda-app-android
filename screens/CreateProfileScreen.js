@@ -15,7 +15,8 @@ import {
   ActionSheetIOS,
   PermissionsAndroid,
   Alert,
-  Dimensions
+  Dimensions,
+  Keyboard
 } from 'react-native'
 // import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete'
 import { Snackbar } from '../utils/snackbar'
@@ -131,7 +132,7 @@ const CreateProfileScreen = ({ navigation }) => {
     // Small delay to ensure the keyboard is fully open
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
-    }, 100)
+    }, 500)
   }
 
   // WhatsApp number validation
@@ -801,6 +802,26 @@ const CreateProfileScreen = ({ navigation }) => {
   // Load profile data on component mount
   useEffect(() => {
     fetchProfileData()
+  }, [])
+
+  // Add keyboard event listeners for better UX
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      // Scroll to bottom when keyboard shows to ensure button is visible
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true })
+      }, 100)
+    })
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      // Optional: scroll back to top when keyboard hides
+      // scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+    })
+
+    return () => {
+      keyboardDidShowListener?.remove()
+      keyboardDidHideListener?.remove()
+    }
   }, [])
 
   // Debug effect to track document states
@@ -2308,6 +2329,7 @@ const CreateProfileScreen = ({ navigation }) => {
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled={true}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -2328,7 +2350,7 @@ const CreateProfileScreen = ({ navigation }) => {
           style={styles.content} 
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+          contentContainerStyle={styles.scrollContent}
         >
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -2541,6 +2563,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20, // Extra padding to ensure button is always visible above keyboard
   },
   sectionContainer: {
     marginBottom: 0,
@@ -2794,11 +2820,11 @@ const styles = StyleSheet.create({
     maxWidth: '90%',
   },
   actionButtonContainer: {
-    paddingBottom: 0,
+    paddingBottom: 20,
     paddingTop: 20,
     marginTop: 20,
     paddingHorizontal: 0,
-    marginBottom: 0,
+    marginBottom: 20,
   },
   actionButton: {
     backgroundColor: '#009689',
