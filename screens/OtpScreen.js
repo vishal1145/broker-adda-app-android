@@ -345,7 +345,6 @@ const styles = StyleSheet.create({
   },
   illustrationSubtitle: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
     textAlign: 'left',
     lineHeight: 22,
@@ -382,6 +381,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
   },
+  placeholderText: {
+    color: '#8E8E93',
+  },
   toggleContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -394,7 +396,6 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
   },
   toggleButton: {

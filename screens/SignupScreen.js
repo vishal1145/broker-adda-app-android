@@ -296,8 +296,10 @@ const SignupScreen = ({ navigation }) => {
 
               {/* Terms and Privacy Policy */}
               <View style={styles.termsContainer}>
-                <Text style={styles.termsText}>
-                  By continuing you agree to our{' '}
+                <View style={styles.termsTextContainer}>
+                  <Text style={styles.termsText}>
+                    By continuing you agree to our{' '}
+                  </Text>
                   <TouchableOpacity 
                     onPress={handleTermsPress}
                     onPressIn={() => setIsTermsHovered(true)}
@@ -312,7 +314,9 @@ const SignupScreen = ({ navigation }) => {
                       Terms & Conditions
                     </Text>
                   </TouchableOpacity>
-                  {' '}and{' '}
+                  <Text style={styles.termsText}>
+                    {' '}and{' '}
+                  </Text>
                   <TouchableOpacity 
                     onPress={handlePrivacyPress}
                     onPressIn={() => setIsPrivacyHovered(true)}
@@ -327,7 +331,7 @@ const SignupScreen = ({ navigation }) => {
                       Privacy Policy
                     </Text>
                   </TouchableOpacity>
-                </Text>
+                </View>
               </View>
 
               {/* Login Link */}
@@ -411,7 +415,6 @@ const styles = StyleSheet.create({
   },
   illustrationSubtitle: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
     textAlign: 'left',
     lineHeight: 22,
@@ -522,6 +525,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
     textAlignVertical: 'center',
   },
+  placeholderText: {
+    color: '#8E8E93',
+  },
   actionButtonContainer: {
     paddingHorizontal: 30,
     paddingBottom: 20,
@@ -574,7 +580,6 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
   },
   toggleButton: {
@@ -588,23 +593,25 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     flexShrink: 1,
   },
-  termsText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 20,
+  termsTextContainer: {
+    flexDirection: 'row',
     flexWrap: 'wrap',
-    flexShrink: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  termsText: {
+    fontSize: 15,
+    color: '#8E8E93',
+    lineHeight: 20,
   },
   linkTouchable: {
-    display: 'inline',
+    marginHorizontal: 0,
   },
   linkText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#000000',
-    textDecorationLine: 'underline',
+    textDecorationLine: 'none',
   },
   linkTextHovered: {
     color: '#009689',

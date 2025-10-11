@@ -354,7 +354,6 @@ const styles = StyleSheet.create({
   },
   illustrationSubtitle: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
     textAlign: 'left',
     lineHeight: 22,
@@ -374,7 +373,6 @@ const styles = StyleSheet.create({
   },
   inputHelper: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#8E8E93',
     marginTop: 8,
     textAlign: 'center',
@@ -476,6 +474,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
     textAlignVertical: 'center',
   },
+  placeholderText: {
+    color: '#8E8E93',
+  },
   actionButtonContainer: {
     paddingHorizontal: 30,
     paddingBottom: 20,
@@ -515,6 +516,9 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginLeft: 8,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -527,7 +531,6 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    fontWeight: '400',
     color: '#8E8E93',
   },
   toggleButton: {
@@ -541,7 +544,6 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 20,
