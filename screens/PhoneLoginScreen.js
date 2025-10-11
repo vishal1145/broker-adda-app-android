@@ -276,7 +276,7 @@ const PhoneLoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   keyboardView: {
     flex: 1,
@@ -362,14 +362,17 @@ const styles = StyleSheet.create({
   inputSection: {
     marginBottom: 30,
   },
-  phoneInputContainer: {
-    marginBottom: 0,
+  inputGroup: {
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#000000',
     marginBottom: 8,
+  },
+  phoneInputContainer: {
+    marginBottom: 0,
   },
   inputHelper: {
     fontSize: 14,
@@ -469,7 +472,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     fontSize: 16,
-    fontWeight: '500',
     color: '#000000',
     minHeight: 50,
     textAlignVertical: 'center',

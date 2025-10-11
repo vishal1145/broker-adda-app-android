@@ -275,7 +275,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   keyboardView: {
     flex: 1,
@@ -376,7 +376,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 20,
-    fontWeight: '600',
     color: '#000000',
     textAlign: 'center',
     textAlignVertical: 'center',

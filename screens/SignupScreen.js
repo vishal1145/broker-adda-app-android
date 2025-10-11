@@ -356,7 +356,7 @@ const SignupScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   keyboardView: {
     flex: 1,
@@ -520,7 +520,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     fontSize: 16,
-    fontWeight: '500',
     color: '#000000',
     minHeight: 50,
     textAlignVertical: 'center',
