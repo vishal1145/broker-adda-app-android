@@ -14,6 +14,7 @@ import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LeadsScreen from '../screens/LeadsScreen';
+import LeadDetailsScreen from '../screens/LeadDetailsScreen';
 import PropertiesScreen from '../screens/PropertiesScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
@@ -82,6 +83,13 @@ const AppNavigator = () => {
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+        <Stack.Screen 
+          name="LeadDetails" 
+          component={LeadDetailsScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
         <Stack.Screen 
           name="Profile" 
           component={ProfileScreen}

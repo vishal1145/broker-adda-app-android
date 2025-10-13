@@ -374,6 +374,63 @@ export const leadsAPI = {
       console.error('Create lead error:', error);
       throw error;
     }
+  },
+
+  // Get lead details by ID
+  getLeadDetails: async (leadId, token) => {
+    try {
+      console.log('Fetching lead details for ID:', leadId);
+      const response = await api.get(`/api/leads/${leadId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Lead details fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get lead details error:', error);
+      throw error;
+    }
+  },
+
+  // Update lead by ID
+  updateLead: async (leadId, leadData, token) => {
+    try {
+      console.log('Updating lead:', leadId, leadData);
+      const response = await api.put(`/api/leads/${leadId}`, leadData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Lead updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update lead error:', error);
+      throw error;
+    }
+  },
+
+  // Delete transfer by ID
+  deleteTransfer: async (leadId, transferId, fromBrokerId, toBrokerId, token) => {
+    try {
+      console.log('Deleting transfer:', leadId, transferId, fromBrokerId, toBrokerId);
+      
+      const url = `/api/leads/${leadId}/transfers/${toBrokerId}`;
+      
+      const response = await api.delete(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Transfer deleted successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Delete transfer error:', error);
+      throw error;
+    }
   }
 };
 
