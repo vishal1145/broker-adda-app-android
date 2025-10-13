@@ -45,7 +45,9 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
   }
 
   const formatValue = (val) => {
-    if (val >= 1000000) {
+    if (val === 0) {
+      return '$0'
+    } else if (val >= 1000000) {
       return `$${(val / 1000000).toFixed(1)}M`
     } else if (val >= 1000) {
       return `$${(val / 1000).toFixed(0)}K`
@@ -171,7 +173,7 @@ const LeadsScreen = ({ navigation }) => {
     regionName: 'All Regions',
     requirement: 'All Requirements',
     propertyType: 'All Property Types',
-    budgetMax: 500000
+    budgetMax: 0
   })
 
   // Add Lead Modal state
@@ -322,7 +324,7 @@ const LeadsScreen = ({ navigation }) => {
       regionName: 'All Regions',
       requirement: 'All Requirements',
       propertyType: 'All Property Types',
-      budgetMax: 500000
+      budgetMax: 0
     })
   }
 
@@ -952,7 +954,7 @@ const LeadsScreen = ({ navigation }) => {
       const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                 filterData.requirement !== 'All Requirements' || 
                                 filterData.propertyType !== 'All Property Types' || 
-                                filterData.budgetMax !== 500000
+                                filterData.budgetMax !== 0
       
       if (hasAdvancedFilters) {
         // Apply both search and advanced filters
@@ -1000,7 +1002,7 @@ const LeadsScreen = ({ navigation }) => {
     const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                               filterData.requirement !== 'All Requirements' || 
                               filterData.propertyType !== 'All Property Types' || 
-                              filterData.budgetMax !== 500000
+                              filterData.budgetMax !== 0
     
     if (hasAdvancedFilters) {
       // Apply advanced filters without search
@@ -1032,7 +1034,7 @@ const LeadsScreen = ({ navigation }) => {
     const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                               filterData.requirement !== 'All Requirements' || 
                               filterData.propertyType !== 'All Property Types' || 
-                              filterData.budgetMax !== 500000
+                              filterData.budgetMax !== 0
     
     if (hasAdvancedFilters) {
       // Apply both status and advanced filters
@@ -1325,7 +1327,7 @@ const LeadsScreen = ({ navigation }) => {
               const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                         filterData.requirement !== 'All Requirements' || 
                                         filterData.propertyType !== 'All Property Types' || 
-                                        filterData.budgetMax !== 500000
+                                        filterData.budgetMax !== 0
               
               await Promise.all([
                 fetchMetrics(),
@@ -1539,7 +1541,7 @@ const LeadsScreen = ({ navigation }) => {
                   const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                             filterData.requirement !== 'All Requirements' || 
                                             filterData.propertyType !== 'All Property Types' || 
-                                            filterData.budgetMax !== 500000
+                                            filterData.budgetMax !== 0
                   
                   if (hasAdvancedFilters) {
                     applyFiltersWithStatus(apiStatus)
@@ -1587,7 +1589,7 @@ const LeadsScreen = ({ navigation }) => {
                     const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                               filterData.requirement !== 'All Requirements' || 
                                               filterData.propertyType !== 'All Property Types' || 
-                                              filterData.budgetMax !== 500000
+                                              filterData.budgetMax !== 0
                     
                     if (hasAdvancedFilters) {
                       applyFiltersWithStatus(apiStatus, pagination.page - 1)
@@ -1624,7 +1626,7 @@ const LeadsScreen = ({ navigation }) => {
                     const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                               filterData.requirement !== 'All Requirements' || 
                                               filterData.propertyType !== 'All Property Types' || 
-                                              filterData.budgetMax !== 500000
+                                              filterData.budgetMax !== 0
                     
                     if (hasAdvancedFilters) {
                       applyFiltersWithStatus(apiStatus, pagination.page + 1)
