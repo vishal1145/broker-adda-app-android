@@ -338,6 +338,24 @@ export const leadsAPI = {
       console.error('Get filtered leads error:', error);
       throw error;
     }
+  },
+
+  // Create new lead
+  createLead: async (leadData, token) => {
+    try {
+      console.log('Creating new lead:', leadData);
+      const response = await api.post('/api/leads', leadData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Lead created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Create lead error:', error);
+      throw error;
+    }
   }
 };
 

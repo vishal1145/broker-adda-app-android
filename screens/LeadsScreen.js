@@ -32,12 +32,12 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
   const [isDragging, setIsDragging] = useState(false)
 
   const percentage = ((value - min) / (max - min)) * 100
-  const sliderPosition = ((sliderWidth) * percentage) / 100 // Use full width
+  const sliderPosition = ((sliderWidth) * percentage) / 100
 
   const handleSliderPress = (evt) => {
     if (sliderWidth === 0) return
     
-    const newPosition = Math.max(0, Math.min(sliderWidth, evt.nativeEvent.locationX)) // Use full width
+    const newPosition = Math.max(0, Math.min(sliderWidth, evt.nativeEvent.locationX))
     const newPercentage = (newPosition / sliderWidth) * 100
     const newValue = Math.round((newPercentage / 100) * (max - min) + min)
     const steppedValue = Math.round(newValue / step) * step
@@ -55,22 +55,36 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
 
   return (
     <View style={styles.sliderContainer}>
-      <Text style={styles.sliderLabel}>Max Budget: {formatValue(value)}</Text>
-      <TouchableOpacity
-        style={styles.sliderTrack}
-        onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)}
-        onPress={handleSliderPress}
-        activeOpacity={1}
-      >
-        <View style={[styles.sliderProgress, { width: `${Math.min(100, percentage)}%` }]} />
-        <View
-          style={[
-            styles.sliderThumb,
-            { left: Math.max(0, Math.min(sliderWidth - 20, sliderPosition - 10)) },
-            isDragging && styles.sliderThumbActive
-          ]}
-        />
-      </TouchableOpacity>
+      {/* Header with label and value display */}
+      <View style={styles.sliderHeader}>
+        <Text style={styles.sliderFieldLabel}>Budget</Text>
+        <View style={styles.sliderValueContainer}>
+          <Text style={styles.sliderValueText}>{formatValue(value)}</Text>
+        </View>
+      </View>
+      
+      {/* Slider track */}
+      <View style={styles.sliderWrapper}>
+        <TouchableOpacity
+          style={styles.sliderTrack}
+          onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)}
+          onPress={handleSliderPress}
+          activeOpacity={1}
+        >
+          {/* Unselected range - shows the full track */}
+          <View style={styles.sliderTrackBackground} />
+          {/* Selected range - shows the progress */}
+          <View style={[styles.sliderProgress, { width: `${Math.min(100, percentage)}%` }]} />
+          {/* Thumb */}
+          <View
+            style={[
+              styles.sliderThumb,
+              { left: Math.max(0, Math.min(sliderWidth - 20, sliderPosition - 10)) },
+              isDragging && styles.sliderThumbActive
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
@@ -149,6 +163,7 @@ const LeadsScreen = ({ navigation }) => {
   const [showTransferredLeads, setShowTransferredLeads] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false)
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false)
   
   // Advanced Filter state
   const [filterData, setFilterData] = useState({
@@ -158,11 +173,37 @@ const LeadsScreen = ({ navigation }) => {
     propertyType: 'Residential',
     budgetMax: 500000
   })
+
+  // Add Lead Modal state
+  const [addLeadData, setAddLeadData] = useState({
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    requirement: '',
+    propertyType: '',
+    budget: 0,
+    primaryRegionId: null,
+    primaryRegionName: '',
+    secondaryRegionId: null,
+    secondaryRegionName: ''
+  })
+  const [validationErrors, setValidationErrors] = useState({
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    propertyType: '',
+    primaryRegion: '',
+    requirement: ''
+  })
+  const [showPrimaryRegionDropdown, setShowPrimaryRegionDropdown] = useState(false)
+  const [showSecondaryRegionDropdown, setShowSecondaryRegionDropdown] = useState(false)
+  const [isSubmittingLead, setIsSubmittingLead] = useState(false)
   const [regions, setRegions] = useState([])
   const [isLoadingRegions, setIsLoadingRegions] = useState(false)
   const [showRegionDropdown, setShowRegionDropdown] = useState(false)
   const [showRequirementDropdown, setShowRequirementDropdown] = useState(false)
   const [showPropertyTypeDropdown, setShowPropertyTypeDropdown] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({})
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -193,6 +234,22 @@ const LeadsScreen = ({ navigation }) => {
     hasNextPage: false,
     hasPrevPage: false
   })
+
+  // Calculate dropdown position based on available space
+  const calculateDropdownPosition = (dropdownKey, event) => {
+    const { pageY } = event.nativeEvent
+    const screenHeight = Dimensions.get('window').height
+    const dropdownHeight = 200 // Approximate dropdown height
+    const spaceBelow = screenHeight - pageY
+    const spaceAbove = pageY
+    
+    const shouldOpenUpward = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight
+    
+    setDropdownPosition(prev => ({
+      ...prev,
+      [dropdownKey]: shouldOpenUpward ? 'upward' : 'downward'
+    }))
+  }
 
   // Fetch regions for filter dropdown
   const fetchRegions = async () => {
@@ -237,7 +294,7 @@ const LeadsScreen = ({ navigation }) => {
     console.log('Region selected:', region.name, 'ID:', region._id)
   }
 
-  const handleRequirementSelect = (requirement) => {
+  const handleFilterRequirementSelect = (requirement) => {
     setFilterData(prev => ({
       ...prev,
       requirement: requirement.value
@@ -248,7 +305,7 @@ const LeadsScreen = ({ navigation }) => {
     setShowPropertyTypeDropdown(false)
   }
 
-  const handlePropertyTypeSelect = (propertyType) => {
+  const handleFilterPropertyTypeSelect = (propertyType) => {
     setFilterData(prev => ({
       ...prev,
       propertyType: propertyType.value
@@ -267,6 +324,220 @@ const LeadsScreen = ({ navigation }) => {
       propertyType: 'Residential',
       budgetMax: 500000
     })
+  }
+
+  // Validation functions
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/
+    if (!phone.trim()) {
+      return 'Phone number is required'
+    }
+    if (!phoneRegex.test(phone.trim())) {
+      return 'Phone number must be 10 digits and start with 6-9'
+    }
+    return ''
+  }
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email.trim()) {
+      return 'Email is required'
+    }
+    if (!emailRegex.test(email.trim())) {
+      return 'Please enter a valid email address'
+    }
+    return ''
+  }
+
+  const validateName = (name) => {
+    if (!name.trim()) {
+      return 'Customer name is required'
+    }
+    return ''
+  }
+
+  const validateRequirement = (requirement) => {
+    if (!requirement) {
+      return 'Requirement is required'
+    }
+    return ''
+  }
+
+  // Add Lead Modal handlers
+  const handleAddLeadFieldChange = (field, value) => {
+    setAddLeadData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+
+    // Clear validation error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }))
+    }
+
+    // Real-time validation for specific fields
+    if (field === 'customerPhone') {
+      const error = validatePhoneNumber(value)
+      setValidationErrors(prev => ({
+        ...prev,
+        customerPhone: error
+      }))
+    } else if (field === 'customerEmail') {
+      const error = validateEmail(value)
+      setValidationErrors(prev => ({
+        ...prev,
+        customerEmail: error
+      }))
+    } else if (field === 'customerName') {
+      const error = validateName(value)
+      setValidationErrors(prev => ({
+        ...prev,
+        customerName: error
+      }))
+    } else if (field === 'requirement') {
+      const error = validateRequirement(value)
+      setValidationErrors(prev => ({
+        ...prev,
+        requirement: error
+      }))
+    }
+  }
+
+  const handleAddLeadRequirementSelect = (requirement) => {
+    setAddLeadData(prev => ({
+      ...prev,
+      requirement: requirement
+    }))
+  }
+
+  const handleAddLeadPropertyTypeSelect = (propertyType) => {
+    setAddLeadData(prev => ({
+      ...prev,
+      propertyType: propertyType
+    }))
+  }
+
+  const handlePrimaryRegionSelect = (region) => {
+    setAddLeadData(prev => ({
+      ...prev,
+      primaryRegionId: region._id,
+      primaryRegionName: region.name
+    }))
+    setShowPrimaryRegionDropdown(false)
+  }
+
+  const handleSecondaryRegionSelect = (region) => {
+    setAddLeadData(prev => ({
+      ...prev,
+      secondaryRegionId: region._id,
+      secondaryRegionName: region.name
+    }))
+    setShowSecondaryRegionDropdown(false)
+  }
+
+  const resetAddLeadForm = () => {
+    setAddLeadData({
+      customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      requirement: '',
+      propertyType: '',
+      budget: 0,
+      primaryRegionId: null,
+      primaryRegionName: '',
+      secondaryRegionId: null,
+      secondaryRegionName: ''
+    })
+    setValidationErrors({
+      customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      propertyType: '',
+      primaryRegion: '',
+      requirement: ''
+    })
+  }
+
+  const handleAddLeadSubmit = async () => {
+    try {
+      setIsSubmittingLead(true)
+      
+      // Validate all fields
+      const nameError = validateName(addLeadData.customerName)
+      const phoneError = validatePhoneNumber(addLeadData.customerPhone)
+      const emailError = validateEmail(addLeadData.customerEmail)
+      const requirementError = validateRequirement(addLeadData.requirement)
+      
+      // Set validation errors
+      setValidationErrors({
+        customerName: nameError,
+        customerPhone: phoneError,
+        customerEmail: emailError,
+        propertyType: addLeadData.propertyType ? '' : 'Property type is required',
+        primaryRegion: addLeadData.primaryRegionId ? '' : 'Primary region is required',
+        requirement: requirementError
+      })
+      
+      // Check if there are any validation errors
+      if (nameError || phoneError || emailError || requirementError || !addLeadData.propertyType || !addLeadData.primaryRegionId) {
+        Snackbar.showError('Error', 'Please fix all validation errors before submitting')
+        return
+      }
+
+      // Get authentication token
+      const token = await storage.getToken()
+      if (!token) {
+        Snackbar.showError('Error', 'Authentication token not found. Please login again.')
+        return
+      }
+
+      // Prepare lead data for API
+      const leadData = {
+        customerName: addLeadData.customerName.trim(),
+        customerPhone: addLeadData.customerPhone.trim(),
+        customerEmail: addLeadData.customerEmail.trim(),
+        requirement: addLeadData.requirement,
+        propertyType: addLeadData.propertyType,
+        budget: addLeadData.budget,
+        primaryRegionId: addLeadData.primaryRegionId
+      }
+
+      // Add secondary region if selected
+      if (addLeadData.secondaryRegionId) {
+        leadData.secondaryRegionId = addLeadData.secondaryRegionId
+      }
+
+      console.log('Creating lead with data:', leadData)
+
+      // Call the API to create the lead
+      const response = await leadsAPI.createLead(leadData, token)
+      
+      if (response.success) {
+        Snackbar.showSuccess('Success', response.message || 'Lead created successfully!')
+        setShowAddLeadModal(false)
+        resetAddLeadForm()
+        
+        // Refresh leads list
+        const statusOption = statusOptions.find(option => option.key === selectedStatus)
+        const apiStatus = statusOption ? statusOption.apiValue : 'all'
+        await fetchLeads(1, false, searchQuery, apiStatus)
+        
+        // Also refresh metrics
+        await fetchMetrics()
+      } else {
+        Snackbar.showError('Error', response.message || 'Failed to create lead')
+      }
+      
+    } catch (error) {
+      console.error('Error adding lead:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create lead'
+      Snackbar.showError('Error', errorMessage)
+    } finally {
+      setIsSubmittingLead(false)
+    }
   }
 
   const applyFilters = async () => {
@@ -651,12 +922,12 @@ const LeadsScreen = ({ navigation }) => {
     loadData()
   }, [])
 
-  // Fetch regions when advanced filter modal opens
+  // Fetch regions when advanced filter modal or add lead modal opens
   useEffect(() => {
-    if (showAdvancedFilter && (!regions || regions.length === 0)) {
+    if ((showAdvancedFilter || showAddLeadModal) && (!regions || regions.length === 0)) {
       fetchRegions()
     }
-  }, [showAdvancedFilter])
+  }, [showAdvancedFilter, showAddLeadModal])
 
   // Refetch leads when toggle state changes
   useEffect(() => {
@@ -940,7 +1211,10 @@ const LeadsScreen = ({ navigation }) => {
               <Text style={styles.headerSubtitle}>Track and manage your leads</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerButton}>
+              <TouchableOpacity 
+                style={styles.headerButton}
+                onPress={() => setShowAddLeadModal(true)}
+              >
                 <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity 
@@ -1100,7 +1374,7 @@ const LeadsScreen = ({ navigation }) => {
               >
                 <View style={[styles.toggleThumb, showTransferredLeads && styles.toggleThumbActive]} />
               </TouchableOpacity>
-              <Text style={styles.toggleLabel}>Transferred</Text>
+              <Text style={styles.toggleLabel}>Transferred Me</Text>
             </View>
           </View>
           
@@ -1222,14 +1496,19 @@ const LeadsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={styles.modalBody} 
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingTop: 20 }}
+            >
               {/* Region Filter */}
-              <View style={styles.filterFieldContainer}>
+              <View style={[styles.filterFieldContainer, { marginTop: 20 }]}>
                 <Text style={styles.filterFieldLabel}>Region</Text>
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={() => {
+                    onPress={(event) => {
+                      calculateDropdownPosition('region', event)
                       setShowRegionDropdown(!showRegionDropdown)
                       setShowRequirementDropdown(false)
                       setShowPropertyTypeDropdown(false)
@@ -1239,14 +1518,21 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.regionName}
                     </Text>
                     <MaterialIcons 
-                      name={showRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      name={
+                        showRegionDropdown 
+                          ? (dropdownPosition.region === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
+                          : "keyboard-arrow-down"
+                      } 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showRegionDropdown && (
-                    <View style={styles.filterDropdownMenu}>
+                    <View style={[
+                      styles.filterDropdownMenu,
+                      dropdownPosition.region === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
+                    ]}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
@@ -1294,7 +1580,8 @@ const LeadsScreen = ({ navigation }) => {
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={() => {
+                    onPress={(event) => {
+                      calculateDropdownPosition('requirement', event)
                       setShowRequirementDropdown(!showRequirementDropdown)
                       setShowRegionDropdown(false)
                       setShowPropertyTypeDropdown(false)
@@ -1304,14 +1591,21 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.requirement}
                     </Text>
                     <MaterialIcons 
-                      name={showRequirementDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      name={
+                        showRequirementDropdown 
+                          ? (dropdownPosition.requirement === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
+                          : "keyboard-arrow-down"
+                      } 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showRequirementDropdown && (
-                    <View style={styles.filterDropdownMenu}>
+                    <View style={[
+                      styles.filterDropdownMenu,
+                      dropdownPosition.requirement === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
+                    ]}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
@@ -1324,7 +1618,7 @@ const LeadsScreen = ({ navigation }) => {
                               styles.filterDropdownItem,
                               filterData.requirement === option.value && { backgroundColor: '#F0FDFA' }
                             ]}
-                            onPress={() => handleRequirementSelect(option)}
+                            onPress={() => handleFilterRequirementSelect(option)}
                           >
                             <Text style={[
                               styles.filterDropdownItemText,
@@ -1344,7 +1638,8 @@ const LeadsScreen = ({ navigation }) => {
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={() => {
+                    onPress={(event) => {
+                      calculateDropdownPosition('propertyType', event)
                       setShowPropertyTypeDropdown(!showPropertyTypeDropdown)
                       setShowRegionDropdown(false)
                       setShowRequirementDropdown(false)
@@ -1354,14 +1649,21 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.propertyType}
                     </Text>
                     <MaterialIcons 
-                      name={showPropertyTypeDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      name={
+                        showPropertyTypeDropdown 
+                          ? (dropdownPosition.propertyType === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
+                          : "keyboard-arrow-down"
+                      } 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showPropertyTypeDropdown && (
-                    <View style={styles.filterDropdownMenu}>
+                    <View style={[
+                      styles.filterDropdownMenu,
+                      dropdownPosition.propertyType === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
+                    ]}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
@@ -1374,7 +1676,7 @@ const LeadsScreen = ({ navigation }) => {
                               styles.filterDropdownItem,
                               filterData.propertyType === option.value && { backgroundColor: '#F0FDFA' }
                             ]}
-                            onPress={() => handlePropertyTypeSelect(option)}
+                            onPress={() => handleFilterPropertyTypeSelect(option)}
                           >
                             <Text style={[
                               styles.filterDropdownItemText,
@@ -1412,6 +1714,297 @@ const LeadsScreen = ({ navigation }) => {
                 onPress={applyFilters}
               >
                 <Text style={styles.applyFiltersButtonText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Add Lead Modal */}
+      <Modal
+        visible={showAddLeadModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAddLeadModal(false)}
+        statusBarTranslucent={true}
+      >
+        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+          <TouchableOpacity 
+            style={styles.modalBackdrop} 
+            activeOpacity={1} 
+            onPress={() => setShowAddLeadModal(false)}
+          />
+          <View style={styles.addLeadModalContent}>
+            <View style={styles.addLeadModalHeader}>
+              <Text style={styles.addLeadModalTitle}>Add New Lead</Text>
+              <TouchableOpacity
+                style={styles.addLeadModalCloseButton}
+                onPress={() => setShowAddLeadModal(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.addLeadModalBody} showsVerticalScrollIndicator={false}>
+              {/* Customer Name */}
+              <View style={styles.addLeadFieldContainer}>
+                <Text style={styles.addLeadFieldLabel}>Customer Name *</Text>
+                <TextInput
+                  style={[
+                    styles.addLeadTextInput,
+                    validationErrors.customerName && styles.addLeadTextInputError
+                  ]}
+                  placeholder="Enter customer's full name"
+                  placeholderTextColor="#9CA3AF"
+                  value={addLeadData.customerName}
+                  onChangeText={(text) => handleAddLeadFieldChange('customerName', text)}
+                />
+                {validationErrors.customerName ? (
+                  <Text style={styles.addLeadErrorText}>{validationErrors.customerName}</Text>
+                ) : null}
+              </View>
+
+              {/* Contact Phone */}
+              <View style={styles.addLeadFieldContainer}>
+                <Text style={styles.addLeadFieldLabel}>Contact Phone *</Text>
+                <TextInput
+                  style={[
+                    styles.addLeadTextInput,
+                    validationErrors.customerPhone && styles.addLeadTextInputError
+                  ]}
+                  placeholder="Enter 10-digit phone number"
+                  placeholderTextColor="#9CA3AF"
+                  value={addLeadData.customerPhone}
+                  onChangeText={(text) => handleAddLeadFieldChange('customerPhone', text)}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+                {validationErrors.customerPhone ? (
+                  <Text style={styles.addLeadErrorText}>{validationErrors.customerPhone}</Text>
+                ) : null}
+              </View>
+
+              {/* Contact Email */}
+              <View style={styles.addLeadFieldContainer}>
+                <Text style={styles.addLeadFieldLabel}>Contact Email *</Text>
+                <TextInput
+                  style={[
+                    styles.addLeadTextInput,
+                    validationErrors.customerEmail && styles.addLeadTextInputError
+                  ]}
+                  placeholder="e.g., john.doe@example.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={addLeadData.customerEmail}
+                  onChangeText={(text) => handleAddLeadFieldChange('customerEmail', text)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                {validationErrors.customerEmail ? (
+                  <Text style={styles.addLeadErrorText}>{validationErrors.customerEmail}</Text>
+                ) : null}
+              </View>
+
+              {/* Requirement */}
+              <View style={styles.addLeadFieldContainer}>
+                <Text style={styles.addLeadFieldLabel}>Requirement *</Text>
+                <View style={styles.addLeadButtonGroup}>
+                  {['Buy', 'Rent', 'Sell'].map((req) => (
+                    <TouchableOpacity
+                      key={req}
+                      style={[
+                        styles.addLeadButton,
+                        addLeadData.requirement === req && styles.addLeadButtonActive
+                      ]}
+                      onPress={() => handleAddLeadRequirementSelect(req)}
+                    >
+                      <Text style={[
+                        styles.addLeadButtonText,
+                        addLeadData.requirement === req && styles.addLeadButtonTextActive
+                      ]}>
+                        {req}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {validationErrors.requirement ? (
+                  <Text style={styles.addLeadErrorText}>{validationErrors.requirement}</Text>
+                ) : null}
+              </View>
+
+              {/* Property Type */}
+              <View style={styles.addLeadFieldContainer}>
+                <Text style={styles.addLeadFieldLabel}>Property Type *</Text>
+                <View style={styles.addLeadButtonGroup}>
+                  {['Residential', 'Commercial', 'Plot', 'Other'].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.addLeadButton,
+                        addLeadData.propertyType === type && styles.addLeadButtonActive
+                      ]}
+                      onPress={() => handleAddLeadPropertyTypeSelect(type)}
+                    >
+                      <Text style={[
+                        styles.addLeadButtonText,
+                        addLeadData.propertyType === type && styles.addLeadButtonTextActive
+                      ]}>
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Budget */}
+              <View style={styles.addLeadFieldContainer}>
+                <View style={styles.addLeadBudgetContainer}>
+                  <CustomSlider
+                    value={addLeadData.budget}
+                    onValueChange={(value) => handleAddLeadFieldChange('budget', value)}
+                    min={0}
+                    max={10000000}
+                    step={100000}
+                  />
+                </View>
+              </View>
+
+              {/* Region Selection Row */}
+              <View style={styles.addLeadRow}>
+                <View style={[styles.addLeadFieldContainer, { flex: 1, marginRight: 8 }]}>
+                  <Text style={styles.addLeadFieldLabel}>Primary Region *</Text>
+                  <View style={styles.addLeadDropdownContainer}>
+                    <TouchableOpacity
+                      style={styles.addLeadDropdownButton}
+                      onPress={() => {
+                        setShowPrimaryRegionDropdown(!showPrimaryRegionDropdown)
+                        setShowSecondaryRegionDropdown(false)
+                      }}
+                    >
+                      <Text style={[
+                        styles.addLeadDropdownText,
+                        !addLeadData.primaryRegionName && styles.addLeadDropdownPlaceholder
+                      ]}>
+                        {addLeadData.primaryRegionName || 'Select...'}
+                      </Text>
+                      <MaterialIcons 
+                        name={showPrimaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                        size={20} 
+                        color="#6B7280" 
+                      />
+                    </TouchableOpacity>
+                    
+                    {showPrimaryRegionDropdown && (
+                      <View style={styles.addLeadDropdownMenu}>
+                        <ScrollView 
+                          showsVerticalScrollIndicator={true}
+                          style={{ maxHeight: 200 }}
+                          nestedScrollEnabled={true}
+                        >
+                          {isLoadingRegions ? (
+                            <View style={styles.addLeadDropdownItem}>
+                              <ActivityIndicator size="small" color="#009689" />
+                              <Text style={styles.addLeadDropdownItemText}>Loading regions...</Text>
+                            </View>
+                          ) : (
+                            regions && regions.length > 0 ? (
+                              regions.map((region) => (
+                                <TouchableOpacity
+                                  key={region._id}
+                                  style={styles.addLeadDropdownItem}
+                                  onPress={() => handlePrimaryRegionSelect(region)}
+                                >
+                                  <Text style={styles.addLeadDropdownItemText}>{region.name}</Text>
+                                </TouchableOpacity>
+                              ))
+                            ) : (
+                              <View style={styles.addLeadDropdownItem}>
+                                <Text style={styles.addLeadDropdownItemText}>No regions available</Text>
+                              </View>
+                            )
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <View style={[styles.addLeadFieldContainer, { flex: 1, marginLeft: 8 }]}>
+                  <Text style={styles.addLeadFieldLabel}>Optional Region</Text>
+                  <View style={styles.addLeadDropdownContainer}>
+                    <TouchableOpacity
+                      style={styles.addLeadDropdownButton}
+                      onPress={() => {
+                        setShowSecondaryRegionDropdown(!showSecondaryRegionDropdown)
+                        setShowPrimaryRegionDropdown(false)
+                      }}
+                    >
+                      <Text style={[
+                        styles.addLeadDropdownText,
+                        !addLeadData.secondaryRegionName && styles.addLeadDropdownPlaceholder
+                      ]}>
+                        {addLeadData.secondaryRegionName || 'Select...'}
+                      </Text>
+                      <MaterialIcons 
+                        name={showSecondaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                        size={20} 
+                        color="#6B7280" 
+                      />
+                    </TouchableOpacity>
+                    
+                    {showSecondaryRegionDropdown && (
+                      <View style={styles.addLeadDropdownMenu}>
+                        <ScrollView 
+                          showsVerticalScrollIndicator={true}
+                          style={{ maxHeight: 200 }}
+                          nestedScrollEnabled={true}
+                        >
+                          {isLoadingRegions ? (
+                            <View style={styles.addLeadDropdownItem}>
+                              <ActivityIndicator size="small" color="#009689" />
+                              <Text style={styles.addLeadDropdownItemText}>Loading regions...</Text>
+                            </View>
+                          ) : (
+                            regions && regions.length > 0 ? (
+                              regions.map((region) => (
+                                <TouchableOpacity
+                                  key={region._id}
+                                  style={styles.addLeadDropdownItem}
+                                  onPress={() => handleSecondaryRegionSelect(region)}
+                                >
+                                  <Text style={styles.addLeadDropdownItemText}>{region.name}</Text>
+                                </TouchableOpacity>
+                              ))
+                            ) : (
+                              <View style={styles.addLeadDropdownItem}>
+                                <Text style={styles.addLeadDropdownItemText}>No regions available</Text>
+                              </View>
+                            )
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
+
+            </ScrollView>
+            
+            <View style={styles.addLeadModalFooter}>
+              <TouchableOpacity
+                style={styles.addLeadCancelButton}
+                onPress={() => setShowAddLeadModal(false)}
+              >
+                <Text style={styles.addLeadCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addLeadSubmitButton, isSubmittingLead && styles.addLeadSubmitButtonDisabled]}
+                onPress={handleAddLeadSubmit}
+                disabled={isSubmittingLead}
+              >
+                {isSubmittingLead ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.addLeadSubmitButtonText}>Add Lead</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -1632,7 +2225,7 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     position: 'absolute',
-    top: '100%',
+    bottom: '100%',
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
@@ -1640,12 +2233,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
-    marginTop: 4,
+    marginBottom: 4,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -2060,6 +2653,7 @@ const styles = StyleSheet.create({
   modalBody: {
     flex: 1,
     paddingVertical: 20,
+    paddingTop: 40, // Add extra padding at top for upward dropdowns
     paddingBottom: 40, // Add extra padding at bottom
     backgroundColor: 'transparent', // Ensure no background color
   },
@@ -2126,7 +2720,6 @@ const styles = StyleSheet.create({
   },
   filterDropdownMenu: {
     position: 'absolute',
-    top: '100%',
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
@@ -2134,14 +2727,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
-    marginTop: 4,
-    maxHeight: 300,
+    maxHeight: 200,
     paddingVertical: 8,
+  },
+  filterDropdownMenuDownward: {
+    top: '100%',
+    marginTop: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  filterDropdownMenuUpward: {
+    bottom: '100%',
+    marginBottom: 8,
+    shadowOffset: { width: 0, height: -4 },
   },
   filterDropdownItem: {
     flexDirection: 'row',
@@ -2161,30 +2762,61 @@ const styles = StyleSheet.create({
   // Slider Styles
   sliderContainer: {
     marginVertical: 8,
-    backgroundColor: 'transparent', // Ensure no background
   },
-  sliderLabel: {
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sliderFieldLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 16,
+  },
+  sliderValueContainer: {
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1,
+    borderColor: '#B3E5FC',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  sliderValueText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#009689',
+  },
+  sliderWrapper: {
+    marginBottom: 8,
   },
   sliderTrack: {
-    height: 6,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     position: 'relative',
-    paddingVertical: 10, // Add padding for easier touch
-    marginHorizontal: 0, // Remove horizontal margin
-    overflow: 'hidden', // Prevent background overflow
+    paddingVertical: 12,
+    marginHorizontal: 0,
+    marginBottom: 8,
+  },
+  sliderTrackBackground: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    position: 'absolute',
+    top: 12,
+    left: 0,
+    right: 0,
   },
   sliderProgress: {
-    height: 6,
+    height: 8,
     backgroundColor: '#009689',
-    borderRadius: 3,
+    borderRadius: 4,
     position: 'absolute',
-    top: 10,
+    top: 12,
     left: 0,
+    zIndex: 1,
   },
   sliderThumb: {
     position: 'absolute',
@@ -2192,16 +2824,19 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#009689',
     borderRadius: 10,
-    top: 3,
-    shadowColor: '#000',
+    top: 8,
+    shadowColor: '#009689',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-    minLeft: 0, // Ensure thumb doesn't go beyond left edge
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
+    zIndex: 2,
   },
   sliderThumbActive: {
-    transform: [{ scale: 1.2 }],
+    transform: [{ scale: 1.15 }],
+    backgroundColor: '#007A6B',
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
   },
 
   // Modal Footer Button Styles
@@ -2229,6 +2864,189 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   applyFiltersButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Add Lead Modal Styles
+  addLeadModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    maxHeight: '90%',
+    minHeight: 500,
+  },
+  addLeadModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  addLeadModalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  addLeadModalCloseButton: {
+    padding: 4,
+  },
+  addLeadModalBody: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  addLeadModalFooter: {
+    flexDirection: 'row',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 12,
+  },
+  addLeadFieldContainer: {
+    marginBottom: 20,
+  },
+  addLeadFieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  addLeadTextInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  addLeadTextInputError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  addLeadErrorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  addLeadRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  addLeadButtonGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  addLeadButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  addLeadButtonActive: {
+    backgroundColor: '#009689',
+    borderColor: '#009689',
+  },
+  addLeadButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  addLeadButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  addLeadBudgetContainer: {
+    marginTop: 8,
+    backgroundColor: 'white',
+  },
+  addLeadDropdownContainer: {
+    position: 'relative',
+  },
+  addLeadDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  addLeadDropdownText: {
+    fontSize: 16,
+    color: '#1F2937',
+    flex: 1,
+  },
+  addLeadDropdownPlaceholder: {
+    color: '#9CA3AF',
+  },
+  addLeadDropdownMenu: {
+    position: 'absolute',
+    bottom: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    marginBottom: 4,
+    maxHeight: 200,
+  },
+  addLeadDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  addLeadDropdownItemText: {
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  addLeadCancelButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  addLeadCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  addLeadSubmitButton: {
+    flex: 1,
+    backgroundColor: '#009689',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  addLeadSubmitButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  addLeadSubmitButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
