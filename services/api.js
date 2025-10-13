@@ -274,18 +274,36 @@ export const leadsAPI = {
     }
   },
 
-  // Get transferred leads with search and status filter
-  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all') => {
+  // Get transferred leads with search, status, and advanced filters
+  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all', filters = {}) => {
     try {
-      console.log('Fetching transferred leads:', { page, limit, userId, search, status });
+      console.log('Fetching transferred leads:', { page, limit, userId, search, status, filters });
       let url = `/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`;
+      
+      // Add search parameter
       if (search && search.trim()) {
         url += `&search=${encodeURIComponent(search.trim())}`;
       }
-      // Only add status parameter if it's not 'all' - API returns all data by default
+      
+      // Add status parameter
       if (status && status !== 'all') {
         url += `&status=${encodeURIComponent(status)}`;
       }
+      
+      // Add advanced filter parameters
+      if (filters.regionId) {
+        url += `&regionId=${filters.regionId}`;
+      }
+      if (filters.propertyType && filters.propertyType !== 'All Property Types') {
+        url += `&propertyType=${encodeURIComponent(filters.propertyType)}`;
+      }
+      if (filters.requirement && filters.requirement !== 'All Requirements') {
+        url += `&requirement=${encodeURIComponent(filters.requirement)}`;
+      }
+      if (filters.budgetMax) {
+        url += `&budgetMax=${filters.budgetMax}`;
+      }
+      
       const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,

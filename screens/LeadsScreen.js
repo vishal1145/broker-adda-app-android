@@ -170,7 +170,7 @@ const LeadsScreen = ({ navigation }) => {
     regionId: null,
     regionName: 'All Regions',
     requirement: 'All Requirements',
-    propertyType: 'Residential',
+    propertyType: 'All Property Types',
     budgetMax: 500000
   })
 
@@ -321,7 +321,7 @@ const LeadsScreen = ({ navigation }) => {
       regionId: null,
       regionName: 'All Regions',
       requirement: 'All Requirements',
-      propertyType: 'Residential',
+      propertyType: 'All Property Types',
       budgetMax: 500000
     })
   }
@@ -560,16 +560,18 @@ const LeadsScreen = ({ navigation }) => {
       const apiStatus = statusOption ? statusOption.apiValue : 'all'
 
       const filters = {
-        regionId: filterData.regionId,
-        propertyType: filterData.propertyType,
-        requirement: filterData.requirement,
+        regionId: filterData.regionName === 'All Regions' ? null : filterData.regionId,
+        propertyType: filterData.propertyType === 'All Property Types' ? null : filterData.propertyType,
+        requirement: filterData.requirement === 'All Requirements' ? null : filterData.requirement,
         budgetMax: filterData.budgetMax,
         search: searchQuery,
         status: apiStatus
       }
 
+      // For transferred leads, we need to use the transferred leads API with filters
+      // For regular leads, use the filtered leads API
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(1, pagination.limit, token, userId, searchQuery, apiStatus)
+        ? await leadsAPI.getTransferredLeads(1, pagination.limit, token, userId, searchQuery, apiStatus, filters)
         : await leadsAPI.getLeadsWithFilters(1, pagination.limit, token, userId, filters)
       
       if (response.success && response.data) {
@@ -630,6 +632,98 @@ const LeadsScreen = ({ navigation }) => {
     } finally {
       setIsLoading(false)
       setShowAdvancedFilter(false)
+    }
+  }
+
+  // Apply filters with specific status (used when status changes but advanced filters are active)
+  const applyFiltersWithStatus = async (apiStatus, page = 1) => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const token = await storage.getToken()
+      const userId = await storage.getUserId()
+      
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+      
+      if (!userId) {
+        throw new Error('No user ID found')
+      }
+
+      const filters = {
+        regionId: filterData.regionName === 'All Regions' ? null : filterData.regionId,
+        propertyType: filterData.propertyType === 'All Property Types' ? null : filterData.propertyType,
+        requirement: filterData.requirement === 'All Requirements' ? null : filterData.requirement,
+        budgetMax: filterData.budgetMax,
+        search: searchQuery,
+        status: apiStatus
+      }
+
+      // For transferred leads, we need to use the transferred leads API with filters
+      // For regular leads, use the filtered leads API
+      const response = showTransferredLeads 
+        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchQuery, apiStatus, filters)
+        : await leadsAPI.getLeadsWithFilters(page, pagination.limit, token, userId, filters)
+      
+      if (response.success && response.data) {
+        const mappedLeads = response.data.items.map(lead => {
+          // Build region string with both primary and secondary regions
+          let regionString = 'Not specified'
+          if (lead.primaryRegion?.name) {
+            regionString = lead.primaryRegion.name
+            if (lead.secondaryRegion?.name) {
+              regionString += `, ${lead.secondaryRegion.name}`
+            }
+          } else if (lead.region?.name) {
+            regionString = lead.region.name
+          }
+
+          return {
+            id: lead._id,
+            name: lead.customerName,
+            email: lead.customerEmail,
+            phone: lead.customerPhone,
+            requirement: lead.requirement,
+            propertyType: lead.propertyType,
+            budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
+            region: regionString,
+            status: lead.status.toLowerCase().replace(' ', '-'),
+            priority: 'medium',
+            source: 'API',
+            createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
+            lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
+            notes: lead.notes || '',
+            avatar: lead.createdBy?.brokerImage || null,
+            sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
+              id: t.toBroker._id,
+              name: t.toBroker.name,
+              avatar: t.toBroker.brokerImage
+            })) || [],
+            additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
+          }
+        })
+
+        setLeadsData(mappedLeads)
+
+        setPagination({
+          page: response.data.page,
+          limit: response.data.limit,
+          total: response.data.total,
+          totalPages: response.data.totalPages,
+          hasNextPage: response.data.hasNextPage,
+          hasPrevPage: response.data.hasPrevPage
+        })
+      } else {
+        throw new Error(response.message || 'Failed to fetch filtered leads')
+      }
+    } catch (err) {
+      console.error('Error applying filters with status:', err)
+      setError(err.message || 'Failed to apply filters')
+      Snackbar.showError('Error', err.message || 'Failed to apply filters')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -854,12 +948,24 @@ const LeadsScreen = ({ navigation }) => {
         hasPrevPage: false
       })
       
-      if (text.trim()) {
-        fetchLeads(1, false, text.trim(), apiStatus)
+      // Check if advanced filters are applied and use them
+      const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                filterData.requirement !== 'All Requirements' || 
+                                filterData.propertyType !== 'All Property Types' || 
+                                filterData.budgetMax !== 500000
+      
+      if (hasAdvancedFilters) {
+        // Apply both search and advanced filters
+        applyFiltersWithStatus(apiStatus)
       } else {
-        fetchLeads(1, false, '', apiStatus)
-        // Hide search bar when search is empty
-        setIsSearchVisible(false)
+        // Apply only search filter
+        if (text.trim()) {
+          fetchLeads(1, false, text.trim(), apiStatus)
+        } else {
+          fetchLeads(1, false, '', apiStatus)
+          // Hide search bar when search is empty
+          setIsSearchVisible(false)
+        }
       }
     }, 500) // 500ms delay
   }
@@ -889,7 +995,20 @@ const LeadsScreen = ({ navigation }) => {
     })
     const statusOption = statusOptions.find(option => option.key === selectedStatus)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
-    fetchLeads(1, false, '', apiStatus)
+    
+    // Check if advanced filters are applied and use them
+    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                              filterData.requirement !== 'All Requirements' || 
+                              filterData.propertyType !== 'All Property Types' || 
+                              filterData.budgetMax !== 500000
+    
+    if (hasAdvancedFilters) {
+      // Apply advanced filters without search
+      applyFiltersWithStatus(apiStatus)
+    } else {
+      // Apply only status filter
+      fetchLeads(1, false, '', apiStatus)
+    }
     setIsSearchVisible(false) // Hide search bar when clearing
   }
 
@@ -908,7 +1027,20 @@ const LeadsScreen = ({ navigation }) => {
     })
     const statusOption = statusOptions.find(option => option.key === statusKey)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
-    fetchLeads(1, false, searchQuery, apiStatus)
+    
+    // Check if advanced filters are applied and use them
+    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                              filterData.requirement !== 'All Requirements' || 
+                              filterData.propertyType !== 'All Property Types' || 
+                              filterData.budgetMax !== 500000
+    
+    if (hasAdvancedFilters) {
+      // Apply both status and advanced filters
+      applyFiltersWithStatus(apiStatus)
+    } else {
+      // Apply only status filter
+      fetchLeads(1, false, searchQuery, apiStatus)
+    }
   }
 
   // Load leads and metrics on component mount
@@ -956,6 +1088,7 @@ const LeadsScreen = ({ navigation }) => {
   ]
 
   const propertyTypeOptions = [
+    { key: 'All Property Types', value: 'All Property Types' },
     { key: 'Residential', value: 'Residential' },
     { key: 'Commercial', value: 'Commercial' },
     { key: 'Plot', value: 'Plot' },
@@ -1186,9 +1319,16 @@ const LeadsScreen = ({ navigation }) => {
             onRefresh={async () => {
               const statusOption = statusOptions.find(option => option.key === selectedStatus)
               const apiStatus = statusOption ? statusOption.apiValue : 'all'
+              
+              // Check if advanced filters are applied and use them
+              const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                        filterData.requirement !== 'All Requirements' || 
+                                        filterData.propertyType !== 'All Property Types' || 
+                                        filterData.budgetMax !== 500000
+              
               await Promise.all([
                 fetchMetrics(),
-                fetchLeads(1, true, searchQuery, apiStatus)
+                hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(1, true, searchQuery, apiStatus)
               ])
             }}
             colors={['#009689']}
@@ -1363,7 +1503,7 @@ const LeadsScreen = ({ navigation }) => {
         <View style={styles.leadsSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              {showTransferredLeads ? 'Transferred Leads' : 'Leads'} ({filteredLeads.length})
+              {showTransferredLeads ? 'Transferred Leads' : 'Leads'}
             </Text>
             <View style={styles.toggleContainer}>
               <Text style={styles.toggleLabel}>All</Text>
@@ -1393,7 +1533,18 @@ const LeadsScreen = ({ navigation }) => {
                 onPress={() => {
                   const statusOption = statusOptions.find(option => option.key === selectedStatus)
                   const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                  fetchLeads(1, false, searchQuery, apiStatus)
+                  
+                  // Check if advanced filters are applied and use them
+                  const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                            filterData.requirement !== 'All Requirements' || 
+                                            filterData.propertyType !== 'All Property Types' || 
+                                            filterData.budgetMax !== 500000
+                  
+                  if (hasAdvancedFilters) {
+                    applyFiltersWithStatus(apiStatus)
+                  } else {
+                    fetchLeads(1, false, searchQuery, apiStatus)
+                  }
                 }}
               >
                 <Text style={styles.retryButtonText}>Retry</Text>
@@ -1430,7 +1581,18 @@ const LeadsScreen = ({ navigation }) => {
                   if (pagination.hasPrevPage) {
                     const statusOption = statusOptions.find(option => option.key === selectedStatus)
                     const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                    fetchLeads(pagination.page - 1, false, searchQuery, apiStatus)
+                    
+                    // Check if advanced filters are applied and use them
+                    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                              filterData.requirement !== 'All Requirements' || 
+                                              filterData.propertyType !== 'All Property Types' || 
+                                              filterData.budgetMax !== 500000
+                    
+                    if (hasAdvancedFilters) {
+                      applyFiltersWithStatus(apiStatus, pagination.page - 1)
+                    } else {
+                      fetchLeads(pagination.page - 1, false, searchQuery, apiStatus)
+                    }
                   }
                 }}
                 disabled={!pagination.hasPrevPage}
@@ -1456,7 +1618,18 @@ const LeadsScreen = ({ navigation }) => {
                   if (pagination.hasNextPage) {
                     const statusOption = statusOptions.find(option => option.key === selectedStatus)
                     const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                    fetchLeads(pagination.page + 1, false, searchQuery, apiStatus)
+                    
+                    // Check if advanced filters are applied and use them
+                    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                              filterData.requirement !== 'All Requirements' || 
+                                              filterData.propertyType !== 'All Property Types' || 
+                                              filterData.budgetMax !== 500000
+                    
+                    if (hasAdvancedFilters) {
+                      applyFiltersWithStatus(apiStatus, pagination.page + 1)
+                    } else {
+                      fetchLeads(pagination.page + 1, false, searchQuery, apiStatus)
+                    }
                   }
                 }}
                 disabled={!pagination.hasNextPage}
@@ -1499,16 +1672,14 @@ const LeadsScreen = ({ navigation }) => {
             <ScrollView 
               style={styles.modalBody} 
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingTop: 20 }}
             >
               {/* Region Filter */}
-              <View style={[styles.filterFieldContainer, { marginTop: 20 }]}>
+              <View style={styles.filterFieldContainer}>
                 <Text style={styles.filterFieldLabel}>Region</Text>
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={(event) => {
-                      calculateDropdownPosition('region', event)
+                    onPress={() => {
                       setShowRegionDropdown(!showRegionDropdown)
                       setShowRequirementDropdown(false)
                       setShowPropertyTypeDropdown(false)
@@ -1518,21 +1689,14 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.regionName}
                     </Text>
                     <MaterialIcons 
-                      name={
-                        showRegionDropdown 
-                          ? (dropdownPosition.region === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
-                          : "keyboard-arrow-down"
-                      } 
+                      name={showRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showRegionDropdown && (
-                    <View style={[
-                      styles.filterDropdownMenu,
-                      dropdownPosition.region === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
-                    ]}>
+                    <View style={styles.filterDropdownMenuDownward}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
@@ -1580,8 +1744,7 @@ const LeadsScreen = ({ navigation }) => {
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={(event) => {
-                      calculateDropdownPosition('requirement', event)
+                    onPress={() => {
                       setShowRequirementDropdown(!showRequirementDropdown)
                       setShowRegionDropdown(false)
                       setShowPropertyTypeDropdown(false)
@@ -1591,27 +1754,26 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.requirement}
                     </Text>
                     <MaterialIcons 
-                      name={
-                        showRequirementDropdown 
-                          ? (dropdownPosition.requirement === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
-                          : "keyboard-arrow-down"
-                      } 
+                      name={showRequirementDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showRequirementDropdown && (
-                    <View style={[
-                      styles.filterDropdownMenu,
-                      dropdownPosition.requirement === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
-                    ]}>
+                    <View style={styles.filterDropdownMenuDownward}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
                         nestedScrollEnabled={true}
                       >
-                        {requirementOptions.map((option) => (
+                        <TouchableOpacity
+                          style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
+                          onPress={() => handleFilterRequirementSelect({ key: 'All Requirements', value: 'All Requirements' })}
+                        >
+                          <Text style={[styles.filterDropdownItemText, { color: '#009689', fontWeight: '600' }]}>All Requirements</Text>
+                        </TouchableOpacity>
+                        {requirementOptions.slice(1).map((option) => (
                           <TouchableOpacity
                             key={option.key}
                             style={[
@@ -1638,8 +1800,7 @@ const LeadsScreen = ({ navigation }) => {
                 <View style={styles.dropdownContainer}>
                   <TouchableOpacity
                     style={styles.filterDropdownButton}
-                    onPress={(event) => {
-                      calculateDropdownPosition('propertyType', event)
+                    onPress={() => {
                       setShowPropertyTypeDropdown(!showPropertyTypeDropdown)
                       setShowRegionDropdown(false)
                       setShowRequirementDropdown(false)
@@ -1649,27 +1810,26 @@ const LeadsScreen = ({ navigation }) => {
                       {filterData.propertyType}
                     </Text>
                     <MaterialIcons 
-                      name={
-                        showPropertyTypeDropdown 
-                          ? (dropdownPosition.propertyType === 'upward' ? "keyboard-arrow-down" : "keyboard-arrow-up")
-                          : "keyboard-arrow-down"
-                      } 
+                      name={showPropertyTypeDropdown ? "keyboard-arrow-down" : "keyboard-arrow-up"} 
                       size={24} 
                       color="#6B7280" 
                     />
                   </TouchableOpacity>
                   
                   {showPropertyTypeDropdown && (
-                    <View style={[
-                      styles.filterDropdownMenu,
-                      dropdownPosition.propertyType === 'upward' ? styles.filterDropdownMenuUpward : styles.filterDropdownMenuDownward
-                    ]}>
+                    <View style={styles.filterDropdownMenuUpward}>
                       <ScrollView 
                         showsVerticalScrollIndicator={true}
                         style={{ maxHeight: 280 }}
                         nestedScrollEnabled={true}
                       >
-                        {propertyTypeOptions.map((option) => (
+                        <TouchableOpacity
+                          style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
+                          onPress={() => handleFilterPropertyTypeSelect({ key: 'All Property Types', value: 'All Property Types' })}
+                        >
+                          <Text style={[styles.filterDropdownItemText, { color: '#009689', fontWeight: '600' }]}>All Property Types</Text>
+                        </TouchableOpacity>
+                        {propertyTypeOptions.slice(1).map((option) => (
                           <TouchableOpacity
                             key={option.key}
                             style={[
@@ -2225,7 +2385,7 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     position: 'absolute',
-    bottom: '100%',
+    top: '100%',
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
@@ -2233,12 +2393,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
-    marginBottom: 4,
+    marginTop: 4,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -2653,7 +2813,7 @@ const styles = StyleSheet.create({
   modalBody: {
     flex: 1,
     paddingVertical: 20,
-    paddingTop: 40, // Add extra padding at top for upward dropdowns
+    paddingTop: 20, // Add extra padding at top for upward dropdowns
     paddingBottom: 40, // Add extra padding at bottom
     backgroundColor: 'transparent', // Ensure no background color
   },
@@ -2735,14 +2895,42 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   filterDropdownMenuDownward: {
+    position: 'absolute',
     top: '100%',
-    marginTop: 8,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    maxHeight: 200,
+    paddingVertical: 8,
+    marginTop: 8,
   },
   filterDropdownMenuUpward: {
+    position: 'absolute',
     bottom: '100%',
-    marginBottom: 8,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    maxHeight: 200,
+    paddingVertical: 8,
+    marginBottom: 8,
   },
   filterDropdownItem: {
     flexDirection: 'row',
