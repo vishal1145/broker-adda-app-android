@@ -9,7 +9,9 @@ import {
   Image,
   Dimensions,
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking,
+  Alert
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@expo/vector-icons'
@@ -154,28 +156,28 @@ const ProfileScreen = ({ navigation }) => {
           
           // Map API data to profile data
           const mappedData = {
-            name: broker.name || broker.userId?.name || 'User',
+            name: broker.name || broker.userId?.name || '-',
             brokerId: broker._id || '',
             role: 'Senior Broker', // Default role
-            mobileNumber: broker.phone || broker.userId?.phone || '',
-            whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || '',
-            email: broker.email || broker.userId?.email || '',
-            officeAddress: broker.address || '',
+            mobileNumber: broker.phone || broker.userId?.phone || '-',
+            whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || '-',
+            email: broker.email || broker.userId?.email || '-',
+            officeAddress: broker.address || '-',
             website: broker.website || '-',
-            firm: broker.firmName || '',
-            gender: broker.gender || '',
+            firm: broker.firmName || '-',
+            gender: broker.gender || '-',
             status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
             joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
               day: 'numeric',
               month: 'short',
               year: 'numeric'
-            }) : '',
-            licenseNumber: broker.licenseNumber || '',
+            }) : '-',
+            licenseNumber: broker.licenseNumber || '-',
             specializations: broker.specializations || [],
             regions: broker.region ? broker.region.map(r => r.name) : [],
-            yearsExperience: '8 Years', // Default
-            totalClients: '245', // Default
-            activeDeals: '12', // Default
+            yearsExperience: broker.experience?.years ? broker.experience.years.toString() : '8',
+            totalClients: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '245',
+            activeDeals: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '12',
             commissionEarned: '$1.2M', // Default
             rating: 4.8, // Default
             socialMedia: broker.socialMedia || {},
@@ -183,42 +185,37 @@ const ProfileScreen = ({ navigation }) => {
               {
                 id: 1,
                 name: 'Aadhar Card',
-                fileType: broker.kycDocs?.aadhar ? 'JPEG' : 'JPEG',
+                fileType: broker.kycDocs?.aadhar ? (broker.kycDocs.aadhar.includes('.pdf') ? 'PDF' : 'JPEG') : 'JPEG',
                 hasFile: !!broker.kycDocs?.aadhar,
-                uploadDate: '2024-01-15',
                 url: getSecureImageUrl(broker.kycDocs?.aadhar) || ''
               },
               {
                 id: 2,
                 name: 'PAN Card',
-                fileType: broker.kycDocs?.pan ? 'JPEG' : 'JPEG',
+                fileType: broker.kycDocs?.pan ? (broker.kycDocs.pan.includes('.pdf') ? 'PDF' : 'JPEG') : 'JPEG',
                 hasFile: !!broker.kycDocs?.pan,
-                uploadDate: '2024-01-15',
                 url: getSecureImageUrl(broker.kycDocs?.pan) || ''
               },
               {
                 id: 3,
                 name: 'GST Certificate',
-                fileType: broker.kycDocs?.gst ? 'JPEG' : 'JPEG',
+                fileType: broker.kycDocs?.gst ? (broker.kycDocs.gst.includes('.pdf') ? 'PDF' : 'JPEG') : 'JPEG',
                 hasFile: !!broker.kycDocs?.gst,
-                uploadDate: '2024-01-20',
                 url: getSecureImageUrl(broker.kycDocs?.gst) || ''
               },
               {
                 id: 4,
                 name: 'Broker License',
-                fileType: 'PDF',
-                hasFile: false,
-                uploadDate: '2024-02-01',
-                url: ''
+                fileType: broker.kycDocs?.brokerLicense ? (broker.kycDocs.brokerLicense.includes('.pdf') ? 'PDF' : 'JPEG') : 'PDF',
+                hasFile: !!broker.kycDocs?.brokerLicense,
+                url: getSecureImageUrl(broker.kycDocs?.brokerLicense) || ''
               },
               {
                 id: 5,
                 name: 'Company ID',
-                fileType: 'JPEG',
-                hasFile: false,
-                uploadDate: '2024-01-10',
-                url: ''
+                fileType: broker.kycDocs?.companyId ? (broker.kycDocs.companyId.includes('.pdf') ? 'PDF' : 'JPEG') : 'JPEG',
+                hasFile: !!broker.kycDocs?.companyId,
+                url: getSecureImageUrl(broker.kycDocs?.companyId) || ''
               }
             ]
           }
@@ -260,15 +257,27 @@ const ProfileScreen = ({ navigation }) => {
     }
   }
 
-  const handlePreviewDocument = (documentId) => {
-    // Handle document preview
-    console.log('Preview document:', documentId)
+  const handlePreviewDocument = async (documentUrl) => {
+    try {
+      console.log('Preview document:', documentUrl)
+      if (!documentUrl) {
+        Alert.alert('Error', 'Document URL not available')
+        return
+      }
+      
+      // Open document in default browser/app
+      const supported = await Linking.canOpenURL(documentUrl)
+      if (supported) {
+        await Linking.openURL(documentUrl)
+      } else {
+        Alert.alert('Error', 'Cannot open this document type')
+      }
+    } catch (error) {
+      console.error('Error opening document:', error)
+      Alert.alert('Error', 'Failed to open document')
+    }
   }
 
-  const handleDownloadDocument = (documentId) => {
-    // Handle document download
-    console.log('Download document:', documentId)
-  }
 
   const handleEditProfile = () => {
     // Navigate to CreateProfile screen for editing
@@ -347,10 +356,10 @@ const ProfileScreen = ({ navigation }) => {
                   }
                 }}
               >
-                <MaterialIcons name="arrow-back" size={24} color="#009689" />
+                <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
-                <MaterialIcons name="edit" size={20} color="#009689" />
+                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
               </TouchableOpacity>
               
               <View style={styles.modernProfileSection}>
@@ -413,17 +422,17 @@ const ProfileScreen = ({ navigation }) => {
                   
                   <View style={styles.profileStats}>
                     <View style={styles.profileStatItem}>
-                      <Text style={styles.profileStatValue}>8+</Text>
-                      <Text style={styles.profileStatLabel}>Years</Text>
+                      <Text style={styles.profileStatValue}>{profileData.yearsExperience}</Text>
+                      <Text style={styles.profileStatLabel}>Experience</Text>
                     </View>
                     <View style={styles.profileStatDivider} />
                     <View style={styles.profileStatItem}>
-                      <Text style={styles.profileStatValue}>245</Text>
-                      <Text style={styles.profileStatLabel}>Clients</Text>
+                      <Text style={styles.profileStatValue}>{profileData.totalClients}</Text>
+                      <Text style={styles.profileStatLabel}>Total Leads</Text>
                     </View>
                     <View style={styles.profileStatDivider} />
                     <View style={styles.profileStatItem}>
-                      <Text style={styles.profileStatValue}>12</Text>
+                      <Text style={styles.profileStatValue}>{profileData.activeDeals}</Text>
                       <Text style={styles.profileStatLabel}>Deals</Text>
                     </View>
                   </View>
@@ -792,50 +801,92 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Documents Section - Neumorphism Design */}
+        {/* Documents Section - CreateProfile Style */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Documents</Text>
-            <TouchableOpacity style={styles.neuUploadButton}>
-              <MaterialIcons name="add" size={20} color="#009689" />
-              <Text style={styles.neuUploadText}>Upload</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.documentsNeuContainer}>
-          {profileData.documents.map((document, index) => (
-              <View key={document.id} style={styles.documentNeuItem}>
-                <View style={styles.documentNeuIcon}>
-                  <MaterialIcons 
-                    name={document.fileType === 'PDF' ? 'picture-as-pdf' : 'image'} 
-                    size={24} 
-                    color="#009689" 
-                  />
+          <Text style={styles.sectionTitle}>Documents</Text>
+          
+          <View style={styles.documentsGrid}>
+            {profileData.documents && profileData.documents.length > 0 ? (
+              profileData.documents.map((document, index) => {
+                const hasDocument = document.hasFile && document.url
+                const isImageFile = (url) => {
+                  if (!url) return false
+                  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+                  return imageExtensions.some(ext => url.toLowerCase().includes(ext))
+                }
+                const isPdfFile = (url) => {
+                  if (!url) return false
+                  return url.toLowerCase().includes('.pdf')
+                }
+                const isImage = hasDocument && isImageFile(document.url)
+                const isPdf = hasDocument && isPdfFile(document.url)
+                
+                return (
+                  <View key={document.id} style={styles.documentCardWrapper}>
+                    {/* Document Title Above Card */}
+                    <Text style={styles.documentTitleAbove}>{document.name}</Text>
+                    
+                    <TouchableOpacity 
+                      style={styles.documentCard}
+                      onPress={() => hasDocument ? handlePreviewDocument(document.url) : null}
+                      activeOpacity={0.8}
+                    >
+                      {hasDocument ? (
+                        <View style={styles.documentImageWrapper}>
+                          {isImage ? (
+                            <SafeImage 
+                              source={{ uri: document.url }} 
+                              style={styles.documentFullImage}
+                              imageType={document.name}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View style={styles.documentFilePreview}>
+                              <MaterialIcons 
+                                name={isPdf ? 'picture-as-pdf' : 'description'} 
+                                size={48} 
+                                color="#009689" 
+                              />
+                              <Text style={styles.fileTypeText}>
+                                {isPdf ? 'PDF Document' : 'Document'}
+                              </Text>
+                              <Text style={styles.fileNameText} numberOfLines={1}>
+                                {document.name}
+                              </Text>
+                            </View>
+                          )}
+                          <TouchableOpacity 
+                            style={styles.editButton}
+                            onPress={(e) => {
+                              e.stopPropagation?.()
+                              handlePreviewDocument(document.url)
+                            }}
+                          >
+                            <MaterialIcons name="visibility" size={16} color="#FFFFFF" />
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <View style={styles.documentPlaceholder}>
+                          <MaterialIcons 
+                            name="cloud-upload" 
+                            size={48} 
+                            color="#009689" 
+                          />
+                          <Text style={styles.uploadText}>Upload {document.name}</Text>
+                          <Text style={styles.formatText}>PDF, JPG, PNG up to 10MB</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )
+              })
+            ) : (
+              <View style={styles.emptyDocumentsContainer}>
+                <MaterialIcons name="folder-open" size={48} color="#9CA3AF" />
+                <Text style={styles.emptyDocumentsText}>No documents available</Text>
+                <Text style={styles.emptyDocumentsSubtext}>Documents will appear here once uploaded</Text>
               </View>
-                <View style={styles.documentNeuContent}>
-                  <Text style={styles.documentNeuName}>{document.name}</Text>
-                  <View style={styles.documentNeuMeta}>
-                    <View style={styles.neuFileType}>
-                      <Text style={styles.neuFileTypeText}>{document.fileType}</Text>
-                </View>
-                    <Text style={styles.documentNeuDate}>{document.uploadDate}</Text>
-              </View>
-                </View>
-                <View style={styles.documentNeuActions}>
-                <TouchableOpacity 
-                    style={styles.neuActionButton}
-                  onPress={() => handlePreviewDocument(document.id)}
-                >
-                  <MaterialIcons name="visibility" size={18} color="#009689" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    style={[styles.neuActionButton, styles.neuDownloadButton]}
-                  onPress={() => handleDownloadDocument(document.id)}
-                >
-                  <MaterialIcons name="download" size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+            )}
           </View>
         </View>
 
@@ -920,12 +971,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   modernEditButton: {
     position: 'absolute',
@@ -934,12 +985,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   modernProfileSection: {
     alignItems: 'center',
@@ -1498,112 +1549,94 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Neumorphism Design Styles
-  documentsNeuContainer: {
-    gap: 16,
+  // CreateProfile Style Document Styles
+  documentsGrid: {
+    flexDirection: 'column',
   },
-  documentNeuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+  documentCardWrapper: {
+    marginBottom: 20,
   },
-  documentNeuIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F0FDFA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  documentNeuContent: {
-    flex: 1,
-    marginRight: 16,
-  },
-  documentNeuName: {
+  documentTitleAbove: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 8,
   },
-  documentNeuMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  neuFileType: {
-    backgroundColor: '#EFF6FF',
+  documentCard: {
+    width: '100%',
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#E5E5EA',
+    overflow: 'hidden',
+    minHeight: 120,
   },
-  neuFileTypeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2563EB',
+  documentImageWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
   },
-  documentNeuDate: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: '#9CA3AF',
+  documentFullImage: {
+    width: '100%',
+    height: '100%',
   },
-  documentNeuActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  neuActionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8FAFC',
+  editButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#009689',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 5,
   },
-  neuDownloadButton: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
-  },
-  neuUploadButton: {
-    flexDirection: 'row',
+  documentPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'center',
+    padding: 20,
+    height: 120,
   },
-  neuUploadText: {
+  uploadText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#009689',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  formatText: {
+    fontSize: 10,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  documentFilePreview: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    height: 120,
+    backgroundColor: '#F8F9FA',
+  },
+  fileTypeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#009689',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  fileNameText: {
+    fontSize: 10,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginTop: 4,
+    maxWidth: '90%',
   },
 
   // Tags
@@ -1639,6 +1672,24 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  emptyDocumentsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyDocumentsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDocumentsSubtext: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#9CA3AF',
+    textAlign: 'center',
   },
 
   // Social Media Styles
@@ -1750,10 +1801,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-  },
-  downloadButton: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
   },
   uploadButton: {
     width: 36,
