@@ -12,7 +12,9 @@ import {
   Alert,
   Dimensions,
   Modal,
-  TextInput
+  TextInput,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
@@ -909,7 +911,11 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             activeOpacity={1} 
             onPress={() => setShowEditModal(false)}
           />
-          <View style={styles.editLeadModalContent}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <View style={styles.editLeadModalContent}>
             <View style={styles.editLeadModalHeader}>
               <Text style={styles.editLeadModalTitle}>
                 {isTransferredLead ? 'Update Status' : 'Edit Lead'}
@@ -922,7 +928,12 @@ const LeadDetailsScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.editLeadModalBody} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={styles.editLeadModalBody} 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.editLeadModalBodyContent}
+            >
               {isTransferredLead ? (
                 // For transferred leads, only show status field
                 <View style={[styles.editLeadFieldContainer, { marginBottom: 8 }]}>
@@ -1239,7 +1250,8 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -1768,6 +1780,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   modalBackdrop: {
     flex: 1,
   },
@@ -1782,6 +1798,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     maxHeight: '90%',
     minHeight: 500,
+    flex: 1,
   },
   editLeadModalHeader: {
     flexDirection: 'row',
@@ -1802,6 +1819,10 @@ const styles = StyleSheet.create({
   },
   editLeadModalBody: {
     flex: 1,
+    paddingBottom: 20,
+  },
+  editLeadModalBodyContent: {
+    flexGrow: 1,
     paddingBottom: 20,
   },
   editLeadModalFooter: {

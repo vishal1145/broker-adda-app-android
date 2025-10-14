@@ -15,7 +15,9 @@ import {
   TextInput,
   Modal,
   PanGestureHandler,
-  Animated
+  Animated,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
@@ -1875,7 +1877,7 @@ const LeadsScreen = ({ navigation }) => {
         onRequestClose={() => setShowAdvancedFilter(false)}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={[]}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -2111,14 +2113,18 @@ const LeadsScreen = ({ navigation }) => {
         onRequestClose={() => setShowAddLeadModal(false)}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={[]}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
             onPress={() => setShowAddLeadModal(false)}
           />
-          <View style={styles.addLeadModalContent}>
-            <View style={styles.addLeadModalHeader}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <View style={styles.addLeadModalContent}>
+              <View style={styles.addLeadModalHeader}>
               <Text style={styles.addLeadModalTitle}>Add New Lead</Text>
               <TouchableOpacity
                 style={styles.addLeadModalCloseButton}
@@ -2128,7 +2134,12 @@ const LeadsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.addLeadModalBody} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={styles.addLeadModalBody} 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.addLeadModalBodyContent}
+            >
               {/* Customer Name */}
               <View style={styles.addLeadFieldContainer}>
                 <Text style={styles.addLeadFieldLabel}>Customer Name *</Text>
@@ -2390,7 +2401,8 @@ const LeadsScreen = ({ navigation }) => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
 
@@ -2405,7 +2417,7 @@ const LeadsScreen = ({ navigation }) => {
         }}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={[]}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -2414,7 +2426,11 @@ const LeadsScreen = ({ navigation }) => {
               resetShareModal()
             }}
           />
-          <View style={styles.shareModalContent}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingView}
+          >
+            <View style={styles.shareModalContent}>
             <View style={styles.shareModalHeader}>
               <Text style={styles.shareModalTitle}>Share Lead</Text>
               <TouchableOpacity
@@ -2428,7 +2444,12 @@ const LeadsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             
-            <ScrollView style={styles.shareModalBody} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={styles.shareModalBody} 
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.shareModalBodyContent}
+            >
               {/* Share Type Selection */}
               <View style={styles.shareTypeContainer}>
                 <TouchableOpacity
@@ -2710,7 +2731,8 @@ const LeadsScreen = ({ navigation }) => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -3326,6 +3348,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   modalBackdrop: {
     flex: 1,
   },
@@ -3613,6 +3639,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     maxHeight: '90%',
     minHeight: 500,
+    flex: 1,
   },
   addLeadModalHeader: {
     flexDirection: 'row',
@@ -3633,6 +3660,10 @@ const styles = StyleSheet.create({
   },
   addLeadModalBody: {
     flex: 1,
+    paddingBottom: 20,
+  },
+  addLeadModalBodyContent: {
+    flexGrow: 1,
     paddingBottom: 20,
   },
   addLeadModalFooter: {
@@ -3796,6 +3827,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     maxHeight: '90%',
     minHeight: 500,
+    flex: 1,
   },
   shareModalHeader: {
     flexDirection: 'row',
@@ -3816,6 +3848,10 @@ const styles = StyleSheet.create({
   },
   shareModalBody: {
     flex: 1,
+    paddingBottom: 20,
+  },
+  shareModalBodyContent: {
+    flexGrow: 1,
     paddingBottom: 20,
   },
   shareModalFooter: {
