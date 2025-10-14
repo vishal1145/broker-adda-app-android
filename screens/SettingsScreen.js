@@ -87,7 +87,7 @@ const SettingsScreen = ({ navigation }) => {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
       <ScrollView 
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 20,
+    paddingBottom: 0,
   },
 
   // Header Styles
