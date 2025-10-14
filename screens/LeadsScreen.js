@@ -1529,11 +1529,12 @@ const LeadsScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
       <ScrollView 
         style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -1874,7 +1875,7 @@ const LeadsScreen = ({ navigation }) => {
         onRequestClose={() => setShowAdvancedFilter(false)}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -2110,7 +2111,7 @@ const LeadsScreen = ({ navigation }) => {
         onRequestClose={() => setShowAddLeadModal(false)}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -2404,7 +2405,7 @@ const LeadsScreen = ({ navigation }) => {
         }}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -2723,6 +2724,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 20,
   },
 
   // Header Styles

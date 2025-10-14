@@ -218,10 +218,14 @@ const PropertiesScreen = ({ navigation }) => {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Modern Header */}
         <View style={styles.modernHeader}>
           {/* Background Pattern */}
@@ -369,11 +373,14 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
 
   // Header Styles
   modernHeader: {
     backgroundColor: '#009689',
-    paddingTop: 40,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
     marginBottom: 20,

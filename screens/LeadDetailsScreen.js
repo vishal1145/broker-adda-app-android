@@ -599,7 +599,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={[]}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#009689" />
@@ -611,7 +611,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container} edges={[]}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
         <View style={styles.errorContainer}>
           <MaterialIcons name="error-outline" size={48} color="#EF4444" />
@@ -630,7 +630,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (!leadData) {
     return (
-      <SafeAreaView style={styles.container} edges={[]}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
         <View style={styles.emptyContainer}>
           <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
@@ -642,11 +642,12 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
       
       <ScrollView 
         style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -683,9 +684,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
               >
                 <MaterialIcons name="edit" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerActionButton}>
-                <MaterialIcons name="share" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+              
             </View>
           </View>
         </View>
@@ -904,7 +903,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
         onRequestClose={() => setShowEditModal(false)}
         statusBarTranslucent={true}
       >
-        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
@@ -1255,11 +1254,14 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollViewContent: {
+    paddingBottom: 20,
+  },
 
   // Header Styles
   header: {
     backgroundColor: '#009689',
-    paddingTop: 40,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
     marginBottom: 20,
