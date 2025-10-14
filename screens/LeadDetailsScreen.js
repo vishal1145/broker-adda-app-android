@@ -156,7 +156,7 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 }
 
 const LeadDetailsScreen = ({ navigation, route }) => {
-  const { leadId } = route.params
+  const { leadId, isTransferredLead = false } = route.params
   const [leadData, setLeadData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -431,26 +431,35 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     try {
       setIsSubmittingLead(true)
       
-      // Validate all fields
-      const nameError = validateName(editLeadData.customerName)
-      const phoneError = validatePhoneNumber(editLeadData.customerPhone)
-      const emailError = validateEmail(editLeadData.customerEmail)
-      const requirementError = validateRequirement(editLeadData.requirement)
-      
-      // Set validation errors
-      setValidationErrors({
-        customerName: nameError,
-        customerPhone: phoneError,
-        customerEmail: emailError,
-        propertyType: editLeadData.propertyType ? '' : 'Property type is required',
-        primaryRegion: editLeadData.primaryRegionId ? '' : 'Primary region is required',
-        requirement: requirementError
-      })
-      
-      // Check if there are any validation errors
-      if (nameError || phoneError || emailError || requirementError || !editLeadData.propertyType || !editLeadData.primaryRegionId) {
-        Snackbar.showError('Error', 'Please fix all validation errors before submitting')
-        return
+      // Validate fields based on lead type
+      if (isTransferredLead) {
+        // For transferred leads, only validate status
+        if (!editLeadData.status) {
+          Snackbar.showError('Error', 'Please select a status')
+          return
+        }
+      } else {
+        // For regular leads, validate all fields
+        const nameError = validateName(editLeadData.customerName)
+        const phoneError = validatePhoneNumber(editLeadData.customerPhone)
+        const emailError = validateEmail(editLeadData.customerEmail)
+        const requirementError = validateRequirement(editLeadData.requirement)
+        
+        // Set validation errors
+        setValidationErrors({
+          customerName: nameError,
+          customerPhone: phoneError,
+          customerEmail: emailError,
+          propertyType: editLeadData.propertyType ? '' : 'Property type is required',
+          primaryRegion: editLeadData.primaryRegionId ? '' : 'Primary region is required',
+          requirement: requirementError
+        })
+        
+        // Check if there are any validation errors
+        if (nameError || phoneError || emailError || requirementError || !editLeadData.propertyType || !editLeadData.primaryRegionId) {
+          Snackbar.showError('Error', 'Please fix all validation errors before submitting')
+          return
+        }
       }
 
       // Get authentication token
@@ -461,20 +470,30 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       }
 
       // Prepare lead data for API
-      const updateData = {
-        customerName: editLeadData.customerName.trim(),
-        customerPhone: editLeadData.customerPhone.trim(),
-        customerEmail: editLeadData.customerEmail.trim(),
-        requirement: editLeadData.requirement,
-        propertyType: editLeadData.propertyType,
-        budget: editLeadData.budget,
-        status: editLeadData.status,
-        primaryRegionId: editLeadData.primaryRegionId
-      }
+      let updateData
+      
+      if (isTransferredLead) {
+        // For transferred leads, only send status
+        updateData = {
+          status: editLeadData.status
+        }
+      } else {
+        // For regular leads, send all fields
+        updateData = {
+          customerName: editLeadData.customerName.trim(),
+          customerPhone: editLeadData.customerPhone.trim(),
+          customerEmail: editLeadData.customerEmail.trim(),
+          requirement: editLeadData.requirement,
+          propertyType: editLeadData.propertyType,
+          budget: editLeadData.budget,
+          status: editLeadData.status,
+          primaryRegionId: editLeadData.primaryRegionId
+        }
 
-      // Add secondary region if selected
-      if (editLeadData.secondaryRegionId) {
-        updateData.secondaryRegionId = editLeadData.secondaryRegionId
+        // Add secondary region if selected
+        if (editLeadData.secondaryRegionId) {
+          updateData.secondaryRegionId = editLeadData.secondaryRegionId
+        }
       }
 
       console.log('Updating lead with data:', updateData)
@@ -856,12 +875,14 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                         {transfer.fromBroker?.primaryRegion?.name || transfer.fromBroker?.region?.[0]?.name || 'Unknown'} → {transfer.toBroker?.primaryRegion?.name || transfer.toBroker?.region?.[0]?.name || 'Unknown'}
                       </Text>
                     </View>
-                    <TouchableOpacity 
-                      style={styles.shareHistoryDeleteButton}
-                      onPress={() => handleDeleteTransfer(transfer)}
-                    >
-                      <MaterialIcons name="delete" size={16} color="#EF4444" />
-                    </TouchableOpacity>
+                    {!isTransferredLead && (
+                      <TouchableOpacity 
+                        style={styles.shareHistoryDeleteButton}
+                        onPress={() => handleDeleteTransfer(transfer)}
+                      >
+                        <MaterialIcons name="delete" size={16} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -891,7 +912,9 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           />
           <View style={styles.editLeadModalContent}>
             <View style={styles.editLeadModalHeader}>
-              <Text style={styles.editLeadModalTitle}>Edit Lead</Text>
+              <Text style={styles.editLeadModalTitle}>
+                {isTransferredLead ? 'Update Status' : 'Edit Lead'}
+              </Text>
               <TouchableOpacity
                 style={styles.editLeadModalCloseButton}
                 onPress={() => setShowEditModal(false)}
@@ -901,269 +924,298 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             
             <ScrollView style={styles.editLeadModalBody} showsVerticalScrollIndicator={false}>
-              {/* Customer Name */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Customer Name *</Text>
-                <TextInput
-                  style={[
-                    styles.editLeadTextInput,
-                    validationErrors.customerName && styles.editLeadTextInputError
-                  ]}
-                  placeholder="Enter customer's full name"
-                  placeholderTextColor="#9CA3AF"
-                  value={editLeadData.customerName}
-                  onChangeText={(text) => handleEditLeadFieldChange('customerName', text)}
-                />
-                {validationErrors.customerName ? (
-                  <Text style={styles.editLeadErrorText}>{validationErrors.customerName}</Text>
-                ) : null}
-              </View>
-
-              {/* Contact Phone */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Contact Phone *</Text>
-                <TextInput
-                  style={[
-                    styles.editLeadTextInput,
-                    validationErrors.customerPhone && styles.editLeadTextInputError
-                  ]}
-                  placeholder="Enter 10-digit phone number"
-                  placeholderTextColor="#9CA3AF"
-                  value={editLeadData.customerPhone}
-                  onChangeText={(text) => handleEditLeadFieldChange('customerPhone', text)}
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                />
-                {validationErrors.customerPhone ? (
-                  <Text style={styles.editLeadErrorText}>{validationErrors.customerPhone}</Text>
-                ) : null}
-              </View>
-
-              {/* Contact Email */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Contact Email *</Text>
-                <TextInput
-                  style={[
-                    styles.editLeadTextInput,
-                    validationErrors.customerEmail && styles.editLeadTextInputError
-                  ]}
-                  placeholder="e.g., john.doe@example.com"
-                  placeholderTextColor="#9CA3AF"
-                  value={editLeadData.customerEmail}
-                  onChangeText={(text) => handleEditLeadFieldChange('customerEmail', text)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                {validationErrors.customerEmail ? (
-                  <Text style={styles.editLeadErrorText}>{validationErrors.customerEmail}</Text>
-                ) : null}
-              </View>
-
-              {/* Requirement */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Requirement *</Text>
-                <View style={styles.editLeadButtonGroup}>
-                  {['Buy', 'Rent', 'Sell'].map((req) => (
-                    <TouchableOpacity
-                      key={req}
-                      style={[
-                        styles.editLeadButton,
-                        editLeadData.requirement === req && styles.editLeadButtonActive
-                      ]}
-                      onPress={() => handleEditLeadRequirementSelect(req)}
-                    >
-                      <Text style={[
-                        styles.editLeadButtonText,
-                        editLeadData.requirement === req && styles.editLeadButtonTextActive
-                      ]}>
-                        {req}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {validationErrors.requirement ? (
-                  <Text style={styles.editLeadErrorText}>{validationErrors.requirement}</Text>
-                ) : null}
-              </View>
-
-              {/* Property Type */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Property Type *</Text>
-                <View style={styles.editLeadButtonGroup}>
-                  {['Residential', 'Commercial', 'Plot', 'Other'].map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.editLeadButton,
-                        editLeadData.propertyType === type && styles.editLeadButtonActive
-                      ]}
-                      onPress={() => handleEditLeadPropertyTypeSelect(type)}
-                    >
-                      <Text style={[
-                        styles.editLeadButtonText,
-                        editLeadData.propertyType === type && styles.editLeadButtonTextActive
-                      ]}>
-                        {type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Status */}
-              <View style={styles.editLeadFieldContainer}>
-                <Text style={styles.editLeadFieldLabel}>Status *</Text>
-                <View style={styles.editLeadButtonGroup}>
-                  {['New', 'Assigned', 'In Progress', 'Rejected', 'Closed'].map((status) => (
-                    <TouchableOpacity
-                      key={status}
-                      style={[
-                        styles.editLeadButton,
-                        editLeadData.status === status && styles.editLeadButtonActive
-                      ]}
-                      onPress={() => handleEditLeadStatusSelect(status)}
-                    >
-                      <Text style={[
-                        styles.editLeadButtonText,
-                        editLeadData.status === status && styles.editLeadButtonTextActive
-                      ]}>
-                        {status}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Budget */}
-              <View style={styles.editLeadFieldContainer}>
-                <View style={styles.editLeadBudgetContainer}>
-                  <CustomSlider
-                    value={editLeadData.budget}
-                    onValueChange={(value) => handleEditLeadFieldChange('budget', value)}
-                    min={0}
-                    max={10000000}
-                    step={100000}
-                  />
-                </View>
-              </View>
-
-              {/* Region Selection Row */}
-              <View style={styles.editLeadRow}>
-                <View style={[styles.editLeadFieldContainer, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.editLeadFieldLabel}>Primary Region *</Text>
-                  <View style={styles.editLeadDropdownContainer}>
-                    <TouchableOpacity
-                      style={styles.editLeadDropdownButton}
-                      onPress={() => {
-                        setShowPrimaryRegionDropdown(!showPrimaryRegionDropdown)
-                        setShowSecondaryRegionDropdown(false)
-                      }}
-                    >
-                      <Text style={[
-                        styles.editLeadDropdownText,
-                        !editLeadData.primaryRegionName && styles.editLeadDropdownPlaceholder
-                      ]}>
-                        {editLeadData.primaryRegionName || 'Select...'}
-                      </Text>
-                      <MaterialIcons 
-                        name={showPrimaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                        size={20} 
-                        color="#6B7280" 
-                      />
-                    </TouchableOpacity>
-                    
-                    {showPrimaryRegionDropdown && (
-                      <View style={styles.editLeadDropdownMenu}>
-                        <ScrollView 
-                          showsVerticalScrollIndicator={true}
-                          style={{ maxHeight: 200 }}
-                          nestedScrollEnabled={true}
-                        >
-                          {isLoadingRegions ? (
-                            <View style={styles.editLeadDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
-                              <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
-                            </View>
-                          ) : (
-                            regions && regions.length > 0 ? (
-                              regions.map((region) => (
-                                <TouchableOpacity
-                                  key={region._id}
-                                  style={styles.editLeadDropdownItem}
-                                  onPress={() => handlePrimaryRegionSelect(region)}
-                                >
-                                  <Text style={styles.editLeadDropdownItemText}>{region.name}</Text>
-                                </TouchableOpacity>
-                              ))
-                            ) : (
-                              <View style={styles.editLeadDropdownItem}>
-                                <Text style={styles.editLeadDropdownItemText}>No regions available</Text>
-                              </View>
-                            )
-                          )}
-                        </ScrollView>
-                      </View>
-                    )}
+              {isTransferredLead ? (
+                // For transferred leads, only show status field
+                <View style={[styles.editLeadFieldContainer, { marginBottom: 8 }]}>
+                  <Text style={styles.editLeadFieldLabel}>Status *</Text>
+                  <View style={styles.editLeadButtonGroup}>
+                    {['New', 'Assigned', 'In Progress', 'Rejected', 'Closed'].map((status) => (
+                      <TouchableOpacity
+                        key={status}
+                        style={[
+                          styles.editLeadButton,
+                          editLeadData.status === status && styles.editLeadButtonActive
+                        ]}
+                        onPress={() => handleEditLeadStatusSelect(status)}
+                      >
+                        <Text style={[
+                          styles.editLeadButtonText,
+                          editLeadData.status === status && styles.editLeadButtonTextActive
+                        ]}>
+                          {status}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 </View>
-                <View style={[styles.editLeadFieldContainer, { flex: 1, marginLeft: 8 }]}>
-                  <Text style={styles.editLeadFieldLabel}>Optional Region</Text>
-                  <View style={styles.editLeadDropdownContainer}>
-                    <TouchableOpacity
-                      style={styles.editLeadDropdownButton}
-                      onPress={() => {
-                        setShowSecondaryRegionDropdown(!showSecondaryRegionDropdown)
-                        setShowPrimaryRegionDropdown(false)
-                      }}
-                    >
-                      <Text style={[
-                        styles.editLeadDropdownText,
-                        !editLeadData.secondaryRegionName && styles.editLeadDropdownPlaceholder
-                      ]}>
-                        {editLeadData.secondaryRegionName || 'Select...'}
-                      </Text>
-                      <MaterialIcons 
-                        name={showSecondaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                        size={20} 
-                        color="#6B7280" 
-                      />
-                    </TouchableOpacity>
-                    
-                    {showSecondaryRegionDropdown && (
-                      <View style={styles.editLeadDropdownMenu}>
-                        <ScrollView 
-                          showsVerticalScrollIndicator={true}
-                          style={{ maxHeight: 200 }}
-                          nestedScrollEnabled={true}
-                        >
-                          {isLoadingRegions ? (
-                            <View style={styles.editLeadDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
-                              <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
-                            </View>
-                          ) : (
-                            regions && regions.length > 0 ? (
-                              regions.map((region) => (
-                                <TouchableOpacity
-                                  key={region._id}
-                                  style={styles.editLeadDropdownItem}
-                                  onPress={() => handleSecondaryRegionSelect(region)}
-                                >
-                                  <Text style={styles.editLeadDropdownItemText}>{region.name}</Text>
-                                </TouchableOpacity>
-                              ))
-                            ) : (
-                              <View style={styles.editLeadDropdownItem}>
-                                <Text style={styles.editLeadDropdownItemText}>No regions available</Text>
-                              </View>
-                            )
-                          )}
-                        </ScrollView>
-                      </View>
-                    )}
+              ) : (
+                // For regular leads, show all fields
+                <>
+                  {/* Customer Name */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Customer Name *</Text>
+                    <TextInput
+                      style={[
+                        styles.editLeadTextInput,
+                        validationErrors.customerName && styles.editLeadTextInputError
+                      ]}
+                      placeholder="Enter customer's full name"
+                      placeholderTextColor="#9CA3AF"
+                      value={editLeadData.customerName}
+                      onChangeText={(text) => handleEditLeadFieldChange('customerName', text)}
+                    />
+                    {validationErrors.customerName ? (
+                      <Text style={styles.editLeadErrorText}>{validationErrors.customerName}</Text>
+                    ) : null}
                   </View>
-                </View>
-              </View>
+
+                  {/* Contact Phone */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Contact Phone *</Text>
+                    <TextInput
+                      style={[
+                        styles.editLeadTextInput,
+                        validationErrors.customerPhone && styles.editLeadTextInputError
+                      ]}
+                      placeholder="Enter 10-digit phone number"
+                      placeholderTextColor="#9CA3AF"
+                      value={editLeadData.customerPhone}
+                      onChangeText={(text) => handleEditLeadFieldChange('customerPhone', text)}
+                      keyboardType="phone-pad"
+                      maxLength={10}
+                    />
+                    {validationErrors.customerPhone ? (
+                      <Text style={styles.editLeadErrorText}>{validationErrors.customerPhone}</Text>
+                    ) : null}
+                  </View>
+
+                  {/* Contact Email */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Contact Email *</Text>
+                    <TextInput
+                      style={[
+                        styles.editLeadTextInput,
+                        validationErrors.customerEmail && styles.editLeadTextInputError
+                      ]}
+                      placeholder="e.g., john.doe@example.com"
+                      placeholderTextColor="#9CA3AF"
+                      value={editLeadData.customerEmail}
+                      onChangeText={(text) => handleEditLeadFieldChange('customerEmail', text)}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                    {validationErrors.customerEmail ? (
+                      <Text style={styles.editLeadErrorText}>{validationErrors.customerEmail}</Text>
+                    ) : null}
+                  </View>
+
+                  {/* Requirement */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Requirement *</Text>
+                    <View style={styles.editLeadButtonGroup}>
+                      {['Buy', 'Rent', 'Sell'].map((req) => (
+                        <TouchableOpacity
+                          key={req}
+                          style={[
+                            styles.editLeadButton,
+                            editLeadData.requirement === req && styles.editLeadButtonActive
+                          ]}
+                          onPress={() => handleEditLeadRequirementSelect(req)}
+                        >
+                          <Text style={[
+                            styles.editLeadButtonText,
+                            editLeadData.requirement === req && styles.editLeadButtonTextActive
+                          ]}>
+                            {req}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                    {validationErrors.requirement ? (
+                      <Text style={styles.editLeadErrorText}>{validationErrors.requirement}</Text>
+                    ) : null}
+                  </View>
+
+                  {/* Property Type */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Property Type *</Text>
+                    <View style={styles.editLeadButtonGroup}>
+                      {['Residential', 'Commercial', 'Plot', 'Other'].map((type) => (
+                        <TouchableOpacity
+                          key={type}
+                          style={[
+                            styles.editLeadButton,
+                            editLeadData.propertyType === type && styles.editLeadButtonActive
+                          ]}
+                          onPress={() => handleEditLeadPropertyTypeSelect(type)}
+                        >
+                          <Text style={[
+                            styles.editLeadButtonText,
+                            editLeadData.propertyType === type && styles.editLeadButtonTextActive
+                          ]}>
+                            {type}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Status */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <Text style={styles.editLeadFieldLabel}>Status *</Text>
+                    <View style={styles.editLeadButtonGroup}>
+                      {['New', 'Assigned', 'In Progress', 'Rejected', 'Closed'].map((status) => (
+                        <TouchableOpacity
+                          key={status}
+                          style={[
+                            styles.editLeadButton,
+                            editLeadData.status === status && styles.editLeadButtonActive
+                          ]}
+                          onPress={() => handleEditLeadStatusSelect(status)}
+                        >
+                          <Text style={[
+                            styles.editLeadButtonText,
+                            editLeadData.status === status && styles.editLeadButtonTextActive
+                          ]}>
+                            {status}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  {/* Budget */}
+                  <View style={styles.editLeadFieldContainer}>
+                    <View style={styles.editLeadBudgetContainer}>
+                      <CustomSlider
+                        value={editLeadData.budget}
+                        onValueChange={(value) => handleEditLeadFieldChange('budget', value)}
+                        min={0}
+                        max={10000000}
+                        step={100000}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Region Selection Row */}
+                  <View style={styles.editLeadRow}>
+                    <View style={[styles.editLeadFieldContainer, { flex: 1, marginRight: 8 }]}>
+                      <Text style={styles.editLeadFieldLabel}>Primary Region *</Text>
+                      <View style={styles.editLeadDropdownContainer}>
+                        <TouchableOpacity
+                          style={styles.editLeadDropdownButton}
+                          onPress={() => {
+                            setShowPrimaryRegionDropdown(!showPrimaryRegionDropdown)
+                            setShowSecondaryRegionDropdown(false)
+                          }}
+                        >
+                          <Text style={[
+                            styles.editLeadDropdownText,
+                            !editLeadData.primaryRegionName && styles.editLeadDropdownPlaceholder
+                          ]}>
+                            {editLeadData.primaryRegionName || 'Select...'}
+                          </Text>
+                          <MaterialIcons 
+                            name={showPrimaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                            size={20} 
+                            color="#6B7280" 
+                          />
+                        </TouchableOpacity>
+                        
+                        {showPrimaryRegionDropdown && (
+                          <View style={styles.editLeadDropdownMenu}>
+                            <ScrollView 
+                              showsVerticalScrollIndicator={true}
+                              style={{ maxHeight: 200 }}
+                              nestedScrollEnabled={true}
+                            >
+                              {isLoadingRegions ? (
+                                <View style={styles.editLeadDropdownItem}>
+                                  <ActivityIndicator size="small" color="#009689" />
+                                  <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
+                                </View>
+                              ) : (
+                                regions && regions.length > 0 ? (
+                                  regions.map((region) => (
+                                    <TouchableOpacity
+                                      key={region._id}
+                                      style={styles.editLeadDropdownItem}
+                                      onPress={() => handlePrimaryRegionSelect(region)}
+                                    >
+                                      <Text style={styles.editLeadDropdownItemText}>{region.name}</Text>
+                                    </TouchableOpacity>
+                                  ))
+                                ) : (
+                                  <View style={styles.editLeadDropdownItem}>
+                                    <Text style={styles.editLeadDropdownItemText}>No regions available</Text>
+                                  </View>
+                                )
+                              )}
+                            </ScrollView>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                    <View style={[styles.editLeadFieldContainer, { flex: 1, marginLeft: 8 }]}>
+                      <Text style={styles.editLeadFieldLabel}>Optional Region</Text>
+                      <View style={styles.editLeadDropdownContainer}>
+                        <TouchableOpacity
+                          style={styles.editLeadDropdownButton}
+                          onPress={() => {
+                            setShowSecondaryRegionDropdown(!showSecondaryRegionDropdown)
+                            setShowPrimaryRegionDropdown(false)
+                          }}
+                        >
+                          <Text style={[
+                            styles.editLeadDropdownText,
+                            !editLeadData.secondaryRegionName && styles.editLeadDropdownPlaceholder
+                          ]}>
+                            {editLeadData.secondaryRegionName || 'Select...'}
+                          </Text>
+                          <MaterialIcons 
+                            name={showSecondaryRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                            size={20} 
+                            color="#6B7280" 
+                          />
+                        </TouchableOpacity>
+                        
+                        {showSecondaryRegionDropdown && (
+                          <View style={styles.editLeadDropdownMenu}>
+                            <ScrollView 
+                              showsVerticalScrollIndicator={true}
+                              style={{ maxHeight: 200 }}
+                              nestedScrollEnabled={true}
+                            >
+                              {isLoadingRegions ? (
+                                <View style={styles.editLeadDropdownItem}>
+                                  <ActivityIndicator size="small" color="#009689" />
+                                  <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
+                                </View>
+                              ) : (
+                                regions && regions.length > 0 ? (
+                                  regions.map((region) => (
+                                    <TouchableOpacity
+                                      key={region._id}
+                                      style={styles.editLeadDropdownItem}
+                                      onPress={() => handleSecondaryRegionSelect(region)}
+                                    >
+                                      <Text style={styles.editLeadDropdownItemText}>{region.name}</Text>
+                                    </TouchableOpacity>
+                                  ))
+                                ) : (
+                                  <View style={styles.editLeadDropdownItem}>
+                                    <Text style={styles.editLeadDropdownItemText}>No regions available</Text>
+                                  </View>
+                                )
+                              )}
+                            </ScrollView>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </>
+              )}
 
             </ScrollView>
             
@@ -1182,7 +1234,9 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                 {isSubmittingLead ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.editLeadSubmitButtonText}>Update Lead</Text>
+                  <Text style={styles.editLeadSubmitButtonText}>
+                    {isTransferredLead ? 'Update Status' : 'Update Lead'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>

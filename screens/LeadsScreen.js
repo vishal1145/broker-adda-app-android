@@ -1268,7 +1268,10 @@ const LeadsScreen = ({ navigation }) => {
               style={getActionButtonStyle('view')}
               onPressIn={() => setPressedButton('view')}
               onPressOut={() => setPressedButton(null)}
-              onPress={() => navigation.navigate('LeadDetails', { leadId: lead.id })}
+              onPress={() => navigation.navigate('LeadDetails', { 
+                leadId: lead.id, 
+                isTransferredLead: showTransferredLeads 
+              })}
               activeOpacity={0.7}
             >
               <MaterialIcons name="visibility" size={18} color={getActionIconColor('view')} />
