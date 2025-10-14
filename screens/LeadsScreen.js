@@ -2575,7 +2575,46 @@ const LeadsScreen = ({ navigation }) => {
                     </TouchableOpacity>
                     
                     {showShareBrokerDropdown && (
-                      <View style={styles.shareDropdownMenu}>
+                      <View style={styles.shareDropdownMenuUpward}>
+                        {/* Select All Button */}
+                        <TouchableOpacity
+                          style={[styles.shareDropdownItem, styles.selectAllButton]}
+                          onPress={() => {
+                            if (shareData.selectedBrokers.length === allBrokers.length) {
+                              // Deselect all
+                              setShareData(prev => ({
+                                ...prev,
+                                selectedBrokers: []
+                              }))
+                            } else {
+                              // Select all
+                              setShareData(prev => ({
+                                ...prev,
+                                selectedBrokers: allBrokers
+                              }))
+                            }
+                          }}
+                        >
+                          <View style={styles.brokerItem}>
+                            <View style={styles.brokerInfo}>
+                              <Text style={[styles.brokerName, styles.selectAllText]}>
+                                {shareData.selectedBrokers.length === allBrokers.length ? 'Deselect All' : 'Select All'}
+                              </Text>
+                              <Text style={styles.brokerRegion}>
+                                {shareData.selectedBrokers.length} of {allBrokers.length} selected
+                              </Text>
+                            </View>
+                            <MaterialIcons 
+                              name={shareData.selectedBrokers.length === allBrokers.length ? "check-box" : "check-box-outline-blank"} 
+                              size={20} 
+                              color="#009689" 
+                            />
+                          </View>
+                        </TouchableOpacity>
+                        
+                        {/* Divider */}
+                        <View style={styles.dropdownDivider} />
+                        
                         <ScrollView 
                           showsVerticalScrollIndicator={true}
                           style={{ maxHeight: 200 }}
@@ -3875,6 +3914,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
     maxHeight: 200,
   },
+  shareDropdownMenuUpward: {
+    position: 'absolute',
+    bottom: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    marginBottom: 4,
+    maxHeight: 200,
+  },
   shareDropdownItem: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -3945,6 +4002,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+
+  // Select All Button Styles
+  selectAllButton: {
+    backgroundColor: '#F0FDFA',
+    borderBottomWidth: 1,
+    borderBottomColor: '#A7F3D0',
+  },
+  selectAllText: {
+    color: '#009689',
+    fontWeight: '600',
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 4,
   },
 })
 
