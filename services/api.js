@@ -431,6 +431,60 @@ export const leadsAPI = {
       console.error('Delete transfer error:', error);
       throw error;
     }
+  },
+
+  // Get all brokers for sharing
+  getAllBrokers: async (token) => {
+    try {
+      console.log('Fetching all brokers for sharing');
+      const response = await api.get('/api/brokers', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('All brokers fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get all brokers error:', error);
+      throw error;
+    }
+  },
+
+  // Get brokers by region
+  getBrokersByRegion: async (regionId, token) => {
+    try {
+      console.log('Fetching brokers by region:', regionId);
+      const response = await api.get(`/api/brokers?regionId=${regionId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Brokers by region fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get brokers by region error:', error);
+      throw error;
+    }
+  },
+
+  // Share lead with brokers
+  shareLead: async (leadId, shareData, token) => {
+    try {
+      console.log('Sharing lead:', leadId, shareData);
+      const response = await api.post(`/api/leads/${leadId}/transfer-and-notes`, shareData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Lead shared successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Share lead error:', error);
+      throw error;
+    }
   }
 };
 

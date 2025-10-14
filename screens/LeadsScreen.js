@@ -166,6 +166,8 @@ const LeadsScreen = ({ navigation }) => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false)
   const [showAddLeadModal, setShowAddLeadModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [selectedLeadForShare, setSelectedLeadForShare] = useState(null)
   
   // Advanced Filter state
   const [filterData, setFilterData] = useState({
@@ -206,6 +208,21 @@ const LeadsScreen = ({ navigation }) => {
   const [showRequirementDropdown, setShowRequirementDropdown] = useState(false)
   const [showPropertyTypeDropdown, setShowPropertyTypeDropdown] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({})
+  
+  // Share Modal state
+  const [shareData, setShareData] = useState({
+    shareType: 'all', // 'all', 'region', 'selected'
+    selectedRegion: null,
+    selectedRegionName: '',
+    selectedBrokers: [],
+    notes: ''
+  })
+  const [showShareRegionDropdown, setShowShareRegionDropdown] = useState(false)
+  const [showShareBrokerDropdown, setShowShareBrokerDropdown] = useState(false)
+  const [allBrokers, setAllBrokers] = useState([])
+  const [filteredBrokers, setFilteredBrokers] = useState([])
+  const [isLoadingBrokers, setIsLoadingBrokers] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -1014,6 +1031,197 @@ const LeadsScreen = ({ navigation }) => {
     setIsSearchVisible(false) // Hide search bar when clearing
   }
 
+  // Share Modal functions
+  const handleSharePress = (lead) => {
+    setSelectedLeadForShare(lead)
+    setShareData({
+      shareType: 'all',
+      selectedRegion: null,
+      selectedRegionName: '',
+      selectedBrokers: [],
+      notes: ''
+    })
+    setShowShareModal(true)
+  }
+
+  const handleShareTypeChange = (shareType) => {
+    setShareData(prev => ({
+      ...prev,
+      shareType,
+      selectedRegion: null,
+      selectedRegionName: '',
+      selectedBrokers: []
+    }))
+    setShowShareRegionDropdown(false)
+    setShowShareBrokerDropdown(false)
+  }
+
+  const handleShareRegionSelect = (region) => {
+    setShareData(prev => ({
+      ...prev,
+      selectedRegion: region._id,
+      selectedRegionName: region.name
+    }))
+    setShowShareRegionDropdown(false)
+    // Fetch brokers for this region
+    fetchBrokersByRegion(region._id)
+  }
+
+  const handleBrokerSelect = (broker) => {
+    setShareData(prev => {
+      const isSelected = prev.selectedBrokers.some(b => b._id === broker._id)
+      if (isSelected) {
+        return {
+          ...prev,
+          selectedBrokers: prev.selectedBrokers.filter(b => b._id !== broker._id)
+        }
+      } else {
+        return {
+          ...prev,
+          selectedBrokers: [...prev.selectedBrokers, broker]
+        }
+      }
+    })
+  }
+
+  const fetchAllBrokers = async () => {
+    try {
+      setIsLoadingBrokers(true)
+      const token = await storage.getToken()
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      const response = await leadsAPI.getAllBrokers(token)
+      if (response.success && response.data && response.data.brokers) {
+        // Use brokers directly from the dedicated API
+        const brokers = response.data.brokers
+        setAllBrokers(brokers)
+        setFilteredBrokers(brokers)
+        console.log('All brokers fetched:', brokers.length)
+      }
+    } catch (error) {
+      console.error('Error fetching all brokers:', error)
+      Snackbar.showError('Error', 'Failed to fetch brokers')
+    } finally {
+      setIsLoadingBrokers(false)
+    }
+  }
+
+  const fetchBrokersByRegion = async (regionId) => {
+    try {
+      setIsLoadingBrokers(true)
+      const token = await storage.getToken()
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      const response = await leadsAPI.getBrokersByRegion(regionId, token)
+      if (response.success && response.data && response.data.brokers) {
+        // Use brokers directly from the dedicated API
+        const brokers = response.data.brokers
+        setFilteredBrokers(brokers)
+        console.log('Brokers by region fetched:', brokers.length)
+      }
+    } catch (error) {
+      console.error('Error fetching brokers by region:', error)
+      Snackbar.showError('Error', 'Failed to fetch brokers for region')
+    } finally {
+      setIsLoadingBrokers(false)
+    }
+  }
+
+  const handleShareSubmit = async () => {
+    try {
+      setIsSharing(true)
+      
+      if (!selectedLeadForShare) {
+        Snackbar.showError('Error', 'No lead selected for sharing')
+        return
+      }
+
+      const token = await storage.getToken()
+      if (!token) {
+        Snackbar.showError('Error', 'Authentication token not found')
+        return
+      }
+
+      let toBrokers = []
+      
+      if (shareData.shareType === 'all') {
+        // Get all broker IDs from the dedicated brokers API
+        const response = await leadsAPI.getAllBrokers(token)
+        if (response.success && response.data && response.data.brokers) {
+          toBrokers = response.data.brokers
+            .map(broker => broker._id)
+            .filter(id => id && id !== selectedLeadForShare.createdBy?._id) // Exclude current user
+        }
+      } else if (shareData.shareType === 'region') {
+        if (!shareData.selectedRegion) {
+          Snackbar.showError('Error', 'Please select a region')
+          return
+        }
+        // Use the filtered brokers for the selected region
+        toBrokers = filteredBrokers
+          .map(broker => broker._id)
+          .filter(id => id !== selectedLeadForShare.createdBy?._id) // Exclude current user
+      } else if (shareData.shareType === 'selected') {
+        if (shareData.selectedBrokers.length === 0) {
+          Snackbar.showError('Error', 'Please select at least one broker')
+          return
+        }
+        toBrokers = shareData.selectedBrokers.map(broker => broker._id)
+      }
+
+      if (toBrokers.length === 0) {
+        Snackbar.showError('Error', 'No brokers available to share with')
+        return
+      }
+
+      const sharePayload = {
+        toBrokers,
+        notes: shareData.notes
+      }
+
+      console.log('Sharing lead with payload:', sharePayload)
+
+      const response = await leadsAPI.shareLead(selectedLeadForShare.id, sharePayload, token)
+      
+      if (response.success) {
+        Snackbar.showSuccess('Success', response.message || 'Lead shared successfully!')
+        setShowShareModal(false)
+        setSelectedLeadForShare(null)
+        
+        // Refresh leads list
+        const statusOption = statusOptions.find(option => option.key === selectedStatus)
+        const apiStatus = statusOption ? statusOption.apiValue : 'all'
+        await fetchLeads(1, false, searchQuery, apiStatus)
+      } else {
+        Snackbar.showError('Error', response.message || 'Failed to share lead')
+      }
+      
+    } catch (error) {
+      console.error('Error sharing lead:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to share lead'
+      Snackbar.showError('Error', errorMessage)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  const resetShareModal = () => {
+    setShareData({
+      shareType: 'all',
+      selectedRegion: null,
+      selectedRegionName: '',
+      selectedBrokers: [],
+      notes: ''
+    })
+    setShowShareRegionDropdown(false)
+    setShowShareBrokerDropdown(false)
+    setFilteredBrokers([])
+  }
+
   // Handle status change
   const handleStatusChange = (statusKey) => {
     setSelectedStatus(statusKey)
@@ -1056,12 +1264,19 @@ const LeadsScreen = ({ navigation }) => {
     loadData()
   }, [])
 
-  // Fetch regions when advanced filter modal or add lead modal opens
+  // Fetch regions when advanced filter modal, add lead modal, or share modal opens
   useEffect(() => {
-    if ((showAdvancedFilter || showAddLeadModal) && (!regions || regions.length === 0)) {
+    if ((showAdvancedFilter || showAddLeadModal || showShareModal) && (!regions || regions.length === 0)) {
       fetchRegions()
     }
-  }, [showAdvancedFilter, showAddLeadModal])
+  }, [showAdvancedFilter, showAddLeadModal, showShareModal])
+
+  // Fetch brokers when share modal opens
+  useEffect(() => {
+    if (showShareModal && shareData.shareType === 'selected' && allBrokers.length === 0) {
+      fetchAllBrokers()
+    }
+  }, [showShareModal, shareData.shareType])
 
   // Refetch leads when toggle state changes
   useEffect(() => {
@@ -1281,6 +1496,7 @@ const LeadsScreen = ({ navigation }) => {
               style={getActionButtonStyle('share')}
               onPressIn={() => setPressedButton('share')}
               onPressOut={() => setPressedButton(null)}
+              onPress={() => handleSharePress(lead)}
               activeOpacity={0.7}
             >
               <MaterialIcons name="send" size={18} color={getActionIconColor('share')} />
@@ -2170,6 +2386,287 @@ const LeadsScreen = ({ navigation }) => {
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <Text style={styles.addLeadSubmitButtonText}>Add Lead</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Share Lead Modal */}
+      <Modal
+        visible={showShareModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowShareModal(false)
+          resetShareModal()
+        }}
+        statusBarTranslucent={true}
+      >
+        <SafeAreaView style={styles.modalOverlay} edges={['top']}>
+          <TouchableOpacity 
+            style={styles.modalBackdrop} 
+            activeOpacity={1} 
+            onPress={() => {
+              setShowShareModal(false)
+              resetShareModal()
+            }}
+          />
+          <View style={styles.shareModalContent}>
+            <View style={styles.shareModalHeader}>
+              <Text style={styles.shareModalTitle}>Share Lead</Text>
+              <TouchableOpacity
+                style={styles.shareModalCloseButton}
+                onPress={() => {
+                  setShowShareModal(false)
+                  resetShareModal()
+                }}
+              >
+                <MaterialIcons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.shareModalBody} showsVerticalScrollIndicator={false}>
+              {/* Share Type Selection */}
+              <View style={styles.shareTypeContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.shareTypeOption,
+                    shareData.shareType === 'all' && styles.shareTypeOptionActive
+                  ]}
+                  onPress={() => handleShareTypeChange('all')}
+                >
+                  <View style={styles.radioButton}>
+                    {shareData.shareType === 'all' && <View style={styles.radioButtonSelected} />}
+                  </View>
+                  <Text style={[
+                    styles.shareTypeText,
+                    shareData.shareType === 'all' && styles.shareTypeTextActive
+                  ]}>
+                    Share with all brokers
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.shareTypeOption,
+                    shareData.shareType === 'region' && styles.shareTypeOptionActive
+                  ]}
+                  onPress={() => handleShareTypeChange('region')}
+                >
+                  <View style={styles.radioButton}>
+                    {shareData.shareType === 'region' && <View style={styles.radioButtonSelected} />}
+                  </View>
+                  <Text style={[
+                    styles.shareTypeText,
+                    shareData.shareType === 'region' && styles.shareTypeTextActive
+                  ]}>
+                    Share with brokers of a region
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.shareTypeOption,
+                    shareData.shareType === 'selected' && styles.shareTypeOptionActive
+                  ]}
+                  onPress={() => handleShareTypeChange('selected')}
+                >
+                  <View style={styles.radioButton}>
+                    {shareData.shareType === 'selected' && <View style={styles.radioButtonSelected} />}
+                  </View>
+                  <Text style={[
+                    styles.shareTypeText,
+                    shareData.shareType === 'selected' && styles.shareTypeTextActive
+                  ]}>
+                    Share with selected brokers
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Region Selection (only when region is selected) */}
+              {shareData.shareType === 'region' && (
+                <View style={styles.shareFieldContainer}>
+                  <Text style={styles.shareFieldLabel}>Select Region</Text>
+                  <View style={styles.shareDropdownContainer}>
+                    <TouchableOpacity
+                      style={styles.shareDropdownButton}
+                      onPress={() => {
+                        setShowShareRegionDropdown(!showShareRegionDropdown)
+                        setShowShareBrokerDropdown(false)
+                      }}
+                    >
+                      <Text style={[
+                        styles.shareDropdownText,
+                        !shareData.selectedRegionName && styles.shareDropdownPlaceholder
+                      ]}>
+                        {shareData.selectedRegionName || 'Select region'}
+                      </Text>
+                      <MaterialIcons 
+                        name={showShareRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                        size={20} 
+                        color="#6B7280" 
+                      />
+                    </TouchableOpacity>
+                    
+                    {showShareRegionDropdown && (
+                      <View style={styles.shareDropdownMenu}>
+                        <ScrollView 
+                          showsVerticalScrollIndicator={true}
+                          style={{ maxHeight: 200 }}
+                          nestedScrollEnabled={true}
+                        >
+                          {isLoadingRegions ? (
+                            <View style={styles.shareDropdownItem}>
+                              <ActivityIndicator size="small" color="#009689" />
+                              <Text style={styles.shareDropdownItemText}>Loading regions...</Text>
+                            </View>
+                          ) : (
+                            regions && regions.length > 0 ? (
+                              regions.map((region) => (
+                                <TouchableOpacity
+                                  key={region._id}
+                                  style={styles.shareDropdownItem}
+                                  onPress={() => handleShareRegionSelect(region)}
+                                >
+                                  <Text style={styles.shareDropdownItemText}>{region.name}</Text>
+                                </TouchableOpacity>
+                              ))
+                            ) : (
+                              <View style={styles.shareDropdownItem}>
+                                <Text style={styles.shareDropdownItemText}>No regions available</Text>
+                              </View>
+                            )
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Broker Selection (only when selected brokers is chosen) */}
+              {shareData.shareType === 'selected' && (
+                <View style={styles.shareFieldContainer}>
+                  <Text style={styles.shareFieldLabel}>Select Broker(s)</Text>
+                  <View style={styles.shareDropdownContainer}>
+                    <TouchableOpacity
+                      style={styles.shareDropdownButton}
+                      onPress={() => {
+                        setShowShareBrokerDropdown(!showShareBrokerDropdown)
+                        setShowShareRegionDropdown(false)
+                      }}
+                    >
+                      <Text style={[
+                        styles.shareDropdownText,
+                        shareData.selectedBrokers.length === 0 && styles.shareDropdownPlaceholder
+                      ]}>
+                        {shareData.selectedBrokers.length === 0 
+                          ? 'Choose brokers...' 
+                          : `${shareData.selectedBrokers.length} broker(s) selected`
+                        }
+                      </Text>
+                      <MaterialIcons 
+                        name={showShareBrokerDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                        size={20} 
+                        color="#6B7280" 
+                      />
+                    </TouchableOpacity>
+                    
+                    {showShareBrokerDropdown && (
+                      <View style={styles.shareDropdownMenu}>
+                        <ScrollView 
+                          showsVerticalScrollIndicator={true}
+                          style={{ maxHeight: 200 }}
+                          nestedScrollEnabled={true}
+                        >
+                          {isLoadingBrokers ? (
+                            <View style={styles.shareDropdownItem}>
+                              <ActivityIndicator size="small" color="#009689" />
+                              <Text style={styles.shareDropdownItemText}>Loading brokers...</Text>
+                            </View>
+                          ) : (
+                            allBrokers && allBrokers.length > 0 ? (
+                              allBrokers.map((broker) => {
+                                const isSelected = shareData.selectedBrokers.some(b => b._id === broker._id)
+                                return (
+                                  <TouchableOpacity
+                                    key={broker._id}
+                                    style={[
+                                      styles.shareDropdownItem,
+                                      isSelected && styles.shareDropdownItemSelected
+                                    ]}
+                                    onPress={() => handleBrokerSelect(broker)}
+                                  >
+                                    <View style={styles.brokerItem}>
+                                      <View style={styles.brokerInfo}>
+                                        <Text style={styles.brokerName}>
+                                          {broker.name || 'Unknown Broker'}
+                                        </Text>
+                                        <Text style={styles.brokerRegion}>
+                                          {broker.firmName ? `${broker.firmName} • ` : ''}
+                                          {broker.region && broker.region.length > 0 
+                                            ? broker.region[0].name || 'No region'
+                                            : 'No region'
+                                          }
+                                        </Text>
+                                      </View>
+                                      {isSelected && (
+                                        <MaterialIcons name="check" size={20} color="#009689" />
+                                      )}
+                                    </View>
+                                  </TouchableOpacity>
+                                )
+                              })
+                            ) : (
+                              <View style={styles.shareDropdownItem}>
+                                <Text style={styles.shareDropdownItemText}>No brokers available</Text>
+                              </View>
+                            )
+                          )}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Share Notes */}
+              <View style={styles.shareFieldContainer}>
+                <Text style={styles.shareFieldLabel}>Share Notes (Optional)</Text>
+                <TextInput
+                  style={styles.shareNotesInput}
+                  placeholder="Add any specific instructions or context..."
+                  placeholderTextColor="#9CA3AF"
+                  value={shareData.notes}
+                  onChangeText={(text) => setShareData(prev => ({ ...prev, notes: text }))}
+                  multiline={true}
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+            </ScrollView>
+            
+            <View style={styles.shareModalFooter}>
+              <TouchableOpacity
+                style={styles.shareCancelButton}
+                onPress={() => {
+                  setShowShareModal(false)
+                  resetShareModal()
+                }}
+              >
+                <Text style={styles.shareCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.shareSubmitButton, isSharing && styles.shareSubmitButtonDisabled]}
+                onPress={handleShareSubmit}
+                disabled={isSharing}
+              >
+                {isSharing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.shareSubmitButtonText}>Share with broker</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -3241,6 +3738,210 @@ const styles = StyleSheet.create({
     backgroundColor: '#9CA3AF',
   },
   addLeadSubmitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+
+  // Share Modal Styles
+  shareModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    maxHeight: '90%',
+    minHeight: 500,
+  },
+  shareModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  shareModalTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  shareModalCloseButton: {
+    padding: 4,
+  },
+  shareModalBody: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  shareModalFooter: {
+    flexDirection: 'row',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 12,
+  },
+  shareTypeContainer: {
+    marginBottom: 24,
+  },
+  shareTypeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  shareTypeOptionActive: {
+    backgroundColor: '#F0FDFA',
+    borderColor: '#A7F3D0',
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonSelected: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#009689',
+  },
+  shareTypeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+    flex: 1,
+  },
+  shareTypeTextActive: {
+    color: '#009689',
+    fontWeight: '600',
+  },
+  shareFieldContainer: {
+    marginBottom: 20,
+  },
+  shareFieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  shareDropdownContainer: {
+    position: 'relative',
+  },
+  shareDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  shareDropdownText: {
+    fontSize: 16,
+    color: '#1F2937',
+    flex: 1,
+  },
+  shareDropdownPlaceholder: {
+    color: '#9CA3AF',
+  },
+  shareDropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+    marginTop: 4,
+    maxHeight: 200,
+  },
+  shareDropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  shareDropdownItemSelected: {
+    backgroundColor: '#F0FDFA',
+  },
+  shareDropdownItemText: {
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  brokerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  brokerInfo: {
+    flex: 1,
+  },
+  brokerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  brokerRegion: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  shareNotesInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    minHeight: 100,
+  },
+  shareCancelButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  shareCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  shareSubmitButton: {
+    flex: 1,
+    backgroundColor: '#009689',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  shareSubmitButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+  },
+  shareSubmitButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
