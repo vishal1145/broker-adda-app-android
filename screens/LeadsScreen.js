@@ -2122,6 +2122,7 @@ const LeadsScreen = ({ navigation }) => {
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           >
             <View style={styles.addLeadModalContent}>
               <View style={styles.addLeadModalHeader}>
@@ -2139,6 +2140,8 @@ const LeadsScreen = ({ navigation }) => {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.addLeadModalBodyContent}
+              bounces={false}
+              scrollEventThrottle={16}
             >
               {/* Customer Name */}
               <View style={styles.addLeadFieldContainer}>
@@ -2152,6 +2155,8 @@ const LeadsScreen = ({ navigation }) => {
                   placeholderTextColor="#9CA3AF"
                   value={addLeadData.customerName}
                   onChangeText={(text) => handleAddLeadFieldChange('customerName', text)}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
                 {validationErrors.customerName ? (
                   <Text style={styles.addLeadErrorText}>{validationErrors.customerName}</Text>
@@ -2172,6 +2177,8 @@ const LeadsScreen = ({ navigation }) => {
                   onChangeText={(text) => handleAddLeadFieldChange('customerPhone', text)}
                   keyboardType="phone-pad"
                   maxLength={10}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
                 />
                 {validationErrors.customerPhone ? (
                   <Text style={styles.addLeadErrorText}>{validationErrors.customerPhone}</Text>
@@ -2192,6 +2199,8 @@ const LeadsScreen = ({ navigation }) => {
                   onChangeText={(text) => handleAddLeadFieldChange('customerEmail', text)}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
                 {validationErrors.customerEmail ? (
                   <Text style={styles.addLeadErrorText}>{validationErrors.customerEmail}</Text>
@@ -2429,6 +2438,7 @@ const LeadsScreen = ({ navigation }) => {
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           >
             <View style={styles.shareModalContent}>
             <View style={styles.shareModalHeader}>
@@ -2449,6 +2459,8 @@ const LeadsScreen = ({ navigation }) => {
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.shareModalBodyContent}
+              bounces={false}
+              scrollEventThrottle={16}
             >
               {/* Share Type Selection */}
               <View style={styles.shareTypeContainer}>
@@ -2703,8 +2715,10 @@ const LeadsScreen = ({ navigation }) => {
                   value={shareData.notes}
                   onChangeText={(text) => setShareData(prev => ({ ...prev, notes: text }))}
                   multiline={true}
-                  numberOfLines={4}
+                  numberOfLines={3}
                   textAlignVertical="top"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
               </View>
             </ScrollView>
@@ -3351,6 +3365,7 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
     justifyContent: 'flex-end',
+    maxHeight: '90%',
   },
   modalBackdrop: {
     flex: 1,
@@ -3638,7 +3653,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingHorizontal: 20,
     maxHeight: '90%',
-    minHeight: 500,
+    minHeight: 400,
     flex: 1,
   },
   addLeadModalHeader: {
@@ -3665,6 +3680,7 @@ const styles = StyleSheet.create({
   addLeadModalBodyContent: {
     flexGrow: 1,
     paddingBottom: 20,
+    paddingTop: 10,
   },
   addLeadModalFooter: {
     flexDirection: 'row',
@@ -3826,7 +3842,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingHorizontal: 20,
     maxHeight: '90%',
-    minHeight: 500,
+    minHeight: 400,
     flex: 1,
   },
   shareModalHeader: {
@@ -3853,6 +3869,7 @@ const styles = StyleSheet.create({
   shareModalBodyContent: {
     flexGrow: 1,
     paddingBottom: 20,
+    paddingTop: 10,
   },
   shareModalFooter: {
     flexDirection: 'row',
@@ -4012,7 +4029,8 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    minHeight: 100,
+    minHeight: 80,
+    maxHeight: 120,
   },
   shareCancelButton: {
     flex: 1,
