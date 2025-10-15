@@ -42,7 +42,9 @@ const CreateProfileScreen = ({ navigation }) => {
     
     // Professional
     licenseNumber: '',
+    experience: '',
     address: '',
+    about: '',
     specializations: [],
     
     // Social Media
@@ -723,7 +725,9 @@ const CreateProfileScreen = ({ navigation }) => {
             
             // Professional
             licenseNumber: broker.licenseNumber || '',
+            experience: broker.experience?.years?.toString() || '',
             address: broker.address || '',
+            about: broker.content || '',
             specializations: broker.specializations || [],
             
             // Social Media (these might not be in the response yet)
@@ -1419,7 +1423,13 @@ const CreateProfileScreen = ({ navigation }) => {
         profileData.append('brokerDetails[firmName]', formData.firmName)
       }
       profileData.append('brokerDetails[licenseNumber]', formData.licenseNumber)
+      if (formData.experience && formData.experience.trim()) {
+        profileData.append('brokerDetails[experienceYears]', formData.experience)
+      }
       profileData.append('brokerDetails[address]', formData.address)
+      if (formData.about && formData.about.trim()) {
+        profileData.append('brokerDetails[content]', formData.about)
+      }
       profileData.append('brokerDetails[state]', formData.state)
       profileData.append('brokerDetails[city]', formData.city)
       if (formData.whatsappNumber) {
@@ -1743,6 +1753,21 @@ const CreateProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>Experience (Years)</Text>
+        <View style={styles.inputWithIcon}>
+          <MaterialIcons name="work-history" size={20} color="#8E8E93" style={styles.inputIcon} />
+          <TextInput
+            style={styles.inputText}
+            value={formData.experience}
+            onChangeText={(text) => updateFormData('experience', text)}
+            placeholder="Enter years of experience"
+            placeholderTextColor="#8E8E93"
+            keyboardType="numeric"
+          />
+        </View>
+      </View>
+
+      <View style={styles.inputGroup}>
         <View style={styles.addressHeader}>
           <Text style={styles.inputLabel}>Address *</Text>
           <TouchableOpacity 
@@ -1826,6 +1851,24 @@ const CreateProfileScreen = ({ navigation }) => {
               </ScrollView>
             </View>
           )}
+        </View>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.inputLabel}>About</Text>
+        <View style={styles.textAreaContainer}>
+          <MaterialIcons name="description" size={20} color="#8E8E93" style={styles.textAreaIcon} />
+          <TextInput
+            style={styles.textArea}
+            value={formData.about}
+            onChangeText={(text) => updateFormData('about', text)}
+            placeholder="Tell us about yourself, your experience, and what makes you unique as a real estate professional..."
+            placeholderTextColor="#8E8E93"
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            onFocus={handleInputFocus}
+          />
         </View>
       </View>
 
@@ -2642,6 +2685,28 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 12,
+  },
+  textAreaContainer: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    minHeight: 100,
+  },
+  textAreaIcon: {
+    marginRight: 12,
+    marginTop: 4,
+  },
+  textArea: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   addressHeader: {
     flexDirection: 'row',

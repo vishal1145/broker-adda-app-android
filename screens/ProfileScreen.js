@@ -39,6 +39,7 @@ const ProfileScreen = ({ navigation }) => {
     officeAddress: '',
     website: '-',
     firm: '',
+    content: '',
     gender: '',
     status: 'Unblock',
     joinedDate: '',
@@ -165,6 +166,7 @@ const ProfileScreen = ({ navigation }) => {
             officeAddress: broker.address || '-',
             website: broker.website || '-',
             firm: broker.firmName || '-',
+            content: broker.content || '',
             gender: broker.gender || '-',
             status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
             joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
@@ -409,6 +411,12 @@ const ProfileScreen = ({ navigation }) => {
                     <MaterialIcons name="business" size={16} color="#FFFFFF" />
                     <Text style={styles.modernFirmName}>{profileData.firm}</Text>
                   </View>
+                  
+                  {profileData.content && profileData.content.trim() && (
+                    <View style={styles.contentContainer}>
+                      <Text style={styles.modernContentText}>{profileData.content}</Text>
+                    </View>
+                  )}
                   
                   <View style={styles.modernRatingContainer}>
                     <View style={styles.ratingStars}>
@@ -1131,6 +1139,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  contentContainer: {
+    marginTop: 12,
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
+  modernContentText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.85)',
+    textAlign: 'center',
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
   modernRatingContainer: {
     flexDirection: 'row',
