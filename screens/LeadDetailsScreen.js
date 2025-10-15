@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -14,7 +14,8 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Keyboard
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
@@ -192,6 +193,13 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   const [isSubmittingLead, setIsSubmittingLead] = useState(false)
   const [regions, setRegions] = useState([])
   const [isLoadingRegions, setIsLoadingRegions] = useState(false)
+  
+  // Keyboard state
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+  
+  // ScrollView ref for auto-scrolling
+  const editLeadScrollRef = useRef(null)
 
   const fetchLeadDetails = async (refresh = false) => {
     try {
@@ -223,6 +231,45 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       setIsRefreshing(false)
     }
   }
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height)
+        setIsKeyboardVisible(true)
+      }
+    )
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0)
+        setIsKeyboardVisible(false)
+      }
+    )
+    const keyboardWillShowListener = Keyboard.addListener(
+      'keyboardWillShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height)
+        setIsKeyboardVisible(true)
+      }
+    )
+    const keyboardWillHideListener = Keyboard.addListener(
+      'keyboardWillHide',
+      () => {
+        setKeyboardHeight(0)
+        setIsKeyboardVisible(false)
+      }
+    )
+
+    return () => {
+      keyboardDidHideListener?.remove()
+      keyboardDidShowListener?.remove()
+      keyboardWillShowListener?.remove()
+      keyboardWillHideListener?.remove()
+    }
+  }, [])
 
   useEffect(() => {
     fetchLeadDetails()
@@ -427,6 +474,8 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       primaryRegion: '',
       requirement: ''
     })
+    // Dismiss keyboard when form is reset
+    Keyboard.dismiss()
   }
 
   const handleEditLeadSubmit = async () => {
@@ -902,37 +951,59 @@ const LeadDetailsScreen = ({ navigation, route }) => {
         visible={showEditModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowEditModal(false)}
+        onRequestClose={() => {
+          Keyboard.dismiss()
+          setShowEditModal(false)
+        }}
         statusBarTranslucent={true}
       >
         <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
-            onPress={() => setShowEditModal(false)}
+            onPress={() => {
+              Keyboard.dismiss()
+              setShowEditModal(false)
+            }}
           />
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            enabled={true}
           >
-            <View style={styles.editLeadModalContent}>
+            <View style={[
+              styles.editLeadModalContent,
+              isKeyboardVisible && Platform.OS === 'android' && {
+                marginBottom: keyboardHeight > 0 ? keyboardHeight - 50 : 0,
+                maxHeight: keyboardHeight > 0 ? '85%' : '90%'
+              }
+            ]}>
             <View style={styles.editLeadModalHeader}>
               <Text style={styles.editLeadModalTitle}>
                 {isTransferredLead ? 'Update Status' : 'Edit Lead'}
               </Text>
               <TouchableOpacity
                 style={styles.editLeadModalCloseButton}
-                onPress={() => setShowEditModal(false)}
+                onPress={() => {
+                  Keyboard.dismiss()
+                  setShowEditModal(false)
+                }}
               >
                 <MaterialIcons name="close" size={24} color="#6B7280" />
               </TouchableOpacity>
             </View>
             
             <ScrollView 
+              ref={editLeadScrollRef}
               style={styles.editLeadModalBody} 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.editLeadModalBodyContent}
+              bounces={false}
+              scrollEventThrottle={16}
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+              keyboardDismissMode="interactive"
             >
               {isTransferredLead ? (
                 // For transferred leads, only show status field
@@ -973,6 +1044,13 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                       placeholderTextColor="#9CA3AF"
                       value={editLeadData.customerName}
                       onChangeText={(text) => handleEditLeadFieldChange('customerName', text)}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          editLeadScrollRef.current?.scrollTo({ y: 0, animated: true })
+                        }, 100)
+                      }}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
                     />
                     {validationErrors.customerName ? (
                       <Text style={styles.editLeadErrorText}>{validationErrors.customerName}</Text>
@@ -991,8 +1069,15 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                       placeholderTextColor="#9CA3AF"
                       value={editLeadData.customerPhone}
                       onChangeText={(text) => handleEditLeadFieldChange('customerPhone', text)}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          editLeadScrollRef.current?.scrollTo({ y: 100, animated: true })
+                        }, 100)
+                      }}
                       keyboardType="phone-pad"
                       maxLength={10}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
                     />
                     {validationErrors.customerPhone ? (
                       <Text style={styles.editLeadErrorText}>{validationErrors.customerPhone}</Text>
@@ -1011,8 +1096,15 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                       placeholderTextColor="#9CA3AF"
                       value={editLeadData.customerEmail}
                       onChangeText={(text) => handleEditLeadFieldChange('customerEmail', text)}
+                      onFocus={() => {
+                        setTimeout(() => {
+                          editLeadScrollRef.current?.scrollTo({ y: 200, animated: true })
+                        }, 100)
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
                     />
                     {validationErrors.customerEmail ? (
                       <Text style={styles.editLeadErrorText}>{validationErrors.customerEmail}</Text>
@@ -1232,7 +1324,10 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             <View style={styles.editLeadModalFooter}>
               <TouchableOpacity
                 style={styles.editLeadCancelButton}
-                onPress={() => setShowEditModal(false)}
+                onPress={() => {
+                  Keyboard.dismiss()
+                  setShowEditModal(false)
+                }}
               >
                 <Text style={styles.editLeadCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -1799,6 +1894,7 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     minHeight: 500,
     flex: 1,
+    flexGrow: 1,
   },
   editLeadModalHeader: {
     flexDirection: 'row',
@@ -1824,6 +1920,7 @@ const styles = StyleSheet.create({
   editLeadModalBodyContent: {
     flexGrow: 1,
     paddingBottom: 20,
+    minHeight: '100%',
   },
   editLeadModalFooter: {
     flexDirection: 'row',

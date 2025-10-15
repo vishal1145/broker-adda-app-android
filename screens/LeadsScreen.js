@@ -17,7 +17,8 @@ import {
   PanGestureHandler,
   Animated,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Keyboard
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
@@ -231,6 +232,14 @@ const LeadsScreen = ({ navigation }) => {
   const [isSearchVisible, setIsSearchVisible] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const searchTimeoutRef = useRef(null)
+  
+  // Keyboard state
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+  
+  // ScrollView refs for auto-scrolling
+  const addLeadScrollRef = useRef(null)
+  const shareLeadScrollRef = useRef(null)
   
   // API state management
   const [leadsData, setLeadsData] = useState([])
@@ -480,6 +489,8 @@ const LeadsScreen = ({ navigation }) => {
       primaryRegion: '',
       requirement: ''
     })
+    // Dismiss keyboard when form is reset
+    Keyboard.dismiss()
   }
 
   const handleAddLeadSubmit = async () => {
@@ -1222,6 +1233,8 @@ const LeadsScreen = ({ navigation }) => {
     setShowShareRegionDropdown(false)
     setShowShareBrokerDropdown(false)
     setFilteredBrokers([])
+    // Dismiss keyboard when modal is reset
+    Keyboard.dismiss()
   }
 
   // Handle status change
@@ -1313,6 +1326,45 @@ const LeadsScreen = ({ navigation }) => {
     { key: 'Plot', value: 'Plot' },
     { key: 'Other', value: 'Other' }
   ]
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height)
+        setIsKeyboardVisible(true)
+      }
+    )
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0)
+        setIsKeyboardVisible(false)
+      }
+    )
+    const keyboardWillShowListener = Keyboard.addListener(
+      'keyboardWillShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height)
+        setIsKeyboardVisible(true)
+      }
+    )
+    const keyboardWillHideListener = Keyboard.addListener(
+      'keyboardWillHide',
+      () => {
+        setKeyboardHeight(0)
+        setIsKeyboardVisible(false)
+      }
+    )
+
+    return () => {
+      keyboardDidHideListener?.remove()
+      keyboardDidShowListener?.remove()
+      keyboardWillShowListener?.remove()
+      keyboardWillHideListener?.remove()
+    }
+  }, [])
 
   // Cleanup search timeout on unmount
   useEffect(() => {
@@ -2117,31 +2169,47 @@ const LeadsScreen = ({ navigation }) => {
           <TouchableOpacity 
             style={styles.modalBackdrop} 
             activeOpacity={1} 
-            onPress={() => setShowAddLeadModal(false)}
+            onPress={() => {
+              Keyboard.dismiss()
+              setShowAddLeadModal(false)
+            }}
           />
           <KeyboardAvoidingView 
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            enabled={true}
           >
-            <View style={styles.addLeadModalContent}>
+            <View style={[
+              styles.addLeadModalContent,
+              isKeyboardVisible && Platform.OS === 'android' && {
+                marginBottom: keyboardHeight > 0 ? keyboardHeight - 50 : 0,
+                maxHeight: keyboardHeight > 0 ? '85%' : '90%'
+              }
+            ]}>
               <View style={styles.addLeadModalHeader}>
               <Text style={styles.addLeadModalTitle}>Add New Lead</Text>
               <TouchableOpacity
                 style={styles.addLeadModalCloseButton}
-                onPress={() => setShowAddLeadModal(false)}
+                onPress={() => {
+                  Keyboard.dismiss()
+                  setShowAddLeadModal(false)
+                }}
               >
                 <MaterialIcons name="close" size={24} color="#6B7280" />
               </TouchableOpacity>
             </View>
             
             <ScrollView 
+              ref={addLeadScrollRef}
               style={styles.addLeadModalBody} 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.addLeadModalBodyContent}
               bounces={false}
               scrollEventThrottle={16}
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+              keyboardDismissMode="interactive"
             >
               {/* Customer Name */}
               <View style={styles.addLeadFieldContainer}>
@@ -2155,6 +2223,11 @@ const LeadsScreen = ({ navigation }) => {
                   placeholderTextColor="#9CA3AF"
                   value={addLeadData.customerName}
                   onChangeText={(text) => handleAddLeadFieldChange('customerName', text)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      addLeadScrollRef.current?.scrollTo({ y: 0, animated: true })
+                    }, 100)
+                  }}
                   returnKeyType="next"
                   blurOnSubmit={false}
                 />
@@ -2175,6 +2248,11 @@ const LeadsScreen = ({ navigation }) => {
                   placeholderTextColor="#9CA3AF"
                   value={addLeadData.customerPhone}
                   onChangeText={(text) => handleAddLeadFieldChange('customerPhone', text)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      addLeadScrollRef.current?.scrollTo({ y: 100, animated: true })
+                    }, 100)
+                  }}
                   keyboardType="phone-pad"
                   maxLength={10}
                   returnKeyType="next"
@@ -2197,6 +2275,11 @@ const LeadsScreen = ({ navigation }) => {
                   placeholderTextColor="#9CA3AF"
                   value={addLeadData.customerEmail}
                   onChangeText={(text) => handleAddLeadFieldChange('customerEmail', text)}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      addLeadScrollRef.current?.scrollTo({ y: 200, animated: true })
+                    }, 100)
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   returnKeyType="done"
@@ -2394,7 +2477,10 @@ const LeadsScreen = ({ navigation }) => {
             <View style={styles.addLeadModalFooter}>
               <TouchableOpacity
                 style={styles.addLeadCancelButton}
-                onPress={() => setShowAddLeadModal(false)}
+                onPress={() => {
+                  Keyboard.dismiss()
+                  setShowAddLeadModal(false)
+                }}
               >
                 <Text style={styles.addLeadCancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -2431,6 +2517,7 @@ const LeadsScreen = ({ navigation }) => {
             style={styles.modalBackdrop} 
             activeOpacity={1} 
             onPress={() => {
+              Keyboard.dismiss()
               setShowShareModal(false)
               resetShareModal()
             }}
@@ -2439,13 +2526,21 @@ const LeadsScreen = ({ navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            enabled={true}
           >
-            <View style={styles.shareModalContent}>
+            <View style={[
+              styles.shareModalContent,
+              isKeyboardVisible && Platform.OS === 'android' && {
+                marginBottom: keyboardHeight > 0 ? keyboardHeight - 50 : 0,
+                maxHeight: keyboardHeight > 0 ? '85%' : '90%'
+              }
+            ]}>
             <View style={styles.shareModalHeader}>
               <Text style={styles.shareModalTitle}>Share Lead</Text>
               <TouchableOpacity
                 style={styles.shareModalCloseButton}
                 onPress={() => {
+                  Keyboard.dismiss()
                   setShowShareModal(false)
                   resetShareModal()
                 }}
@@ -2455,12 +2550,15 @@ const LeadsScreen = ({ navigation }) => {
             </View>
             
             <ScrollView 
+              ref={shareLeadScrollRef}
               style={styles.shareModalBody} 
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.shareModalBodyContent}
               bounces={false}
               scrollEventThrottle={16}
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+              keyboardDismissMode="interactive"
             >
               {/* Share Type Selection */}
               <View style={styles.shareTypeContainer}>
@@ -2714,6 +2812,11 @@ const LeadsScreen = ({ navigation }) => {
                   placeholderTextColor="#9CA3AF"
                   value={shareData.notes}
                   onChangeText={(text) => setShareData(prev => ({ ...prev, notes: text }))}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      shareLeadScrollRef.current?.scrollToEnd({ animated: true })
+                    }, 100)
+                  }}
                   multiline={true}
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -2727,6 +2830,7 @@ const LeadsScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={styles.shareCancelButton}
                 onPress={() => {
+                  Keyboard.dismiss()
                   setShowShareModal(false)
                   resetShareModal()
                 }}
@@ -3655,6 +3759,7 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     minHeight: 400,
     flex: 1,
+    flexGrow: 1,
   },
   addLeadModalHeader: {
     flexDirection: 'row',
@@ -3681,6 +3786,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
     paddingTop: 10,
+    minHeight: '100%',
   },
   addLeadModalFooter: {
     flexDirection: 'row',
@@ -3844,6 +3950,7 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     minHeight: 400,
     flex: 1,
+    flexGrow: 1,
   },
   shareModalHeader: {
     flexDirection: 'row',
@@ -3870,6 +3977,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: 20,
     paddingTop: 10,
+    minHeight: '100%',
   },
   shareModalFooter: {
     flexDirection: 'row',
