@@ -158,7 +158,17 @@ const PhoneLoginScreen = ({ navigation }) => {
           >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => {
+                // Check if we can go back, if not, do nothing
+                if (navigation.canGoBack()) {
+                  navigation.goBack()
+                }
+                // If we can't go back (like after logout), do nothing
+                // This prevents going back to the profile screen after logout
+              }}
+            >
               <MaterialIcons name="arrow-back" size={24} color="#009689" />
             </TouchableOpacity>
             {/* <Text style={styles.headerTitle}>Phone Verification</Text>

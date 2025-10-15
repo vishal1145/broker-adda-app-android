@@ -248,12 +248,18 @@ const ProfileScreen = ({ navigation }) => {
       await storage.clearAuthData()
       console.log('All auth data cleared successfully')
       
-      // Navigate to phone login screen
-      navigation.navigate('PhoneLogin')
+      // Reset navigation stack and navigate to phone login screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'PhoneLogin' }],
+      })
     } catch (error) {
       console.error('Error clearing auth data:', error)
       // Still navigate to phone login even if clearing fails
-      navigation.navigate('PhoneLogin')
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'PhoneLogin' }],
+      })
     }
   }
 
