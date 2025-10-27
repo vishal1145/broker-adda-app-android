@@ -126,7 +126,11 @@ const PropertiesScreen = ({ navigation }) => {
     : propertiesData.filter(prop => prop.status === selectedFilter)
 
   const PropertyCard = ({ property }) => (
-    <View style={styles.propertyCard}>
+    <TouchableOpacity 
+      style={styles.propertyCard}
+      onPress={() => navigation.navigate('PropertyDetails', { property })}
+      activeOpacity={0.8}
+    >
       <View style={styles.propertyImageContainer}>
         <Image 
           source={{ uri: property.images[0] }} 
@@ -200,11 +204,23 @@ const PropertiesScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.propertyFooter}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              navigation.navigate('PropertyDetails', { property })
+            }}
+          >
             <MaterialIcons name="visibility" size={18} color="#009689" />
             <Text style={styles.actionButtonText}>View Details</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              navigation.navigate('CreateProperty', { property })
+            }}
+          >
             <MaterialIcons name="edit" size={18} color="#009689" />
             <Text style={styles.actionButtonText}>Edit</Text>
           </TouchableOpacity>
@@ -214,7 +230,7 @@ const PropertiesScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   )
 
   return (
