@@ -193,6 +193,15 @@ const CreatePropertyScreen = ({ navigation }) => {
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       try {
+        // First check if permission is already granted
+        const checkResult = await PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.CAMERA
+        )
+        if (checkResult) {
+          return true
+        }
+        
+        // Request permission
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.CAMERA,
           {
@@ -205,10 +214,12 @@ const CreatePropertyScreen = ({ navigation }) => {
         )
         return granted === PermissionsAndroid.RESULTS.GRANTED
       } catch (err) {
-        console.warn(err)
+        console.warn('Camera permission error:', err)
+        Snackbar.showError('Error', 'Failed to request camera permission')
         return false
       }
     }
+    // For iOS, permission is requested when camera is launched
     return true
   }
 
@@ -259,42 +270,60 @@ const CreatePropertyScreen = ({ navigation }) => {
 
   // Handle media selection
   const handleMediaSelection = async (field, source) => {
-    if (source === 'camera') {
-      const hasPermission = await requestCameraPermission()
-      if (!hasPermission) {
-        Snackbar.showError('Permission Denied', 'Camera permission is required to take photos')
-        return
+    try {
+      if (source === 'camera') {
+        const hasPermission = await requestCameraPermission()
+        if (!hasPermission) {
+          Snackbar.showError('Permission Denied', 'Camera permission is required to take photos')
+          return
+        }
       }
-    }
 
-    const options = {
-      mediaType: field === 'images' ? 'photo' : 'video',
-      quality: 0.8,
-      maxWidth: 2000,
-      maxHeight: 2000,
-      includeBase64: false,
-    }
-
-    const callback = (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled media picker')
-      } else if (response.errorMessage) {
-        console.log('MediaPicker Error: ', response.errorMessage)
-        Snackbar.showError('Error', 'Failed to select media')
-      } else if (response.assets && response.assets[0]) {
-        const asset = response.assets[0]
-        const fileUrl = asset.uri
-        
-        // Add to form data
-        handleAddMedia(field, fileUrl)
-        Snackbar.showSuccess('Success', `${field === 'images' ? 'Image' : 'Video'} added successfully!`)
+      const options = {
+        mediaType: field === 'images' ? 'photo' : 'video',
+        quality: 0.8,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        includeBase64: false,
+        saveToPhotos: false,
       }
-    }
 
-    if (source === 'camera') {
-      launchCamera(options, callback)
-    } else {
-      launchImageLibrary(options, callback)
+      const callback = (response) => {
+        console.log('Media picker response:', response)
+        if (response.didCancel) {
+          console.log('User cancelled media picker')
+        } else if (response.errorCode) {
+          console.log('MediaPicker Error Code: ', response.errorCode)
+          console.log('MediaPicker Error Message: ', response.errorMessage)
+          
+          let errorMsg = 'Failed to access media'
+          if (response.errorCode === 'permission') {
+            errorMsg = 'Camera/Gallery permission is required'
+          } else if (response.errorCode === 'others') {
+            errorMsg = response.errorMessage || 'Failed to access camera/gallery'
+          }
+          Snackbar.showError('Error', errorMsg)
+        } else if (response.errorMessage) {
+          console.log('MediaPicker Error: ', response.errorMessage)
+          Snackbar.showError('Error', response.errorMessage)
+        } else if (response.assets && response.assets[0]) {
+          const asset = response.assets[0]
+          const fileUrl = asset.uri
+          
+          // Add to form data
+          handleAddMedia(field, fileUrl)
+          Snackbar.showSuccess('Success', `${field === 'images' ? 'Image' : 'Video'} added successfully!`)
+        }
+      }
+
+      if (source === 'camera') {
+        launchCamera(options, callback)
+      } else {
+        launchImageLibrary(options, callback)
+      }
+    } catch (error) {
+      console.error('Error launching media picker:', error)
+      Snackbar.showError('Error', 'Failed to open camera/gallery. Please try again.')
     }
   }
 
@@ -824,7 +853,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('propertyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#059669" />
+                  <MaterialIcons name="close" size={16} color="#009689" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -855,7 +884,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('nearbyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#059669" />
+                  <MaterialIcons name="close" size={16} color="#009689" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -886,7 +915,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('features', index)}>
-                  <MaterialIcons name="close" size={16} color="#059669" />
+                  <MaterialIcons name="close" size={16} color="#009689" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -917,7 +946,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('locationBenefits', index)}>
-                  <MaterialIcons name="close" size={16} color="#059669" />
+                  <MaterialIcons name="close" size={16} color="#009689" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1456,7 +1485,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   addButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#009689',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1488,7 +1517,7 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#E0F7FA',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -1496,7 +1525,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    color: '#059669',
+    color: '#009689',
     fontWeight: '500',
   },
   mediaTag: {
