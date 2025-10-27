@@ -241,7 +241,10 @@ const PropertiesScreen = ({ navigation }) => {
               <Text style={styles.headerSubtitle}>Manage your property listings</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerButton}>
+              <TouchableOpacity 
+                style={styles.headerButton}
+                onPress={() => navigation.navigate('CreateProperty')}
+              >
                 <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.headerButton}>
