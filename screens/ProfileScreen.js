@@ -288,9 +288,9 @@ const ProfileScreen = ({ navigation }) => {
 
 
   const handleEditProfile = () => {
-    // Navigate to CreateProfile screen for editing
-    console.log('Navigating to CreateProfile screen')
-    navigation.navigate('CreateProfile')
+    // Navigate to CreateProfile screen for editing with edit mode flag
+    console.log('Navigating to CreateProfile screen for editing')
+    navigation.navigate('CreateProfile', { isEdit: true })
   }
 
   const StatCard = ({ icon, title, value, color, bgColor }) => (
@@ -774,46 +774,48 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Social Media Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Social Media</Text>
-          <View style={styles.socialMediaContainer}>
-            {profileData.socialMedia && Object.keys(profileData.socialMedia).length > 0 ? (
-              Object.entries(profileData.socialMedia).map(([platform, url]) => {
-                const getSocialIcon = (platform) => {
-                  switch (platform) {
-                    case 'linkedin':
-                      return <FontAwesome name="linkedin" size={24} color="#0077B5" />
-                    case 'twitter':
-                      return <FontAwesome name="twitter" size={24} color="#1DA1F2" />
-                    case 'instagram':
-                      return <FontAwesome name="instagram" size={24} color="#E4405F" />
-                    case 'facebook':
-                      return <FontAwesome name="facebook" size={24} color="#1877F2" />
-                    default:
-                      return <MaterialIcons name="link" size={24} color="#009689" />
+        {/* Social Media Section - Only show if documents are uploaded */}
+        {profileData.documents && profileData.documents.length > 0 && profileData.documents.some(doc => doc.hasFile && doc.url) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Social Media</Text>
+            <View style={styles.socialMediaContainer}>
+              {profileData.socialMedia && Object.keys(profileData.socialMedia).length > 0 ? (
+                Object.entries(profileData.socialMedia).map(([platform, url]) => {
+                  const getSocialIcon = (platform) => {
+                    switch (platform) {
+                      case 'linkedin':
+                        return <FontAwesome name="linkedin" size={24} color="#0077B5" />
+                      case 'twitter':
+                        return <FontAwesome name="twitter" size={24} color="#1DA1F2" />
+                      case 'instagram':
+                        return <FontAwesome name="instagram" size={24} color="#E4405F" />
+                      case 'facebook':
+                        return <FontAwesome name="facebook" size={24} color="#1877F2" />
+                      default:
+                        return <MaterialIcons name="link" size={24} color="#009689" />
+                    }
                   }
-                }
 
-                return (
-                  <View key={platform} style={styles.socialMediaItem}>
-                    <View style={styles.socialMediaIcon}>
-                      {getSocialIcon(platform)}
+                  return (
+                    <View key={platform} style={styles.socialMediaItem}>
+                      <View style={styles.socialMediaIcon}>
+                        {getSocialIcon(platform)}
+                      </View>
+                      <View style={styles.socialMediaContent}>
+                        <Text style={styles.socialMediaPlatform}>
+                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                        </Text>
+                        <Text style={styles.socialMediaUrl}>{url}</Text>
+                      </View>
                     </View>
-                    <View style={styles.socialMediaContent}>
-                      <Text style={styles.socialMediaPlatform}>
-                        {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                      </Text>
-                      <Text style={styles.socialMediaUrl}>{url}</Text>
-                    </View>
-                  </View>
-                )
-              })
-            ) : (
-              <Text style={styles.emptyStateText}>No social media links added yet</Text>
-            )}
+                  )
+                })
+              ) : (
+                <Text style={styles.emptyStateText}>No social media links added yet</Text>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Documents Section - CreateProfile Style */}
         <View style={styles.section}>

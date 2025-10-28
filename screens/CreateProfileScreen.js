@@ -28,9 +28,10 @@ import { authAPI, placesAPI } from '../services/api'
 import { storage } from '../services/storage'
 import * as Location from 'expo-location'
 
-const CreateProfileScreen = ({ navigation }) => {
+const CreateProfileScreen = ({ navigation, route }) => {
   const [currentStep, setCurrentStep] = useState(1) // 1: Personal Info, 2: Professional, 3: Regions, 4: Documents
   const scrollViewRef = useRef(null)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [formData, setFormData] = useState({
     // Personal Info
     fullName: '',
@@ -307,6 +308,9 @@ const CreateProfileScreen = ({ navigation }) => {
   }
 
   const getStepTitle = () => {
+    if (isEditMode) {
+      return 'Update Broker Profile'
+    }
     return 'Create Broker Profile'
   }
 
@@ -713,6 +717,7 @@ const CreateProfileScreen = ({ navigation }) => {
         // Map API response to form data based on actual response structure
         if (response && response.data && response.data.broker) {
           const broker = response.data.broker
+          
           setFormData(prev => ({
             ...prev,
             // Personal Info
@@ -803,9 +808,49 @@ const CreateProfileScreen = ({ navigation }) => {
     }
   }
 
-  // Load profile data on component mount
+  // Load profile data on component mount or if coming from edit
   useEffect(() => {
-    fetchProfileData()
+    const checkProfileAndRoute = async () => {
+      // Check if navigating from ProfileScreen for editing
+      if (route?.params?.isEdit) {
+        setIsEditMode(true)
+        // Fetch profile data for editing
+        await fetchProfileData()
+      } else {
+        // Check if profile already exists (user not coming from edit)
+        try {
+          const token = await storage.getToken()
+          const brokerId = await storage.getBrokerId()
+          
+          if (token && brokerId) {
+            const response = await authAPI.getProfile(brokerId, token)
+            
+            // If profile exists and we're not in edit mode, redirect to MainTabs
+            if (response && response.data && response.data.broker) {
+              const broker = response.data.broker
+              // Check if broker has completed profile (has name, gender, etc.)
+              if (broker.name && broker.gender) {
+                console.log('Profile already exists, redirecting to MainTabs')
+                navigation.replace('MainTabs')
+                return
+              }
+              // If incomplete profile exists, don't set edit mode - user is creating profile
+            }
+          }
+        } catch (error) {
+          console.log('No existing profile found, user can create profile')
+          // This is expected for new signups
+        }
+        
+        // Fetch profile data even for new users to pre-populate if available
+        // This is for new signups, so isEditMode stays false
+        setIsEditMode(false)
+        await fetchProfileData()
+      }
+    }
+    
+    checkProfileAndRoute()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Add keyboard event listeners for better UX
@@ -1551,9 +1596,14 @@ const CreateProfileScreen = ({ navigation }) => {
       
       setIsSubmitting(false)
       
-      // Navigate directly to home page without alert (like OTP verification)
-      console.log('Profile created successfully, navigating to home...')
-      navigation.navigate('MainTabs')
+      // Navigate based on mode
+      if (isEditMode) {
+        console.log('Profile updated successfully, navigating back to Profile...')
+        navigation.navigate('Profile')
+      } else {
+        console.log('Profile created successfully, navigating to home...')
+        navigation.navigate('MainTabs')
+      }
       
     } catch (error) {
       setIsSubmitting(false)
@@ -2331,6 +2381,10 @@ const CreateProfileScreen = ({ navigation }) => {
 
   // Get button text based on current step
   const getButtonText = () => {
+    if (isEditMode && currentStep === 4) {
+      return 'Update Profile'
+    }
+    
     switch (currentStep) {
       case 1:
         return 'Continue to Professional'
