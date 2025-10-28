@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -21,6 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { Snackbar } from '../utils/snackbar'
+import { authAPI, propertiesAPI } from '../services/api'
+import storage from '../services/storage'
 
 const { width } = Dimensions.get('window')
 
@@ -34,6 +36,11 @@ const CreatePropertyScreen = ({ navigation }) => {
   const [showFurnishingModal, setShowFurnishingModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [regionOptions, setRegionOptions] = useState([])
+  const [loadingRegions, setLoadingRegions] = useState(false)
+  const [brokerId, setBrokerId] = useState(null)
+  const [userId, setUserId] = useState(null)
+  const [authToken, setAuthToken] = useState(null)
   
   // Input refs for amenity fields
   const propertyAmenityInput = useRef(null)
@@ -84,17 +91,6 @@ const CreatePropertyScreen = ({ navigation }) => {
     notes: '',
   })
 
-  const regionOptions = [
-    'Uttar Pradesh',
-    'Maharashtra',
-    'Delhi',
-    'Karnataka',
-    'Tamil Nadu',
-    'Gujarat',
-    'Rajasthan',
-    'West Bengal'
-  ]
-
   const currencyOptions = [
     'INR',
     'USD',
@@ -132,6 +128,87 @@ const CreatePropertyScreen = ({ navigation }) => {
     'Sold',
     'Draft'
   ]
+
+  // Fetch regions on component mount
+  useEffect(() => {
+    fetchRegions()
+    loadUserData()
+  }, [])
+
+  const loadUserData = async () => {
+    try {
+      // Get broker ID
+      const brokerIdValue = await storage.getBrokerId()
+      if (brokerIdValue) {
+        setBrokerId(brokerIdValue)
+      }
+      
+      // Get user ID (this is what we'll send to the API)
+      const userIdValue = await storage.getUserId()
+      if (userIdValue) {
+        setUserId(userIdValue)
+      }
+      
+      // Fallback: if no userId but brokerId exists, use brokerId as userId
+      if (!userIdValue && brokerIdValue) {
+        setUserId(brokerIdValue)
+      }
+      
+      const token = await storage.getToken()
+      if (token) {
+        setAuthToken(token)
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    }
+  }
+
+  const fetchRegions = async () => {
+    try {
+      setLoadingRegions(true)
+      const response = await authAPI.getAllRegions()
+      
+      // Extract regions from the response
+      let regions = []
+      if (response && response.data && response.data.regions) {
+        // API returns { data: { regions: [...] } }
+        regions = response.data.regions.map(region => region.name || region)
+      } else if (response && Array.isArray(response)) {
+        regions = response.map(region => region.name || region)
+      }
+      
+      if (regions.length > 0) {
+        setRegionOptions(regions)
+      } else {
+        // Fallback to default regions if API fails
+        setRegionOptions([
+          'Uttar Pradesh',
+          'Maharashtra',
+          'Delhi',
+          'Karnataka',
+          'Tamil Nadu',
+          'Gujarat',
+          'Rajasthan',
+          'West Bengal'
+        ])
+      }
+    } catch (error) {
+      console.error('Error fetching regions:', error)
+      // Fallback to default regions if API fails
+      setRegionOptions([
+        'Uttar Pradesh',
+        'Maharashtra',
+        'Delhi',
+        'Karnataka',
+        'Tamil Nadu',
+        'Gujarat',
+        'Rajasthan',
+        'West Bengal'
+      ])
+    } finally {
+      setLoadingRegions(false)
+    }
+  }
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -390,14 +467,97 @@ const CreatePropertyScreen = ({ navigation }) => {
   const handleCompleteProperty = async () => {
     try {
       setIsSubmitting(true)
-      // TODO: Implement API call to create property
-      console.log('Form Data:', formData)
-      await new Promise(resolve => setTimeout(resolve, 1500)) // Simulate API call
+
+      if (!authToken || !userId) {
+        Snackbar.showError('Error', 'Please login again to create property')
+        return
+      }
+
+      // Create FormData object
+      const propertyFormData = new FormData()
+      
+      // Basic Information
+      propertyFormData.append('title', formData.propertyTitle)
+      propertyFormData.append('description', formData.shortDescription || '')
+      propertyFormData.append('propertyDescription', formData.detailedDescription || '')
+      
+      // Property Details
+      propertyFormData.append('propertySize', formData.propertySize)
+      propertyFormData.append('propertyType', formData.propertyType)
+      propertyFormData.append('subType', formData.subType)
+      
+      // Location & Pricing
+      propertyFormData.append('price', formData.price)
+      propertyFormData.append('priceUnit', formData.currency)
+      propertyFormData.append('address', formData.address || '')
+      propertyFormData.append('city', formData.city)
+      propertyFormData.append('region', formData.region)
+      
+      // Coordinates (optional, can be set to default or user input)
+      propertyFormData.append('coordinates[lat]', '0')
+      propertyFormData.append('coordinates[lng]', '0')
+      
+      // Additional Details
+      propertyFormData.append('bedrooms', formData.bedrooms)
+      propertyFormData.append('bathrooms', formData.bathrooms)
+      propertyFormData.append('furnishing', formData.furnishing)
+      
+      // Broker & Status
+      propertyFormData.append('broker', userId)
+      propertyFormData.append('status', formData.status)
+      propertyFormData.append('isFeatured', 'false')
+      
+      // Amenities, Features, etc.
+      formData.propertyAmenities.forEach(amenity => {
+        propertyFormData.append('amenities[]', amenity)
+      })
+      
+      formData.nearbyAmenities.forEach(amenity => {
+        propertyFormData.append('nearbyAmenities[]', amenity)
+      })
+      
+      formData.features.forEach(feature => {
+        propertyFormData.append('features[]', feature)
+      })
+      
+      formData.locationBenefits.forEach(benefit => {
+        propertyFormData.append('locationBenefits[]', benefit)
+      })
+      
+      // Images - handle file uploads
+      formData.images.forEach((imageUri, index) => {
+        if (imageUri && imageUri.startsWith('file://')) {
+          // Local file URI
+          propertyFormData.append('images[]', {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: `property_image_${index}.jpg`
+          })
+        } else if (imageUri && !imageUri.startsWith('http')) {
+          // URL string
+          propertyFormData.append('images', imageUri)
+        }
+      })
+      
+      // Videos
+      formData.videos.forEach(video => {
+        propertyFormData.append('videos[]', video)
+      })
+      
+      // Notes
+      if (formData.notes) {
+        propertyFormData.append('notes', formData.notes)
+      }
+
+      console.log('Submitting property data...')
+      const response = await propertiesAPI.createProperty(propertyFormData, authToken)
+      
       Snackbar.showSuccess('Property Created', 'Your property has been created successfully')
       navigation.goBack()
     } catch (error) {
       console.error('Error creating property:', error)
-      Snackbar.showError('Error', 'Failed to create property. Please try again.')
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create property. Please try again.'
+      Snackbar.showError('Error', errorMessage)
     } finally {
       setIsSubmitting(false)
     }

@@ -488,6 +488,27 @@ export const leadsAPI = {
   }
 };
 
+// Properties API functions
+export const propertiesAPI = {
+  // Create new property
+  createProperty: async (propertyData, token) => {
+    try {
+      console.log('Creating new property:', propertyData);
+      const response = await api.post('/api/properties', propertyData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      console.log('Property created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Create property error:', error);
+      throw error;
+    }
+  }
+};
+
 // Google Places API functions
 export const placesAPI = {
   // Google Places API key from environment
