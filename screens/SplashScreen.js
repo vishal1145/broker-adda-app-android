@@ -58,8 +58,8 @@ const SplashScreen = ({ navigation }) => {
   }, [navigation])
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       
       <View style={styles.gradient}>
         {/* Background Pattern */}
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   gradient: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     justifyContent: 'space-between', // Distribute space between content and footer
   },
   headerPattern: {
@@ -200,19 +200,20 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: responsive.fontSize.lg,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#EDFDF4CC',
     textAlign: 'center',
     letterSpacing: 0.5,
   },
   footer: {
     alignItems: 'center',
     paddingHorizontal: responsive.padding.md,
-    paddingVertical: responsive.verticalScale(40),
+    paddingBottom: responsive.verticalScale(20),
+    paddingTop: responsive.verticalScale(10),
   },
   footerText: {
     fontSize: responsive.fontSize.sm,
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#EDFDF4CC',
     letterSpacing: 0.5,
   },
 })
