@@ -26,6 +26,7 @@ const SignupScreen = ({ navigation }) => {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [isTermsHovered, setIsTermsHovered] = useState(false)
   const [isPrivacyHovered, setIsPrivacyHovered] = useState(false)
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false)
   
   const countryCodes = [
     { code: '+91', country: 'India' },
@@ -43,6 +44,11 @@ const SignupScreen = ({ navigation }) => {
 
     if (phoneNumber.length < 10) {
       Snackbar.showValidationError('Please enter a valid 10-digit phone number')
+      return
+    }
+
+    if (!isTermsAccepted) {
+      Snackbar.showValidationError('Please accept the Terms & Conditions to continue')
       return
     }
 
@@ -201,7 +207,7 @@ const SignupScreen = ({ navigation }) => {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <MaterialIcons name="arrow-back" size={24} color="#009689" />
+              <MaterialIcons name="arrow-back" size={24} color="#000000" />
             </TouchableOpacity>
           </View>
 
@@ -212,10 +218,10 @@ const SignupScreen = ({ navigation }) => {
               {/* Header Section */}
               <View style={styles.headerSection}>
                 <Text style={styles.illustrationTitle}>
-                  Create Account
+                Sign Up with Number
                 </Text>
                 <Text style={styles.illustrationSubtitle}>
-                  Please enter your phone number to create an account
+                Please enter your phone number correctly to continue.
                 </Text>
               </View>
 
@@ -227,7 +233,7 @@ const SignupScreen = ({ navigation }) => {
                     <TouchableOpacity 
                       style={[
                         styles.countryCode,
-                        { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
+                        { borderColor: phoneNumber.length > 0 ? '#0D542BFF' : '#E5E5EA' }
                       ]}
                       onPress={toggleCountryDropdown}
                       activeOpacity={0.7}
@@ -241,7 +247,7 @@ const SignupScreen = ({ navigation }) => {
                     <TextInput
                       style={[
                         styles.phoneInput,
-                        { borderColor: phoneNumber.length > 0 ? '#009689' : '#E5E5EA' }
+                        { borderColor: phoneNumber.length > 0 ? '#0D542BFF' : '#E5E5EA' }
                       ]}
                       placeholder="Enter your phone number"
                       value={phoneNumber}
@@ -272,15 +278,71 @@ const SignupScreen = ({ navigation }) => {
 
             {/* Bottom Section */}
             <View style={styles.bottomSection}>
+              {/* Terms and Privacy Policy with Checkbox */}
+              <View style={styles.termsContainer}>
+                <View style={styles.termsWithCheckbox}>
+                  <TouchableOpacity 
+                    style={styles.checkbox}
+                    onPress={() => setIsTermsAccepted(!isTermsAccepted)}
+                  >
+                    <View style={[
+                      styles.checkboxBox,
+                      isTermsAccepted && styles.checkboxBoxChecked
+                    ]}>
+                      {isTermsAccepted && (
+                        <MaterialIcons name="check" size={16} color="#FFFFFF" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <View style={styles.termsTextContainer}>
+                    <Text style={styles.termsText}>
+                      By continuing you agree to our{' '}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={handleTermsPress}
+                      onPressIn={() => setIsTermsHovered(true)}
+                      onPressOut={() => setIsTermsHovered(false)}
+                      activeOpacity={0.7}
+                      style={styles.linkTouchable}
+                    >
+                      <Text style={[
+                        styles.linkText, 
+                        isTermsHovered && styles.linkTextHovered
+                      ]}>
+                        Terms & Conditions
+                      </Text>
+                    </TouchableOpacity>
+                    <Text style={styles.termsText}>
+                      {' '}and{' '}
+                    </Text>
+                    <TouchableOpacity 
+                      onPress={handlePrivacyPress}
+                      onPressIn={() => setIsPrivacyHovered(true)}
+                      onPressOut={() => setIsPrivacyHovered(false)}
+                      activeOpacity={0.7}
+                      style={styles.linkTouchable}
+                    >
+                      <Text style={[
+                        styles.linkText, 
+                        isPrivacyHovered && styles.linkTextHovered
+                      ]}>
+                        Privacy Policy
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
               {/* Action Button */}
               <View style={styles.actionButtonContainer}>
                 <TouchableOpacity 
                   style={[
                     styles.actionButton, 
-                    phoneNumber.length < 10 ? styles.actionButtonDisabled : null
+                    (phoneNumber.length < 10 || !isTermsAccepted) ? styles.actionButtonDisabled : null
                   ]} 
                   onPress={handleSignup}
-                  disabled={isLoading || phoneNumber.length < 10}
+                  disabled={isLoading || phoneNumber.length < 10 || !isTermsAccepted}
                 >
                   {isLoading ? (
                     <View style={styles.loadingContainer}>
@@ -293,46 +355,6 @@ const SignupScreen = ({ navigation }) => {
                     <Text style={styles.actionButtonText}>Sign Up</Text>
                   )}
                 </TouchableOpacity>
-              </View>
-
-              {/* Terms and Privacy Policy */}
-              <View style={styles.termsContainer}>
-                <View style={styles.termsTextContainer}>
-                  <Text style={styles.termsText}>
-                    By continuing you agree to our{' '}
-                  </Text>
-                  <TouchableOpacity 
-                    onPress={handleTermsPress}
-                    onPressIn={() => setIsTermsHovered(true)}
-                    onPressOut={() => setIsTermsHovered(false)}
-                    activeOpacity={0.7}
-                    style={styles.linkTouchable}
-                  >
-                    <Text style={[
-                      styles.linkText, 
-                      isTermsHovered && styles.linkTextHovered
-                    ]}>
-                      Terms & Conditions
-                    </Text>
-                  </TouchableOpacity>
-                  <Text style={styles.termsText}>
-                    {' '}and{' '}
-                  </Text>
-                  <TouchableOpacity 
-                    onPress={handlePrivacyPress}
-                    onPressIn={() => setIsPrivacyHovered(true)}
-                    onPressOut={() => setIsPrivacyHovered(false)}
-                    activeOpacity={0.7}
-                    style={styles.linkTouchable}
-                  >
-                    <Text style={[
-                      styles.linkText, 
-                      isPrivacyHovered && styles.linkTextHovered
-                    ]}>
-                      Privacy Policy
-                    </Text>
-                  </TouchableOpacity>
-                </View>
               </View>
 
               {/* Login Link */}
@@ -358,7 +380,7 @@ const SignupScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     flex: 1,
@@ -385,14 +407,10 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 15,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    
   },
   content: {
     paddingHorizontal: 30,
@@ -474,13 +492,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   countryCodeText: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontSize: 16,
     fontWeight: '600',
     marginRight: 5,
   },
   dropdownIcon: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -514,7 +532,7 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   phoneInput: {
     flex: 1,
@@ -539,13 +557,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
     width: '100%',
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -555,7 +573,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   actionButtonDisabled: {
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#0D542BFF',
+    opacity: 0.4,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -589,18 +608,41 @@ const styles = StyleSheet.create({
   toggleButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   termsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     paddingBottom: 15,
     paddingTop: 5,
     flexShrink: 1,
   },
+  termsWithCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexShrink: 1,
+  },
+  checkbox: {
+    marginRight: 10,
+    marginTop: 2,
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxBoxChecked: {
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
+  },
   termsTextContainer: {
+    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   termsText: {
@@ -618,7 +660,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'none',
   },
   linkTextHovered: {
-    color: '#009689',
+    color: '#0D542BFF',
   },
 })
 

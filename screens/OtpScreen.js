@@ -17,7 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI } from '../services/api'
 import { storage } from '../services/storage'
 
-const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
+const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp, onEditPhone }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(0)
@@ -177,7 +177,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <MaterialIcons name="arrow-back" size={24} color="#009689" />
+              <MaterialIcons name="arrow-back" size={24} color="#000000" />
             </TouchableOpacity>
             {/* <Text style={styles.headerTitle}>Enter Verification Code</Text>
             <View style={styles.headerBorder} /> */}
@@ -190,11 +190,20 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
               {/* Header Section */}
               <View style={styles.headerSection}>
                 <Text style={styles.illustrationTitle}>
-                  Enter Verification Code
+                Enter OTP
                 </Text>
-                <Text style={styles.illustrationSubtitle}>
-                  We've sent a 6-digit code to {phoneNumber}
-                </Text>
+                <View style={styles.subtitleContainer}>
+                  <Text style={styles.illustrationSubtitle}>
+                    We have sent a code to {phoneNumber}
+                  </Text>
+                  <TouchableOpacity 
+                    onPress={onEditPhone}
+                    style={styles.editIconContainer}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <MaterialIcons name="edit" size={16} color="#000000" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Input Section */}
@@ -208,7 +217,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
                         style={[
                           styles.otpBox,
                           { 
-                            borderColor: otp[index] ? '#009689' : (focusedIndex === index ? '#009689' : '#E5E5EA'),
+                            borderColor: otp[index] ? '#0D542BFF' : (focusedIndex === index ? '#0D542BFF' : '#E5E5EA'),
                             backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
                           }
                         ]}
@@ -277,7 +286,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     flex: 1,
@@ -303,15 +312,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignSelf: 'flex-start',
-    marginBottom: 15,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    marginBottom: 15,   
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   headerTitle: {
     fontSize: 24,
@@ -348,12 +351,21 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     lineHeight: 30,
   },
+  subtitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
   illustrationSubtitle: {
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'left',
     lineHeight: 22,
     paddingHorizontal: 0,
+  },
+  editIconContainer: {
+    marginLeft: 4,
+    padding: 2,
   },
   inputSection: {
     marginBottom: 10,
@@ -405,7 +417,7 @@ const styles = StyleSheet.create({
   toggleButton: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   actionButtonContainer: {
     paddingHorizontal: 30,
@@ -414,13 +426,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
     width: '100%',
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -430,7 +442,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   actionButtonDisabled: {
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#0D542BFF',
+    opacity: 0.4,
     shadowOpacity: 0,
     elevation: 0,
   },

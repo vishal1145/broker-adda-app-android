@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 2,
   },
   imageContainer: {
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dottedLineActive: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
   },
   dottedLineInactive: {
     backgroundColor: '#E5E5EA',
@@ -492,12 +492,12 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     width: responsive.scale(24),
     height: responsive.scale(24),
-    backgroundColor: '#009689',
-    borderRadius: responsive.scale(6),
+    backgroundColor: '#0D542BFF',
+    borderRadius: responsive.scale(12), // Circular checkbox
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -530,13 +530,13 @@ const styles = StyleSheet.create({
     paddingBottom: Math.max(responsive.verticalScale(50), 34), // Ensure minimum safe area
   },
   getStartedButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingVertical: responsive.verticalScale(20),
     paddingHorizontal: responsive.padding.xl,
     borderRadius: responsive.borderRadius.xl,
     alignItems: 'center',
     marginTop: responsive.spacing.sm,
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -557,20 +557,15 @@ const styles = StyleSheet.create({
   skipButton: {
     paddingHorizontal: responsive.padding.lg,
     paddingVertical: responsive.padding.sm,
-    borderRadius: responsive.borderRadius.xl,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // More visible background
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: '#E5E5EA',
   },
   skipButtonText: {
-    color: '#6B7280', // Darker color for better visibility
+    color: '#1F2937',
     fontSize: 16,
-    fontWeight: '600', // Slightly bolder
+    fontWeight: '500',
   },
   step3HeadingContainer: {
     paddingHorizontal: responsive.padding.xl,
