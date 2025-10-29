@@ -11,7 +11,8 @@ import {
   Animated,
   ActivityIndicator,
   Linking,
-  Alert
+  Alert,
+  Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@expo/vector-icons'
@@ -88,6 +89,30 @@ const ProfileScreen = ({ navigation }) => {
       ...prev,
       [imageType]: false
     }))
+  }
+
+  // Helper functions for document file types
+  const isImageFile = (url) => {
+    if (!url) return false
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+    const lowerUrl = url.toLowerCase()
+    return imageExtensions.some(ext => lowerUrl.includes(ext))
+  }
+
+  const isPdfFile = (url) => {
+    if (!url) return false
+    const lowerUrl = url.toLowerCase()
+    return lowerUrl.includes('.pdf')
+  }
+
+  const getFileTypeIcon = (url) => {
+    if (isPdfFile(url)) {
+      return 'picture-as-pdf'
+    } else if (isImageFile(url)) {
+      return 'image'
+    } else {
+      return 'description'
+    }
   }
 
   // Enhanced image component with fallback
@@ -214,12 +239,23 @@ const ProfileScreen = ({ navigation }) => {
               },
               {
                 id: 5,
-                name: 'Company ID',
+                name: 'Company Identification Details',
                 fileType: broker.kycDocs?.companyId ? (broker.kycDocs.companyId.includes('.pdf') ? 'PDF' : 'JPEG') : 'JPEG',
                 hasFile: !!broker.kycDocs?.companyId,
                 url: getSecureImageUrl(broker.kycDocs?.companyId) || ''
               }
-            ]
+            ].filter(doc => {
+              // Filter out documents with empty URLs or blank kycDocs values
+              const kycKey = doc.id === 1 ? 'aadhar' : 
+                           doc.id === 2 ? 'pan' :
+                           doc.id === 3 ? 'gst' :
+                           doc.id === 4 ? 'brokerLicense' :
+                           'companyId'
+              const kycValue = broker.kycDocs?.[kycKey]
+              
+              // Only show documents that have a non-empty kycDocs value
+              return kycValue && kycValue.trim() !== '' && doc.url && doc.url.trim() !== ''
+            })
           }
           
           setProfileData(mappedData)
@@ -325,9 +361,11 @@ const ProfileScreen = ({ navigation }) => {
     </View>
   )
 
+  const statusBarHeight = Platform.OS === 'ios' ? 44 : (StatusBar.currentHeight || 0)
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+    <SafeAreaView style={styles.container} edges={['top','bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       
       <ScrollView 
         style={styles.scrollView} 
@@ -346,7 +384,7 @@ const ProfileScreen = ({ navigation }) => {
             
             <View style={styles.modernHeaderContent}>
               <TouchableOpacity 
-                style={styles.backButton} 
+                style={[styles.backButton, { top: statusBarHeight + 10 }]} 
                 onPress={() => {
                   console.log('Back button pressed');
                   try {
@@ -366,7 +404,7 @@ const ProfileScreen = ({ navigation }) => {
               >
                 <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
+              <TouchableOpacity style={[styles.modernEditButton, { top: statusBarHeight + 10 }]} onPress={handleEditProfile}>
                 <MaterialIcons name="edit" size={20} color="#FFFFFF" />
               </TouchableOpacity>
               
@@ -388,13 +426,6 @@ const ProfileScreen = ({ navigation }) => {
                       </View>
                     )}
                     <View style={styles.profileImageOverlay} />
-                  </View>
-                  <View style={styles.modernStatusIndicator}>
-                    <View style={styles.modernStatusDot} />
-                    <View style={styles.statusPulse} />
-                  </View>
-                  <View style={styles.profileBadge}>
-                    <MaterialIcons name="verified" size={16} color="#FFFFFF" />
                   </View>
                 </View>
                 
@@ -456,209 +487,69 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Advanced Statistics Section */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsHeader}>
-            <Text style={styles.sectionTitle}>Performance Overview</Text>
-            <View style={styles.statsSubtitle}>
-              <MaterialIcons name="analytics" size={16} color="#009689" />
-              <Text style={styles.statsSubtitleText}>Real-time metrics</Text>
-            </View>
-          </View>
-          
-          <View style={styles.advancedStatsGrid}>
-            {/* Commission Card */}
-            <View style={styles.advancedStatCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.statCardHeader}>
-                  <View style={styles.statCardIcon}>
-                    <MaterialIcons name="trending-up" size={28} color="#FFFFFF" />
-            </View>
-                  <View style={styles.statCardTrend}>
-                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
-                    <Text style={styles.statTrendText}>+12%</Text>
-                  </View>
-                </View>
-                <Text style={styles.advancedStatValue}>{profileData.commissionEarned}</Text>
-                <Text style={styles.advancedStatLabel}>Commission Earned</Text>
-                <View style={styles.statProgressBar}>
-                  <View style={[styles.statProgressFill, { width: '85%', backgroundColor: '#FFFFFF' }]} />
-                </View>
-              </LinearGradient>
-          </View>
 
-            {/* Clients Card */}
-            <View style={styles.advancedStatCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.statCardHeader}>
-                  <View style={styles.statCardIcon}>
-                    <MaterialIcons name="people" size={28} color="#FFFFFF" />
-            </View>
-                  <View style={styles.statCardTrend}>
-                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
-                    <Text style={styles.statTrendText}>+8%</Text>
-                  </View>
-                </View>
-                <Text style={styles.advancedStatValue}>{profileData.totalClients}</Text>
-                <Text style={styles.advancedStatLabel}>Total Clients</Text>
-                <View style={styles.statProgressBar}>
-                  <View style={[styles.statProgressFill, { width: '92%', backgroundColor: '#FFFFFF' }]} />
-                </View>
-              </LinearGradient>
-          </View>
-
-            {/* Active Deals Card */}
-            <View style={styles.advancedStatCard}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706', '#B45309']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.statCardHeader}>
-                  <View style={styles.statCardIcon}>
-                    <MaterialIcons name="work" size={28} color="#FFFFFF" />
-              </View>
-                  <View style={styles.statCardTrend}>
-                    <MaterialIcons name="arrow-upward" size={16} color="#FFFFFF" />
-                    <Text style={styles.statTrendText}>+5%</Text>
-            </View>
-                </View>
-                <Text style={styles.advancedStatValue}>{profileData.activeDeals}</Text>
-                <Text style={styles.advancedStatLabel}>Active Deals</Text>
-                <View style={styles.statProgressBar}>
-                  <View style={[styles.statProgressFill, { width: '68%', backgroundColor: '#FFFFFF' }]} />
-                </View>
-              </LinearGradient>
-          </View>
-
-            {/* Experience Card */}
-            <View style={styles.advancedStatCard}>
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.statCardHeader}>
-                  <View style={styles.statCardIcon}>
-                    <MaterialIcons name="schedule" size={28} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.statCardTrend}>
-                    <MaterialIcons name="star" size={16} color="#FFFFFF" />
-                    <Text style={styles.statTrendText}>Expert</Text>
-                  </View>
-                </View>
-                <Text style={styles.advancedStatValue}>{profileData.yearsExperience}</Text>
-                <Text style={styles.advancedStatLabel}>Experience</Text>
-                <View style={styles.statProgressBar}>
-                  <View style={[styles.statProgressFill, { width: '100%', backgroundColor: '#FFFFFF' }]} />
-                </View>
-              </LinearGradient>
-            </View>
-          </View>
-
-          </View>
-
-        {/* Broker Information - Modern Design */}
+        {/* Professional Information */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="business" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Broker Information</Text>
-            </View>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>Professional</Text>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Professional Information</Text>
           
-          <View style={styles.brokerInfoContainer}>
-            <View style={styles.brokerInfoCard}>
-              <View style={styles.brokerInfoHeader}>
-                <View style={styles.brokerInfoIconContainer}>
-                  <MaterialIcons name="account-circle" size={32} color="#009689" />
-                </View>
-                <View style={styles.brokerInfoTitleContainer}>
-                  <Text style={styles.brokerInfoTitle}>Professional Details</Text>
-                  <Text style={styles.brokerInfoSubtitle}>Company & Personal Information</Text>
+          <View style={styles.infoContainer}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="business" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Firm Name</Text>
+                <Text style={styles.infoValue}>{profileData.firm}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="person" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Gender</Text>
+                <Text style={styles.infoValue}>{profileData.gender}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="verified" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Status</Text>
+                <View style={[
+                  styles.statusBadge,
+                  profileData.status === 'Unblock' ? styles.statusBadgeActive : styles.statusBadgeBlocked
+                ]}>
+                  <Text style={[
+                    styles.statusBadgeText,
+                    profileData.status === 'Unblock' ? styles.statusBadgeTextActive : styles.statusBadgeTextBlocked
+                  ]}>
+                    {profileData.status === 'Unblock' ? 'Active' : 'Blocked'}
+                  </Text>
                 </View>
               </View>
-              
-              <View style={styles.brokerInfoList}>
-                <View style={styles.brokerInfoRow}>
-                  <View style={styles.brokerInfoLeft}>
-                    <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="business" size={20} color="#009689" />
-                    </View>
-                    <Text style={styles.brokerInfoLabel}>Firm</Text>
-                  </View>
-                  <Text style={styles.brokerInfoValue}>{profileData.firm}</Text>
-                </View>
-                
-                <View style={styles.brokerInfoDivider} />
-                
-                <View style={styles.brokerInfoRow}>
-                  <View style={styles.brokerInfoLeft}>
-                    <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="person" size={20} color="#009689" />
-                    </View>
-                    <Text style={styles.brokerInfoLabel}>Gender</Text>
-                  </View>
-                  <Text style={styles.brokerInfoValue}>{profileData.gender}</Text>
-                </View>
-                
-                <View style={styles.brokerInfoDivider} />
-                
-                <View style={styles.brokerInfoRow}>
-                  <View style={styles.brokerInfoLeft}>
-                    <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="schedule" size={20} color="#009689" />
-                    </View>
-                    <Text style={styles.brokerInfoLabel}>Status</Text>
-                  </View>
-                  <View style={styles.statusContainer}>
-                    <View style={styles.statusIndicator}>
-                      <View style={styles.statusDot} />
-                    </View>
-                    <Text style={styles.statusText}>{profileData.status}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.brokerInfoDivider} />
-                
-                <View style={styles.brokerInfoRow}>
-                  <View style={styles.brokerInfoLeft}>
-                    <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="calendar-today" size={20} color="#009689" />
-                    </View>
-                    <Text style={styles.brokerInfoLabel}>Joined Date</Text>
-                  </View>
-                  <Text style={styles.brokerInfoValue}>{profileData.joinedDate}</Text>
-                </View>
-                
-                <View style={styles.brokerInfoDivider} />
-                
-                <View style={styles.brokerInfoRow}>
-                  <View style={styles.brokerInfoLeft}>
-                    <View style={styles.brokerInfoIcon}>
-                      <MaterialIcons name="description" size={20} color="#009689" />
-                    </View>
-                    <Text style={styles.brokerInfoLabel}>License Number</Text>
-                  </View>
-                  <Text style={styles.brokerInfoValue}>{profileData.licenseNumber}</Text>
-                </View>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="calendar-today" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Joined Date</Text>
+                <Text style={styles.infoValue}>{profileData.joinedDate}</Text>
+              </View>
+            </View>
+            
+            <View style={[styles.infoRow, styles.infoRowLast]}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="description" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>License Number</Text>
+                <Text style={styles.infoValue}>{profileData.licenseNumber}</Text>
               </View>
             </View>
           </View>
@@ -696,126 +587,128 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Contact Information - Floating Design */}
+        {/* Contact Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Information</Text>
-          <View style={styles.floatingContainer}>
-            <View style={styles.floatingHeader}>
-              <View style={styles.floatingIconWrapper}>
-                <MaterialIcons name="contact-phone" size={28} color="#FFFFFF" />
+          
+          <View style={styles.infoContainer}>
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="phone" size={22} color="#6B7280" />
               </View>
-              <View style={styles.floatingHeaderText}>
-                <Text style={styles.floatingTitle}>Get In Touch</Text>
-                <Text style={styles.floatingSubtitle}>Reach out anytime</Text>
-          </View>
-        </View>
-
-            <View style={styles.contactFloatingGrid}>
-              <View style={styles.contactFloatingItem}>
-                <View style={styles.contactFloatingIcon}>
-                  <MaterialIcons name="phone" size={22} color="#FFFFFF" />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Mobile</Text>
+                <Text style={styles.infoValue}>{profileData.mobileNumber}</Text>
               </View>
-                <View style={styles.contactFloatingContent}>
-                  <Text style={styles.contactFloatingLabel}>Mobile</Text>
-                  <View style={styles.contactFloatingValueRow}>
-                    <Text style={styles.contactFloatingValue}>{profileData.mobileNumber}</Text>
-                    <View style={styles.verifiedBadge}>
-                      <MaterialIcons name="check" size={12} color="#FFFFFF" />
             </View>
-          </View>
-            </View>
-          </View>
-
-              <View style={styles.contactFloatingItem}>
-                <View style={styles.contactFloatingIcon}>
-                  <MaterialIcons name="chat" size={22} color="#FFFFFF" />
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="chat" size={22} color="#6B7280" />
               </View>
-                <View style={styles.contactFloatingContent}>
-                  <Text style={styles.contactFloatingLabel}>WhatsApp</Text>
-                  <Text style={styles.contactFloatingValue}>{profileData.whatsappNumber}</Text>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>WhatsApp</Text>
+                <Text style={styles.infoValue}>{profileData.whatsappNumber}</Text>
+              </View>
             </View>
-          </View>
-
-              <View style={styles.contactFloatingItem}>
-                <View style={styles.contactFloatingIcon}>
-                  <MaterialIcons name="email" size={22} color="#FFFFFF" />
-                </View>
-                <View style={styles.contactFloatingContent}>
-                  <Text style={styles.contactFloatingLabel}>Email</Text>
-                  <View style={styles.contactFloatingValueRow}>
-                    <Text style={styles.contactFloatingValue}>{profileData.email}</Text>
-                    <View style={styles.verifiedBadge}>
-                      <MaterialIcons name="check" size={12} color="#FFFFFF" />
-                    </View>
-                  </View>
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="email" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue}>{profileData.email}</Text>
+              </View>
             </View>
-          </View>
-
-              <View style={styles.contactFloatingItem}>
-                <View style={styles.contactFloatingIcon}>
-                  <MaterialIcons name="location-on" size={22} color="#FFFFFF" />
-                </View>
-                <View style={styles.contactFloatingContent}>
-                  <Text style={styles.contactFloatingLabel}>Office Address</Text>
-                  <Text style={styles.contactFloatingValue}>{profileData.officeAddress}</Text>
+            
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="location-on" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Office Address</Text>
+                <Text style={styles.infoValue}>{profileData.officeAddress}</Text>
+              </View>
             </View>
-          </View>
-
-              <View style={styles.contactFloatingItem}>
-                <View style={styles.contactFloatingIcon}>
-                  <MaterialIcons name="language" size={22} color="#FFFFFF" />
-                </View>
-                <View style={styles.contactFloatingContent}>
-                  <Text style={styles.contactFloatingLabel}>Website</Text>
-                  <Text style={styles.contactFloatingValue}>{profileData.website}</Text>
-                </View>
+            
+            <View style={[styles.infoRow, styles.infoRowLast]}>
+              <View style={styles.infoIconWrapper}>
+                <MaterialIcons name="language" size={22} color="#6B7280" />
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Website</Text>
+                <Text style={styles.infoValue}>{profileData.website}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Social Media Section - Only show if documents are uploaded */}
-        {profileData.documents && profileData.documents.length > 0 && profileData.documents.some(doc => doc.hasFile && doc.url) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Social Media</Text>
-            <View style={styles.socialMediaContainer}>
-              {profileData.socialMedia && Object.keys(profileData.socialMedia).length > 0 ? (
-                Object.entries(profileData.socialMedia).map(([platform, url]) => {
-                  const getSocialIcon = (platform) => {
-                    switch (platform) {
-                      case 'linkedin':
-                        return <FontAwesome name="linkedin" size={24} color="#0077B5" />
-                      case 'twitter':
-                        return <FontAwesome name="twitter" size={24} color="#1DA1F2" />
-                      case 'instagram':
-                        return <FontAwesome name="instagram" size={24} color="#E4405F" />
-                      case 'facebook':
-                        return <FontAwesome name="facebook" size={24} color="#1877F2" />
-                      default:
-                        return <MaterialIcons name="link" size={24} color="#009689" />
+        {/* Social Media Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Social Media</Text>
+          <View style={styles.socialMediaContainer}>
+            {profileData.socialMedia && Object.keys(profileData.socialMedia).length > 0 && 
+             Object.values(profileData.socialMedia).some(url => url && url.trim() !== '') ? (
+              <View style={styles.socialMediaIconsRow}>
+                {Object.entries(profileData.socialMedia)
+                  .filter(([platform, url]) => url && url.trim() !== '')
+                  .map(([platform, url]) => {
+                    const getSocialIcon = (platform) => {
+                      switch (platform) {
+                        case 'linkedin':
+                          return <FontAwesome name="linkedin" size={28} color="#0077B5" />
+                        case 'twitter':
+                          return <FontAwesome name="twitter" size={28} color="#1DA1F2" />
+                        case 'instagram':
+                          return <FontAwesome name="instagram" size={28} color="#E4405F" />
+                        case 'facebook':
+                          return <FontAwesome name="facebook" size={28} color="#1877F2" />
+                        default:
+                          return <MaterialIcons name="link" size={28} color="#6B7280" />
+                      }
                     }
-                  }
 
-                  return (
-                    <View key={platform} style={styles.socialMediaItem}>
-                      <View style={styles.socialMediaIcon}>
+                    const openSocialLink = async () => {
+                      try {
+                        let urlToOpen = url
+                        // Ensure URL has protocol
+                        if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+                          urlToOpen = `https://${urlToOpen}`
+                        }
+                        const supported = await Linking.canOpenURL(urlToOpen)
+                        if (supported) {
+                          await Linking.openURL(urlToOpen)
+                        } else {
+                          Alert.alert('Error', 'Cannot open this link')
+                        }
+                      } catch (error) {
+                        console.error('Error opening social media link:', error)
+                        Alert.alert('Error', 'Failed to open link')
+                      }
+                    }
+
+                    return (
+                      <TouchableOpacity
+                        key={platform}
+                        style={styles.socialMediaIconButton}
+                        onPress={openSocialLink}
+                        activeOpacity={0.7}
+                      >
                         {getSocialIcon(platform)}
-                      </View>
-                      <View style={styles.socialMediaContent}>
-                        <Text style={styles.socialMediaPlatform}>
-                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                        </Text>
-                        <Text style={styles.socialMediaUrl}>{url}</Text>
-                      </View>
-                    </View>
-                  )
-                })
-              ) : (
-                <Text style={styles.emptyStateText}>No social media links added yet</Text>
-              )}
-            </View>
+                      </TouchableOpacity>
+                    )
+                  })}
+              </View>
+            ) : (
+              <View style={styles.emptySocialMediaContainer}>
+                <MaterialIcons name="share" size={48} color="#9CA3AF" />
+                <Text style={styles.emptySocialMediaText}>No social media links added yet</Text>
+                <Text style={styles.emptySocialMediaSubtext}>Social media links will appear here once added</Text>
+              </View>
+            )}
           </View>
-        )}
+        </View>
 
         {/* Documents Section - CreateProfile Style */}
         <View style={styles.section}>
@@ -825,15 +718,6 @@ const ProfileScreen = ({ navigation }) => {
             {profileData.documents && profileData.documents.length > 0 ? (
               profileData.documents.map((document, index) => {
                 const hasDocument = document.hasFile && document.url
-                const isImageFile = (url) => {
-                  if (!url) return false
-                  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-                  return imageExtensions.some(ext => url.toLowerCase().includes(ext))
-                }
-                const isPdfFile = (url) => {
-                  if (!url) return false
-                  return url.toLowerCase().includes('.pdf')
-                }
                 const isImage = hasDocument && isImageFile(document.url)
                 const isPdf = hasDocument && isPdfFile(document.url)
                 
@@ -843,7 +727,10 @@ const ProfileScreen = ({ navigation }) => {
                     <Text style={styles.documentTitleAbove}>{document.name}</Text>
                     
                     <TouchableOpacity 
-                      style={styles.documentCard}
+                      style={[
+                        styles.documentCard,
+                        hasDocument && styles.documentCardUploaded
+                      ]}
                       onPress={() => hasDocument ? handlePreviewDocument(document.url) : null}
                       activeOpacity={0.8}
                     >
@@ -857,17 +744,17 @@ const ProfileScreen = ({ navigation }) => {
                               resizeMode="cover"
                             />
                           ) : (
-                            <View style={styles.documentFilePreview}>
+                            <View style={[styles.documentFilePreview, hasDocument && styles.documentFilePreviewUploaded]}>
                               <MaterialIcons 
-                                name={isPdf ? 'picture-as-pdf' : 'description'} 
+                                name={getFileTypeIcon(document.url)} 
                                 size={48} 
-                                color="#009689" 
+                                color="#0D542BFF" 
                               />
-                              <Text style={styles.fileTypeText}>
+                              <Text style={[styles.fileTypeText, hasDocument && styles.fileTypeTextUploaded]}>
                                 {isPdf ? 'PDF Document' : 'Document'}
                               </Text>
-                              <Text style={styles.fileNameText} numberOfLines={1}>
-                                {document.name}
+                              <Text style={[styles.fileNameText, hasDocument && styles.fileNameTextUploaded]} numberOfLines={1}>
+                                {document.url.split('/').pop() || document.name}
                               </Text>
                             </View>
                           )}
@@ -886,7 +773,7 @@ const ProfileScreen = ({ navigation }) => {
                           <MaterialIcons 
                             name="cloud-upload" 
                             size={48} 
-                            color="#009689" 
+                            color="#8E8E93" 
                           />
                           <Text style={styles.uploadText}>Upload {document.name}</Text>
                           <Text style={styles.formatText}>PDF, JPG, PNG up to 10MB</Text>
@@ -935,8 +822,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   modernHeaderGradient: {
-    backgroundColor: '#009689',
-    paddingTop: 20,
+    backgroundColor: '#0D542BFF',
     paddingBottom: 50,
     position: 'relative',
     overflow: 'hidden',
@@ -982,31 +868,17 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 20,
     left: 24,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   modernEditButton: {
     position: 'absolute',
-    top: 20,
     right: 24,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   modernProfileSection: {
     alignItems: 'center',
@@ -1015,21 +887,23 @@ const styles = StyleSheet.create({
   modernProfileImageContainer: {
     position: 'relative',
     marginBottom: 24,
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileImageWrapper: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
     position: 'relative',
   },
   modernProfileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 4,
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    borderWidth: 1,
     borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
   },
   profileImageOverlay: {
     position: 'absolute',
@@ -1037,13 +911,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 60,
+    borderRadius: 58,
     backgroundColor: 'rgba(102, 126, 234, 0.1)',
   },
   modernStatusIndicator: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
+    bottom: 4,
+    right: 4,
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -1052,11 +926,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: '#667eea',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   modernStatusDot: {
     width: 14,
@@ -1075,8 +944,8 @@ const styles = StyleSheet.create({
   },
   profileBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: 4,
+    left: 4,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -1108,9 +977,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   profileImagePlaceholder: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   profileImagePlaceholderText: {
     fontSize: 36,
@@ -1222,8 +1096,8 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1F2937',
-    marginBottom: 8,
+    color: '#000000',
+    marginBottom: 12,
     letterSpacing: 0.5,
   },
   statsSubtitle: {
@@ -1247,11 +1121,6 @@ const styles = StyleSheet.create({
     minWidth: (width - 80) / 2,
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
   },
   statGradient: {
     padding: 20,
@@ -1313,7 +1182,7 @@ const styles = StyleSheet.create({
   // Section Styles
   section: {
     paddingHorizontal: 24,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1322,260 +1191,78 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  // Modern Broker Information Styles
-  sectionHeader: {
+  // Direct Info Styles (Professional and Contact Information)
+  infoContainer: {
+    marginTop: 12,
+  },
+  infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  sectionIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#009689',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#009689',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  sectionBadge: {
-    backgroundColor: '#F0FDFA',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  sectionBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#059669',
-  },
-  brokerInfoContainer: {
-    marginBottom: 8,
-  },
-  brokerInfoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  brokerInfoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingBottom: 20,
+    alignItems: 'flex-start',
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
-  brokerInfoIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#F0FDFA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    borderWidth: 2,
-    borderColor: '#A7F3D0',
+  infoRowLast: {
+    borderBottomWidth: 0,
   },
-  brokerInfoTitleContainer: {
-    flex: 1,
-  },
-  brokerInfoTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  brokerInfoSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  brokerInfoList: {
-    gap: 0,
-  },
-  brokerInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-  },
-  brokerInfoLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  brokerInfoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F0FDFA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  brokerInfoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  brokerInfoValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1F2937',
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: 16,
-  },
-  brokerInfoDivider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginLeft: 48,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  statusIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#DCFCE7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#10B981',
-  },
-
-  // Floating Design Styles
-  floatingContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  floatingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  floatingIconWrapper: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#3B82F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  floatingHeaderText: {
-    flex: 1,
-  },
-  floatingTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  floatingSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  contactFloatingGrid: {
-    gap: 16,
-  },
-  contactFloatingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  contactFloatingIcon: {
+  infoIconWrapper: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#009689',
+    backgroundColor: '#F9FAFB',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+    flexShrink: 0,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  contactFloatingContent: {
+  infoContent: {
     flex: 1,
+    paddingTop: 2,
+    justifyContent: 'flex-start',
   },
-  contactFloatingLabel: {
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    lineHeight: 22,
+    flexWrap: 'wrap',
+  },
+  statusBadge: {
+    backgroundColor: '#E8F5E8',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  statusBadgeActive: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#0D542BFF',
+  },
+  statusBadgeBlocked: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  statusBadgeText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
-    marginBottom: 4,
   },
-  contactFloatingValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+  statusBadgeTextActive: {
+    color: '#0D542BFF',
   },
-  contactFloatingValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  verifiedBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#10B981',
-    alignItems: 'center',
-    justifyContent: 'center',
+  statusBadgeTextBlocked: {
+    color: '#EF4444',
   },
 
   // CreateProfile Style Document Styles
@@ -1600,6 +1287,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     minHeight: 120,
   },
+  documentCardUploaded: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#0D542BFF',
+  },
   documentImageWrapper: {
     position: 'relative',
     width: '100%',
@@ -1616,16 +1307,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   documentPlaceholder: {
     alignItems: 'center',
@@ -1636,7 +1322,7 @@ const styles = StyleSheet.create({
   uploadText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#009689',
+    color: '#8E8E93',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -1653,12 +1339,18 @@ const styles = StyleSheet.create({
     height: 120,
     backgroundColor: '#F8F9FA',
   },
+  documentFilePreviewUploaded: {
+    backgroundColor: '#E8F5E8',
+  },
   fileTypeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
     marginTop: 8,
     textAlign: 'center',
+  },
+  fileTypeTextUploaded: {
+    color: '#0D542BFF',
   },
   fileNameText: {
     fontSize: 10,
@@ -1666,6 +1358,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     maxWidth: '90%',
+  },
+  fileNameTextUploaded: {
+    color: '#0D542BFF',
   },
 
   // Tags
@@ -1675,24 +1370,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#F0FDFA',
+    backgroundColor: '#E8F5E8',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#0D542BFF',
   },
   tagText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#059669',
+    color: '#0D542BFF',
   },
   regionTag: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#E8F5E8',
+    borderColor: '#0D542BFF',
   },
   regionTagText: {
-    color: '#2563EB',
+    color: '#0D542BFF',
   },
   emptyStateText: {
     fontSize: 14,
@@ -1723,46 +1418,40 @@ const styles = StyleSheet.create({
 
   // Social Media Styles
   socialMediaContainer: {
+    marginTop: 8,
+  },
+  socialMediaIconsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
   },
-  socialMediaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  socialMediaIconButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  socialMediaIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#0D542BFF',
   },
-  socialMediaContent: {
-    flex: 1,
+  emptySocialMediaContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
-  socialMediaPlatform: {
+  emptySocialMediaText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
+    color: '#6B7280',
+    marginTop: 16,
+    marginBottom: 8,
   },
-  socialMediaUrl: {
+  emptySocialMediaSubtext: {
     fontSize: 14,
     fontWeight: '400',
-    color: '#6B7280',
+    color: '#9CA3AF',
+    textAlign: 'center',
   },
 
   // Documents
@@ -1856,11 +1545,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 8,
     justifyContent: 'center',
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   logoutText: {
     fontSize: 16,
@@ -1879,14 +1563,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#009689',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
   },
 })
 
