@@ -218,7 +218,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp, onEditPhon
                           styles.otpBox,
                           { 
                             borderColor: otp[index] ? '#0D542BFF' : (focusedIndex === index ? '#0D542BFF' : '#E5E5EA'),
-                            backgroundColor: focusedIndex === index ? '#F0FDFF' : '#FFFFFF'
+                            backgroundColor: focusedIndex === index ? '#E8F5E8' : '#FFFFFF'
                           }
                         ]}
                         value={otp[index]}

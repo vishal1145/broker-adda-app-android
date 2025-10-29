@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { StyleSheet, Text, View, StatusBar, Image, Animated, Dimensions } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { responsive } from '../utils/responsive'
 import { storage } from '../services/storage'
 
@@ -58,8 +57,8 @@ const SplashScreen = ({ navigation }) => {
   }, [navigation])
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" translucent={true} />
       
       <View style={styles.gradient}>
         {/* Background Pattern */}
@@ -100,13 +99,14 @@ const SplashScreen = ({ navigation }) => {
           <Text style={styles.footerText}>© 2024 Broker Adda. All rights reserved.</Text>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0D542BFF',
   },
   gradient: {
     flex: 1,
