@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, StatusBar, Image, Animated, Dimensions } from '
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { responsive } from '../utils/responsive'
 import { storage } from '../services/storage'
+import * as NavigationBar from 'expo-navigation-bar'
 
 const SplashScreen = ({ navigation }) => {
   const fadeAnim = new Animated.Value(0)
@@ -10,6 +11,10 @@ const SplashScreen = ({ navigation }) => {
   const slideAnim = new Animated.Value(50)
 
   useEffect(() => {
+    // Set Android navigation bar color only for splash screen
+    NavigationBar.setBackgroundColorAsync('#0D542BFF').catch(() => {})
+    NavigationBar.setButtonStyleAsync('light').catch(() => {})
+
     // Animate logo entrance
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -55,6 +60,12 @@ const SplashScreen = ({ navigation }) => {
     }
 
     checkAuthAndNavigate()
+    
+    // Cleanup: restore defaults after leaving splash
+    return () => {
+      NavigationBar.setBackgroundColorAsync('#FFFFFF').catch(() => {})
+      NavigationBar.setButtonStyleAsync('dark').catch(() => {})
+    }
   }, [navigation])
 
   return (
