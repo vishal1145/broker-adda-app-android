@@ -218,7 +218,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp, onEditPhon
                           styles.otpBox,
                           { 
                             borderColor: otp[index] ? '#0D542BFF' : (focusedIndex === index ? '#0D542BFF' : '#E5E5EA'),
-                            backgroundColor: focusedIndex === index ? '#E8F5E8' : '#FFFFFF'
+                            backgroundColor: 'transparent'
                           }
                         ]}
                         value={otp[index]}
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,             
     minHeight: 50,
     paddingVertical: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',

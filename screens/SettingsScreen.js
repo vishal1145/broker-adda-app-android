@@ -7,68 +7,84 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Dimensions
+  Dimensions,
+  Linking
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import appJson from '../app.json'
+import { storage } from '../services/storage'
 
 const { width } = Dimensions.get('window')
 
 const SettingsScreen = ({ navigation }) => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false)
-  const [locationEnabled, setLocationEnabled] = useState(true)
-  const [biometricEnabled, setBiometricEnabled] = useState(false)
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(true)
+  const [emailEnabled, setEmailEnabled] = useState(false)
+  const [smsEnabled, setSmsEnabled] = useState(true)
+  const appVersion = (appJson?.expo?.version) || appJson?.version || '1.0.0'
 
   const settingsSections = [
     {
       title: 'Account',
       items: [
-        { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate' },
-        { icon: 'security', title: 'Security & Privacy', subtitle: 'Password, 2FA, and privacy settings', action: 'navigate' },
-        { icon: 'payment', title: 'Payment Methods', subtitle: 'Manage your payment options', action: 'navigate' },
-        { icon: 'receipt', title: 'Billing & Invoices', subtitle: 'View your billing history', action: 'navigate' }
+        { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate', route: 'Profile', iconColor: '#16A34A', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
+        { icon: 'verified-user', title: 'Two-Factor Authentication', subtitle: 'Enhanced security for your account', action: 'toggle', value: twoFactorEnabled, onToggle: setTwoFactorEnabled, iconColor: '#9CA3AF', iconBg: '#F3F4F6', iconBorder: '#E5E7EB' },
+        { icon: 'logout', title: 'Logout', subtitle: '', action: 'logout', isEmphasis: true, iconColor: '#F59E0B', iconBg: '#FFF7ED', iconBorder: '#FED7AA' },
+        { icon: 'delete', title: 'Delete Account', subtitle: '', action: 'navigate', destructive: true }
       ]
     },
     {
-      title: 'Preferences',
+      title: 'Notifications',
       items: [
-        { icon: 'notifications', title: 'Push Notifications', subtitle: 'Get notified about important updates', action: 'toggle', value: notificationsEnabled, onToggle: setNotificationsEnabled },
-        { icon: 'dark-mode', title: 'Dark Mode', subtitle: 'Switch between light and dark themes', action: 'toggle', value: darkModeEnabled, onToggle: setDarkModeEnabled },
-        { icon: 'location-on', title: 'Location Services', subtitle: 'Allow location access for better experience', action: 'toggle', value: locationEnabled, onToggle: setLocationEnabled },
-        { icon: 'fingerprint', title: 'Biometric Login', subtitle: 'Use fingerprint or face ID to login', action: 'toggle', value: biometricEnabled, onToggle: setBiometricEnabled }
+        { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: setPushEnabled, iconColor: '#2563EB', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'mail-outline', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: setEmailEnabled, iconColor: '#EF4444', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
+        { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: setSmsEnabled, iconColor: '#F59E0B', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
       ]
     },
     {
-      title: 'App Settings',
+      title: 'Privacy & Security',
       items: [
-        { icon: 'language', title: 'Language', subtitle: 'English (US)', action: 'navigate' },
-        { icon: 'schedule', title: 'Working Hours', subtitle: 'Set your availability', action: 'navigate' },
-        { icon: 'storage', title: 'Storage & Cache', subtitle: 'Manage app storage', action: 'navigate' },
-        { icon: 'update', title: 'App Updates', subtitle: 'Check for updates', action: 'navigate' }
+        { icon: 'lock-outline', title: 'Privacy Policy', subtitle: '', action: 'navigate', url: 'https://broker-adda.algofolks.com/privacy', iconColor: '#3B82F6', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'description', title: 'Terms of Service', subtitle: '', action: 'navigate', url: 'https://broker-adda.algofolks.com/terms', iconColor: '#10B981', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
+        { icon: 'storage', title: 'Data Management', subtitle: 'Export or delete your data', action: 'navigate', iconColor: '#10B981', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     },
     {
-      title: 'Support',
+      title: 'Appearance',
       items: [
-        { icon: 'help', title: 'Help Center', subtitle: 'Get help and support', action: 'navigate' },
-        { icon: 'contact-support', title: 'Contact Us', subtitle: 'Reach out to our support team', action: 'navigate' },
-        { icon: 'rate-review', title: 'Rate App', subtitle: 'Rate us on the app store', action: 'navigate' },
-        { icon: 'info', title: 'About', subtitle: 'App version and information', action: 'navigate' }
+        { icon: 'palette', title: 'App Theme', subtitle: 'Choose light or dark mode', action: 'navigate', iconColor: '#10B981', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
+      ]
+    },
+    {
+      title: 'Support & Feedback',
+      items: [
+        { icon: 'help-outline', title: 'Help Center', subtitle: '', action: 'navigate', iconColor: '#10B981', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
+        { icon: 'chat-bubble-outline', title: 'Send Feedback', subtitle: '', action: 'navigate', iconColor: '#10B981', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     }
   ]
 
   const SettingItem = ({ item, onPress }) => (
-    <TouchableOpacity style={styles.settingItem} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.settingItemCard, item.destructive && styles.settingItemCardDestructive]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
       <View style={styles.settingLeft}>
         <View style={styles.settingIcon}>
-          <MaterialIcons name={item.icon} size={24} color="#009689" />
+          <MaterialIcons
+            name={item.icon}
+            size={22}
+            color={item.destructive ? '#EF4444' : (item.iconColor || '#0D542BFF')}
+          />
         </View>
         <View style={styles.settingInfo}>
-          <Text style={styles.settingTitle}>{item.title}</Text>
-          <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+          <Text style={[styles.settingTitle, item.destructive && styles.destructiveTitle, item.isEmphasis && styles.emphasisTitle]}>{item.title}</Text>
+          {item.subtitle ? (
+            <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+          ) : null}
         </View>
       </View>
       <View style={styles.settingRight}>
@@ -76,11 +92,11 @@ const SettingsScreen = ({ navigation }) => {
           <Switch
             value={item.value}
             onValueChange={item.onToggle}
-            trackColor={{ false: '#E5E7EB', true: '#009689' }}
+            trackColor={{ false: '#D1D5DB', true: '#0D542BFF' }}
             thumbColor={item.value ? '#FFFFFF' : '#FFFFFF'}
           />
-        ) : (
-          <MaterialIcons name="chevron-right" size={24} color="#6B7280" />
+        ) : item.destructive ? null : (
+          <MaterialIcons name="chevron-right" size={22} color="#9CA3AF" />
         )}
       </View>
     </TouchableOpacity>
@@ -88,7 +104,7 @@ const SettingsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
         style={styles.scrollView} 
@@ -129,7 +145,23 @@ const SettingsScreen = ({ navigation }) => {
                     item={item}
                     onPress={() => {
                       if (item.action === 'navigate') {
-                        console.log(`Navigate to ${item.title}`)
+                        if (item.url) {
+                          Linking.openURL(item.url)
+                        } else if (item.route) {
+                          navigation.navigate(item.route)
+                        } else {
+                          console.log(`Navigate to ${item.title}`)
+                        }
+                      } else if (item.action === 'logout') {
+                        (async () => {
+                          try {
+                            await storage.clearAuthData()
+                          } catch (e) {
+                            // ignore and continue
+                          } finally {
+                            navigation.reset({ index: 0, routes: [{ name: 'PhoneLogin' }] })
+                          }
+                        })()
                       }
                     }}
                   />
@@ -138,12 +170,23 @@ const SettingsScreen = ({ navigation }) => {
             </View>
           ))}
 
-          {/* Logout Section */}
-          <View style={styles.logoutSection}>
-            <TouchableOpacity style={styles.logoutButton}>
-              <MaterialIcons name="logout" size={24} color="#FFFFFF" />
-              <Text style={styles.logoutText}>Sign Out</Text>
-            </TouchableOpacity>
+          {/* App Version Card */}
+          <View style={styles.versionCard}>
+            <View style={styles.versionInfo}>
+              <View style={styles.versionIconWrap}>
+                <MaterialIcons name="info-outline" size={18} color="#EAB308" />
+              </View>
+              <View style={styles.versionTextWrap}>
+                <Text style={styles.versionTitle}>App Version {appVersion}</Text>
+              </View>
+            </View>
+              <View style={styles.versionIndentedContent}>
+              <Text style={styles.versionSubtitle}>You are running the latest version of the app.
+Updates are automatic.</Text>
+              <TouchableOpacity style={styles.updateButton}>
+                <Text style={styles.updateButtonText}>Check for Updates</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -165,7 +208,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -258,25 +301,29 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    overflow: 'hidden',
+    // container now holds individual card rows
   },
-  settingItem: {
+  settingItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: 12,
+  },
+  settingItemCardDestructive: {
+    borderColor: 'transparent',
+    borderWidth: 0,
+    backgroundColor: '#FFFFFF',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -284,16 +331,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F0FDFA',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#E5E7EB',
   },
+  // All icons use the same neutral gray container
   settingInfo: {
     flex: 1,
   },
@@ -311,29 +359,74 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  // Logout Section
-  logoutSection: {
-    marginTop: 20,
+  destructiveTitle: {
+    color: '#EF4444',
   },
-  logoutButton: {
+  emphasisTitle: {
+    color: '#111827',
+    fontWeight: '700',
+  },
+
+  // Version Card
+  versionCard: {
+    marginTop: 8,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  versionInfo: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  versionIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EF4444',
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 8,
-    shadowColor: '#EF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginTop: 2,
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  versionTextWrap: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  versionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  versionSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  versionIndentedContent: {
+    // Align block with the title start (icon 24 + gap ~12)
+    // marginLeft: 34,
+  },
+  updateButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F4B400',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginTop: 12,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  updateButtonText: {
+    color: '#111827',
+    fontSize: 14,
+    fontWeight: '700',
   },
 })
 

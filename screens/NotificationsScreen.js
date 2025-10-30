@@ -11,12 +11,11 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
+// LinearGradient not used here
 
 const { width } = Dimensions.get('window')
 
 const NotificationsScreen = ({ navigation }) => {
-  const [selectedFilter, setSelectedFilter] = useState('all')
   
   // Sample notifications data
   const [notifications] = useState([
@@ -84,17 +83,11 @@ const NotificationsScreen = ({ navigation }) => {
       priority: 'medium',
       isRead: true,
       icon: 'update',
-      iconColor: '#009689'
+      iconColor: '#0D542BFF'
     }
   ])
 
-  const filterOptions = [
-    { key: 'all', label: 'All', count: notifications.length },
-    { key: 'unread', label: 'Unread', count: notifications.filter(notif => !notif.isRead).length },
-    { key: 'lead', label: 'Leads', count: notifications.filter(notif => notif.type === 'lead').length },
-    { key: 'property', label: 'Properties', count: notifications.filter(notif => notif.type === 'property').length },
-    { key: 'payment', label: 'Payments', count: notifications.filter(notif => notif.type === 'payment').length }
-  ]
+  // Filters removed as per UI requirement
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -105,46 +98,93 @@ const NotificationsScreen = ({ navigation }) => {
     }
   }
 
-  const filteredNotifications = selectedFilter === 'all' 
-    ? notifications 
-    : selectedFilter === 'unread'
-    ? notifications.filter(notif => !notif.isRead)
-    : notifications.filter(notif => notif.type === selectedFilter)
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'lead':
+      case 'property':
+      case 'payment':
+      case 'message':
+      case 'system':
+        return '#0D542B' // consistent dark green icons as in screenshot
+      default:
+        return '#0D542B'
+    }
+  }
+
+  const getTypeBgColor = (type) => {
+    switch (type) {
+      case 'lead':
+      case 'property':
+      case 'payment':
+      case 'message':
+      case 'system':
+        return '#E6F4EA' // soft green tint behind icons
+      default:
+        return '#E6F4EA'
+    }
+  }
+
+  const getBadgeTextColor = (type) => {
+    switch (type) {
+      case 'lead':
+        return '#0D542B'
+      case 'payment':
+        return '#F4B000' // bright yellow text
+      default:
+        return '#111827'
+    }
+  }
+
+  const getBadgeBgColor = (type) => {
+    switch (type) {
+      case 'lead':
+        return '#E6F4EA'
+      case 'payment':
+        return '#FFF4CC' // soft yellow
+      default:
+        return 'transparent'
+    }
+  }
+
+  const getTypeIconName = (type, fallback) => {
+    switch (type) {
+      case 'lead': return 'trending-up'
+      case 'property': return 'home'
+      case 'payment': return 'attach-money'
+      case 'message': return 'chat-bubble-outline'
+      case 'system': return 'build'
+      default: return fallback || 'notifications'
+    }
+  }
+
+  const filteredNotifications = notifications
 
   const NotificationCard = ({ notification }) => (
-    <TouchableOpacity style={[
-      styles.notificationCard,
-      !notification.isRead && styles.unreadCard
-    ]}>
+    <TouchableOpacity style={styles.notificationCard}>
       <View style={styles.notificationHeader}>
-        <View style={[styles.notificationIcon, { backgroundColor: notification.iconColor + '20' }]}>
-          <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
+        <View style={[styles.notificationIcon, { backgroundColor: getTypeBgColor(notification.type) }]}>
+          <MaterialIcons name={getTypeIconName(notification.type, notification.icon)} size={18} color={getTypeColor(notification.type)} />
         </View>
         <View style={styles.notificationInfo}>
-          <Text style={[styles.notificationTitle, !notification.isRead && styles.unreadTitle]}>
-            {notification.title}
-          </Text>
+          <Text style={styles.notificationTitle}>{notification.title}</Text>
           <Text style={styles.notificationTime}>{notification.time}</Text>
         </View>
-        <View style={styles.notificationActions}>
-          {!notification.isRead && <View style={styles.unreadDot} />}
-          <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(notification.priority) }]} />
-        </View>
       </View>
-      
+
       <Text style={styles.notificationDescription}>{notification.description}</Text>
-      
+
+      <View style={styles.footerDivider} />
+
       <View style={styles.notificationFooter}>
-        <View style={styles.typeBadge}>
-          <Text style={[styles.typeText, { color: notification.iconColor }]}>
-            {notification.type.toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.priorityBadge}>
-          <Text style={[styles.priorityText, { color: getPriorityColor(notification.priority) }]}>
-            {notification.priority.toUpperCase()}
-          </Text>
-        </View>
+        {['lead', 'payment'].includes(notification.type) ? (
+          <View style={[styles.typeBadge, { backgroundColor: getBadgeBgColor(notification.type) }]}>
+            <Text style={[styles.typeText, { color: getBadgeTextColor(notification.type) }]}>
+              {notification.type.toUpperCase()}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.typeTextPlain}>{notification.type.toUpperCase()}</Text>
+        )}
       </View>
     </TouchableOpacity>
   )
@@ -176,112 +216,50 @@ const NotificationsScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.headerButton}>
                 <MaterialIcons name="mark-email-read" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton}>
+              <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
                 <MaterialIcons name="settings" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Stats Overview */}
+        {/* Stats Overview - two cards */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.length}</Text>
-                <Text style={styles.statLabel}>Total Notifications</Text>
-              </LinearGradient>
+            <View style={[styles.statCard, styles.statCardGreen]}> 
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="trending-up" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>{notifications.filter(notif => notif.type === 'lead').length}</Text>
+                </View>
+                <Text style={styles.statTitle}>Lead Updates</Text>
+              </View>
             </View>
-            
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="fiber-new" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => !notif.isRead).length}</Text>
-                <Text style={styles.statLabel}>Unread</Text>
-              </LinearGradient>
-            </View>
-            
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706', '#B45309']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => notif.type === 'lead').length}</Text>
-                <Text style={styles.statLabel}>Lead Updates</Text>
-              </LinearGradient>
-            </View>
-            
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="home" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{notifications.filter(notif => notif.type === 'property').length}</Text>
-                <Text style={styles.statLabel}>Property Updates</Text>
-              </LinearGradient>
+
+            <View style={[styles.statCard, styles.statCardYellow]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="home" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>{notifications.filter(notif => notif.type === 'property').length}</Text>
+                </View>
+                <Text style={styles.statTitle}>Property Updates</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Filter Tabs */}
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {filterOptions.map((filter) => (
-              <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.filterTab,
-                  selectedFilter === filter.key && styles.filterTabActive
-                ]}
-                onPress={() => setSelectedFilter(filter.key)}
-              >
-                <Text style={[
-                  styles.filterTabText,
-                  selectedFilter === filter.key && styles.filterTabTextActive
-                ]}>
-                  {filter.label}
-                </Text>
-                <View style={[
-                  styles.filterBadge,
-                  selectedFilter === filter.key && styles.filterBadgeActive
-                ]}>
-                  <Text style={[
-                    styles.filterBadgeText,
-                    selectedFilter === filter.key && styles.filterBadgeTextActive
-                  ]}>
-                    {filter.count}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Filters intentionally removed */}
 
         {/* Notifications List */}
         <View style={styles.notificationsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Notifications ({filteredNotifications.length})</Text>
-            <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#009689" />
-              <Text style={styles.sortText}>Sort</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>
+              Notifications (
+              <Text style={styles.countText}>{notifications.length}</Text>
+              <Text> / </Text>
+              <Text style={styles.unreadCountText}>{notifications.filter(n => !n.isRead).length} Unread</Text>
+              )
+            </Text>
           </View>
           
           <FlatList
@@ -310,8 +288,18 @@ const styles = StyleSheet.create({
   },
 
   // Header Styles
+  simpleHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  simpleHeaderText: {
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '600',
+  },
   modernHeader: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -401,30 +389,40 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: (width - 52) / 2,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  statGradient: {
-    padding: 20,
+  statCardGreen: {
+    backgroundColor: '#34D399',
+  },
+  statCardYellow: {
+    backgroundColor: '#FCD34D',
+  },
+  statCardContent: {
+    padding: 16,
+    minHeight: 88,
+  },
+  statTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 100,
+    marginBottom: 10,
   },
-  statValue: {
-    fontSize: 24,
+  statCount: {
+    fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginVertical: 8,
   },
-  statLabel: {
+  statTitle: {
     fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Filter Section
@@ -447,8 +445,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   filterTabActive: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
   },
   filterTabText: {
     fontSize: 14,
@@ -495,6 +493,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1F2937',
   },
+  countText: {
+    color: '#1F2937',
+    fontWeight: '700',
+  },
+  unreadCountText: {
+    color: '#0D542BFF',
+    fontWeight: '700',
+  },
   sortButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -508,50 +514,58 @@ const styles = StyleSheet.create({
   sortText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
     marginLeft: 4,
   },
 
   // Notification Card Styles
   notificationCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
   unreadCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#009689',
-    backgroundColor: '#F8FAFC',
+    // intentionally simplified to keep all cards consistent with design
+    borderLeftWidth: 0,
+    backgroundColor: '#FFFFFF',
   },
   notificationHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   notificationIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  notificationIconSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   notificationInfo: {
     flex: 1,
   },
   notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   unreadTitle: {
     fontWeight: '700',
@@ -568,7 +582,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
   },
   priorityIndicator: {
     width: 12,
@@ -576,27 +590,35 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   notificationDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  footerDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 10,
   },
   notificationFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   typeBadge: {
-    backgroundColor: '#F0FDFA',
-    borderRadius: 12,
-    paddingHorizontal: 8,
+    borderRadius: 10,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   typeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  typeTextPlain: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: 0.3,
   },
   priorityBadge: {
     backgroundColor: '#F3F4F6',

@@ -490,6 +490,31 @@ export const leadsAPI = {
 
 // Properties API functions
 export const propertiesAPI = {
+  // Get properties for a broker
+  getProperties: async (userId, token, page = 1, limit = 5, status = 'all') => {
+    try {
+      console.log('Fetching properties for user:', userId);
+      let url = `/api/properties?brokerId=${userId}&page=${page}&limit=${limit}`;
+      
+      // Add status filter if not 'all'
+      if (status && status !== 'all') {
+        url += `&status=${encodeURIComponent(status)}`;
+      }
+      
+      const response = await api.get(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Properties fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get properties error:', error);
+      throw error;
+    }
+  },
+
   // Create new property
   createProperty: async (propertyData, token) => {
     try {
@@ -504,6 +529,60 @@ export const propertiesAPI = {
       return response.data;
     } catch (error) {
       console.error('Create property error:', error);
+      throw error;
+    }
+  },
+
+  // Get property details by ID
+  getPropertyDetails: async (propertyId, token) => {
+    try {
+      console.log('Fetching property details for ID:', propertyId);
+      const response = await api.get(`/api/properties/${propertyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Property details fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get property details error:', error);
+      throw error;
+    }
+  },
+
+  // Update property by ID
+  updateProperty: async (propertyId, propertyData, token) => {
+    try {
+      console.log('Updating property:', propertyId, propertyData);
+      const response = await api.put(`/api/properties/${propertyId}`, propertyData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Property updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update property error:', error);
+      throw error;
+    }
+  },
+
+  // Delete property by ID
+  deleteProperty: async (propertyId, token) => {
+    try {
+      console.log('Deleting property:', propertyId);
+      const response = await api.delete(`/api/properties/${propertyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Property deleted successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Delete property error:', error);
       throw error;
     }
   }

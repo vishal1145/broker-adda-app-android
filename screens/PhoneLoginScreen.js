@@ -21,16 +21,9 @@ const PhoneLoginScreen = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isOtpSent, setIsOtpSent] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedCountryCode, setSelectedCountryCode] = useState('+91')
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  // Country code is fixed to +91
   
-  const countryCodes = [
-    { code: '+91', country: 'India' },
-    { code: '+62', country: 'Indonesia' },
-    { code: '+1', country: 'USA' },
-    { code: '+44', country: 'UK' },
-    { code: '+86', country: 'China' }
-  ]
+  // Country codes dropdown removed; using +91 only
 
   const handleSendOtp = async () => {
     if (!phoneNumber.trim()) {
@@ -107,14 +100,7 @@ const PhoneLoginScreen = ({ navigation }) => {
     setIsOtpSent(false)
   }
 
-  const handleCountryCodeSelect = (countryCode) => {
-    setSelectedCountryCode(countryCode)
-    setShowCountryDropdown(false)
-  }
-
-  const toggleCountryDropdown = () => {
-    setShowCountryDropdown(!showCountryDropdown)
-  }
+  // Dropdown logic removed
 
   const formatPhoneNumber = (text) => {
     // Remove all non-numeric characters
@@ -194,17 +180,14 @@ const PhoneLoginScreen = ({ navigation }) => {
                 {/* Phone Number Input */}
                 <View style={styles.phoneInputContainer}>
                   <View style={styles.inputRow}>
-                    <TouchableOpacity 
+                    <View 
                       style={[
                         styles.countryCode,
-                        { borderColor: phoneNumber.length > 0 ? '#0D542BFF' : '#E5E5EA' }
+                        { borderColor: '#0D542BFF' }
                       ]}
-                      onPress={toggleCountryDropdown}
-                      activeOpacity={0.7}
                     >
-                      <Text style={styles.countryCodeText}>{selectedCountryCode}</Text>
-                      <Text style={styles.dropdownIcon}>▼</Text>
-                    </TouchableOpacity>
+                      <Text style={styles.countryCodeText}>+91</Text>
+                    </View>
                     
                     <View style={styles.inputGap} />
                     
@@ -222,20 +205,7 @@ const PhoneLoginScreen = ({ navigation }) => {
                     />
                   </View>
                   
-                  {/* Country Code Dropdown */}
-                  {showCountryDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      {countryCodes.map((country, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={styles.dropdownItem}
-                          onPress={() => handleCountryCodeSelect(country.code)}
-                        >
-                          <Text style={styles.dropdownItemText}>{country.code}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+                  {/* Country code is fixed to +91; dropdown removed */}
                 </View>
               </View>
             </View>
@@ -399,7 +369,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   countryCode: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'transparent',
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -433,9 +403,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   countryCodeText: {
-    color: '#0D542BFF',
+    color: '#000000',
     fontSize: 16,
-    fontWeight: '600',
+    // fontWeight: '600',
     marginRight: 5,
   },
   dropdownIcon: {
@@ -477,7 +447,7 @@ const styles = StyleSheet.create({
   },
   phoneInput: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: 'transparent',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,

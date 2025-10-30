@@ -91,7 +91,7 @@ const HomeScreen = ({ navigation }) => {
             style={styles.retryButton}
             onPress={retry}
           >
-            <MaterialIcons name="refresh" size={12} color="#009689" />
+            <MaterialIcons name="refresh" size={12} color="#0D542BFF" />
           </TouchableOpacity>
         </View>
       )
@@ -329,11 +329,11 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.metricCard}>
       <View style={styles.cardHeader}>
         <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-          <MaterialIcons name={icon} size={16} color={iconColor === "#009689" ? "#FFFFFF" : "#009689"} />
+          <MaterialIcons name={icon} size={16} color={iconColor === "#0D542BFF" ? "#FFFFFF" : "#0D542BFF"} />
         </View>
         <Text style={styles.cardTitle}>{title}</Text>
         <View style={styles.changePill}>
-          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#009689" />
+          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#0D542BFF" />
           <Text style={styles.changeText}>{change}%</Text>
         </View>
       </View>
@@ -356,7 +356,7 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
         style={styles.scrollView} 
@@ -387,7 +387,7 @@ const HomeScreen = ({ navigation }) => {
               </View>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.notificationButton}>
+              <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate('Notifications')}>
                 <View style={styles.notificationBadge}>
                   <Text style={styles.badgeNumber}>3</Text>
                 </View>
@@ -534,7 +534,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="business" size={24} color="#009689" />
+                  <MaterialIcons name="business" size={24} color="#0D542BFF" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -551,7 +551,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="home" size={24} color="#009689" />
+                  <MaterialIcons name="home" size={24} color="#0D542BFF" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -568,7 +568,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.propertyCard}>
               <View style={styles.propertyCardHeader}>
                 <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="location-on" size={24} color="#009689" />
+                  <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
                 </View>
                 <View style={styles.propertyChangeContainer}>
                   <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
@@ -654,9 +654,9 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <Text style={styles.sectionTitle}>Notifications</Text>
             </View>
-            <TouchableOpacity style={styles.seeAllButton}>
+            <TouchableOpacity style={styles.seeAllButton} onPress={() => navigation.navigate('Notifications')}>
               <Text style={styles.seeAllText}>See All</Text>
-              <MaterialIcons name="arrow-forward" size={16} color="#009689" />
+              <MaterialIcons name="arrow-forward" size={16} color="#0D542BFF" />
             </TouchableOpacity>
           </View>
           
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
 
   // Modern Header Styles
   modernHeader: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -897,10 +897,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1066,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   propertyProgressFill: {
     height: '100%',
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 3,
   },
 
@@ -1136,7 +1136,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   notificationsContainer: {
     gap: 16,
@@ -1295,7 +1295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#009689',
+    borderColor: '#0D542BFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

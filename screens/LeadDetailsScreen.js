@@ -651,7 +651,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#009689" />
           <Text style={styles.loadingText}>Loading lead details...</Text>
@@ -663,7 +663,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   if (error) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.errorContainer}>
           <MaterialIcons name="error-outline" size={48} color="#EF4444" />
           <Text style={styles.errorTitle}>Failed to Load Lead Details</Text>
@@ -682,7 +682,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   if (!leadData) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.emptyContainer}>
           <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
           <Text style={styles.emptyTitle}>Lead Not Found</Text>
@@ -694,7 +694,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
         style={styles.scrollView} 

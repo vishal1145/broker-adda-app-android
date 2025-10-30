@@ -144,7 +144,7 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
           <MaterialIcons name="person" size={20} color="#065F46" />
         )}
         <TouchableOpacity 
-          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#009689', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
           onPress={retry}
         >
           <MaterialIcons name="refresh" size={10} color="#FFFFFF" />
@@ -1430,7 +1430,7 @@ const LeadsScreen = ({ navigation }) => {
 
     const getActionIconColor = (buttonType) => {
       const isPressed = pressedButton === buttonType
-      return isPressed ? '#009689' : '#9E9E9E'
+      return isPressed ? '#0D542BFF' : '#9E9E9E'
     }
 
     return (
@@ -1466,7 +1466,7 @@ const LeadsScreen = ({ navigation }) => {
         <View style={styles.leadDetailsGrid}>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="trending-up" size={16} color="#009689" />
+              <MaterialIcons name="trending-up" size={16} color="#0D542BFF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REQUIREMENT</Text>
                 <Text style={styles.detailValue}>{lead.requirement || 'Not specified'}</Text>
@@ -1475,7 +1475,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="home" size={16} color="#009689" />
+              <MaterialIcons name="home" size={16} color="#0D542BFF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>PROPERTY TYPE</Text>
                 <Text style={styles.detailValue}>{lead.propertyType || 'Not specified'}</Text>
@@ -1484,7 +1484,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="attach-money" size={16} color="#009689" />
+              <MaterialIcons name="attach-money" size={16} color="#0D542BFF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>BUDGET</Text>
                 <Text style={styles.detailValue}>{lead.budget}</Text>
@@ -1493,7 +1493,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="location-on" size={16} color="#009689" />
+              <MaterialIcons name="location-on" size={16} color="#0D542BFF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REGION(S)</Text>
                 <Text style={styles.detailValue}>{lead.region || 'Not specified'}</Text>
@@ -1584,7 +1584,7 @@ const LeadsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
         style={styles.scrollView} 
@@ -1608,8 +1608,8 @@ const LeadsScreen = ({ navigation }) => {
                 hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(1, true, searchQuery, apiStatus)
               ])
             }}
-            colors={['#009689']}
-            tintColor="#009689"
+            colors={['#0D542BFF']}
+            tintColor="#0D542BFF"
           />
         }
       >
@@ -1665,7 +1665,7 @@ const LeadsScreen = ({ navigation }) => {
             </View>
             {isSearching && (
               <View style={styles.searchLoadingContainer}>
-                <ActivityIndicator size="small" color="#009689" />
+                <ActivityIndicator size="small" color="#0D542BFF" />
                 <Text style={styles.searchLoadingText}>Searching...</Text>
               </View>
             )}
@@ -1758,7 +1758,7 @@ const LeadsScreen = ({ navigation }) => {
                         {option.label}
                       </Text>
                       {selectedStatus === option.key && (
-                        <MaterialIcons name="check" size={20} color="#009689" />
+                        <MaterialIcons name="check" size={20} color="#0D542BFF" />
                       )}
                     </TouchableOpacity>
                   ))}
@@ -1770,7 +1770,7 @@ const LeadsScreen = ({ navigation }) => {
               style={styles.advancedFilterButton}
               onPress={() => setShowAdvancedFilter(true)}
             >
-              <MaterialIcons name="tune" size={20} color="#009689" />
+              <MaterialIcons name="tune" size={20} color="#0D542BFF" />
               <Text style={styles.advancedFilterText}>Advanced</Text>
             </TouchableOpacity>
           </View>
@@ -1797,7 +1797,7 @@ const LeadsScreen = ({ navigation }) => {
           
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#009689" />
+              <ActivityIndicator size="large" color="#0D542BFF" />
               <Text style={styles.loadingText}>Loading leads...</Text>
             </View>
           ) : error ? (
@@ -1874,7 +1874,7 @@ const LeadsScreen = ({ navigation }) => {
                 }}
                 disabled={!pagination.hasPrevPage}
               >
-                <MaterialIcons name="chevron-left" size={20} color={pagination.hasPrevPage ? "#009689" : "#9CA3AF"} />
+                <MaterialIcons name="chevron-left" size={20} color={pagination.hasPrevPage ? "#0D542BFF" : "#9CA3AF"} />
                 <Text style={[styles.paginationButtonText, !pagination.hasPrevPage && styles.paginationButtonTextDisabled]}>
                   Previous
                 </Text>
@@ -1914,7 +1914,7 @@ const LeadsScreen = ({ navigation }) => {
                 <Text style={[styles.paginationButtonText, !pagination.hasNextPage && styles.paginationButtonTextDisabled]}>
                   Next
                 </Text>
-                <MaterialIcons name="chevron-right" size={20} color={pagination.hasNextPage ? "#009689" : "#9CA3AF"} />
+                <MaterialIcons name="chevron-right" size={20} color={pagination.hasNextPage ? "#0D542BFF" : "#9CA3AF"} />
               </TouchableOpacity>
             </View>
           )}
@@ -1983,11 +1983,11 @@ const LeadsScreen = ({ navigation }) => {
                           style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
                           onPress={() => handleRegionSelect({ _id: null, name: 'All Regions' })}
                         >
-                          <Text style={[styles.filterDropdownItemText, { color: '#009689', fontWeight: '600' }]}>All Regions</Text>
+                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Regions</Text>
                         </TouchableOpacity>
                         {isLoadingRegions ? (
                           <View style={styles.filterDropdownItem}>
-                            <ActivityIndicator size="small" color="#009689" />
+                            <ActivityIndicator size="small" color="#0D542BFF" />
                             <Text style={styles.filterDropdownItemText}>Loading regions...</Text>
                           </View>
                         ) : (
@@ -2048,7 +2048,7 @@ const LeadsScreen = ({ navigation }) => {
                           style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
                           onPress={() => handleFilterRequirementSelect({ key: 'All Requirements', value: 'All Requirements' })}
                         >
-                          <Text style={[styles.filterDropdownItemText, { color: '#009689', fontWeight: '600' }]}>All Requirements</Text>
+                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Requirements</Text>
                         </TouchableOpacity>
                         {requirementOptions.slice(1).map((option) => (
                           <TouchableOpacity
@@ -2061,7 +2061,7 @@ const LeadsScreen = ({ navigation }) => {
                           >
                             <Text style={[
                               styles.filterDropdownItemText,
-                              filterData.requirement === option.value && { color: '#009689', fontWeight: '600' }
+                              filterData.requirement === option.value && { color: '#0D542BFF', fontWeight: '600' }
                             ]}>{option.value}</Text>
                           </TouchableOpacity>
                         ))}
@@ -2104,7 +2104,7 @@ const LeadsScreen = ({ navigation }) => {
                           style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
                           onPress={() => handleFilterPropertyTypeSelect({ key: 'All Property Types', value: 'All Property Types' })}
                         >
-                          <Text style={[styles.filterDropdownItemText, { color: '#009689', fontWeight: '600' }]}>All Property Types</Text>
+                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Property Types</Text>
                         </TouchableOpacity>
                         {propertyTypeOptions.slice(1).map((option) => (
                           <TouchableOpacity
@@ -2117,7 +2117,7 @@ const LeadsScreen = ({ navigation }) => {
                           >
                             <Text style={[
                               styles.filterDropdownItemText,
-                              filterData.propertyType === option.value && { color: '#009689', fontWeight: '600' }
+                              filterData.propertyType === option.value && { color: '#0D542BFF', fontWeight: '600' }
                             ]}>{option.value}</Text>
                           </TouchableOpacity>
                         ))}
@@ -2388,7 +2388,7 @@ const LeadsScreen = ({ navigation }) => {
                         >
                           {isLoadingRegions ? (
                             <View style={styles.addLeadDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
+                              <ActivityIndicator size="small" color="#0D542BFF" />
                               <Text style={styles.addLeadDropdownItemText}>Loading regions...</Text>
                             </View>
                           ) : (
@@ -2445,7 +2445,7 @@ const LeadsScreen = ({ navigation }) => {
                         >
                           {isLoadingRegions ? (
                             <View style={styles.addLeadDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
+                              <ActivityIndicator size="small" color="#0D542BFF" />
                               <Text style={styles.addLeadDropdownItemText}>Loading regions...</Text>
                             </View>
                           ) : (
@@ -2651,7 +2651,7 @@ const LeadsScreen = ({ navigation }) => {
                         >
                           {isLoadingRegions ? (
                             <View style={styles.shareDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
+                              <ActivityIndicator size="small" color="#0D542BFF" />
                               <Text style={styles.shareDropdownItemText}>Loading regions...</Text>
                             </View>
                           ) : (
@@ -2739,7 +2739,7 @@ const LeadsScreen = ({ navigation }) => {
                             <MaterialIcons 
                               name={shareData.selectedBrokers.length === allBrokers.length ? "check-box" : "check-box-outline-blank"} 
                               size={20} 
-                              color="#009689" 
+                              color="#0D542BFF" 
                             />
                           </View>
                         </TouchableOpacity>
@@ -2754,7 +2754,7 @@ const LeadsScreen = ({ navigation }) => {
                         >
                           {isLoadingBrokers ? (
                             <View style={styles.shareDropdownItem}>
-                              <ActivityIndicator size="small" color="#009689" />
+                              <ActivityIndicator size="small" color="#0D542BFF" />
                               <Text style={styles.shareDropdownItemText}>Loading brokers...</Text>
                             </View>
                           ) : (
@@ -2784,7 +2784,7 @@ const LeadsScreen = ({ navigation }) => {
                                         </Text>
                                       </View>
                                       {isSelected && (
-                                        <MaterialIcons name="check" size={20} color="#009689" />
+                                        <MaterialIcons name="check" size={20} color="#0D542BFF" />
                                       )}
                                     </View>
                                   </TouchableOpacity>
@@ -2871,7 +2871,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   modernHeader: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingTop: 40,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -3104,7 +3104,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   dropdownItemTextActive: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontWeight: '600',
   },
   advancedFilterButton: {
@@ -3121,7 +3121,7 @@ const styles = StyleSheet.create({
   advancedFilterText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
 
   // Leads Section
@@ -3161,7 +3161,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   toggleButtonActive: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
   },
   toggleThumb: {
     width: 24,
@@ -3346,7 +3346,7 @@ const styles = StyleSheet.create({
     color: '#9E9E9E',
   },
   actionButtonTextPressed: {
-    color: '#009689',
+    color: '#0D542BFF',
   },
 
   // Loading, Error, and Empty States
@@ -3380,7 +3380,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -3440,7 +3440,7 @@ const styles = StyleSheet.create({
   paginationButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
     marginHorizontal: 4,
   },
   paginationButtonTextDisabled: {
@@ -3526,7 +3526,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E7EB',
   },
   modalButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -3666,7 +3666,7 @@ const styles = StyleSheet.create({
   sliderValueText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   sliderWrapper: {
     marginBottom: 8,
@@ -3690,7 +3690,7 @@ const styles = StyleSheet.create({
   },
   sliderProgress: {
     height: 8,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 4,
     position: 'absolute',
     top: 12,
@@ -3701,10 +3701,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 20,
     height: 20,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 10,
     top: 8,
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
@@ -3736,7 +3736,7 @@ const styles = StyleSheet.create({
   },
   applyFiltersButton: {
     flex: 1,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -3842,8 +3842,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   addLeadButtonActive: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
   },
   addLeadButtonText: {
     fontSize: 14,
@@ -3925,7 +3925,7 @@ const styles = StyleSheet.create({
   },
   addLeadSubmitButton: {
     flex: 1,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -4018,7 +4018,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
   },
   shareTypeText: {
     fontSize: 16,
@@ -4027,7 +4027,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   shareTypeTextActive: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontWeight: '600',
   },
   shareFieldContainer: {
@@ -4156,7 +4156,7 @@ const styles = StyleSheet.create({
   },
   shareSubmitButton: {
     flex: 1,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -4177,7 +4177,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#A7F3D0',
   },
   selectAllText: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontWeight: '600',
   },
   dropdownDivider: {

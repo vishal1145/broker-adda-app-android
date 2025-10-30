@@ -365,7 +365,7 @@ const ProfileScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       <ScrollView 
         style={styles.scrollView} 
@@ -497,9 +497,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoIconWrapper}>
                 <MaterialIcons name="business" size={22} color="#6B7280" />
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Firm Name</Text>
-                <Text style={styles.infoValue}>{profileData.firm}</Text>
+              <View style={styles.infoContentRow}>
+                <Text style={styles.infoLabelInline}>Firm</Text>
+                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.firm}</Text>
               </View>
             </View>
             
@@ -507,9 +507,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoIconWrapper}>
                 <MaterialIcons name="person" size={22} color="#6B7280" />
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Gender</Text>
-                <Text style={styles.infoValue}>{profileData.gender}</Text>
+              <View style={styles.infoContentRow}>
+                <Text style={styles.infoLabelInline}>Gender</Text>
+                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.gender}</Text>
               </View>
             </View>
             
@@ -517,19 +517,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoIconWrapper}>
                 <MaterialIcons name="verified" size={22} color="#6B7280" />
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Status</Text>
-                <View style={[
-                  styles.statusBadge,
-                  profileData.status === 'Unblock' ? styles.statusBadgeActive : styles.statusBadgeBlocked
-                ]}>
-                  <Text style={[
-                    styles.statusBadgeText,
-                    profileData.status === 'Unblock' ? styles.statusBadgeTextActive : styles.statusBadgeTextBlocked
-                  ]}>
-                    {profileData.status === 'Unblock' ? 'Active' : 'Blocked'}
-                  </Text>
-                </View>
+              <View style={styles.infoContentRow}>
+                <Text style={styles.infoLabelInline}>Status</Text>
+                <Text style={styles.infoStatusValue} numberOfLines={1} ellipsizeMode="tail">{profileData.status === 'Unblock' ? 'Active' : 'Blocked'}</Text>
               </View>
             </View>
             
@@ -537,9 +527,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoIconWrapper}>
                 <MaterialIcons name="calendar-today" size={22} color="#6B7280" />
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Joined Date</Text>
-                <Text style={styles.infoValue}>{profileData.joinedDate}</Text>
+              <View style={styles.infoContentRow}>
+                <Text style={styles.infoLabelInline}>Joined Date</Text>
+                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.joinedDate}</Text>
               </View>
             </View>
             
@@ -547,9 +537,9 @@ const ProfileScreen = ({ navigation }) => {
               <View style={styles.infoIconWrapper}>
                 <MaterialIcons name="description" size={22} color="#6B7280" />
               </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>License Number</Text>
-                <Text style={styles.infoValue}>{profileData.licenseNumber}</Text>
+              <View style={styles.infoContentRow}>
+                <Text style={styles.infoLabelInline}>License Number</Text>
+                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.licenseNumber}</Text>
               </View>
             </View>
           </View>
@@ -598,7 +588,12 @@ const ProfileScreen = ({ navigation }) => {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Mobile</Text>
-                <Text style={styles.infoValue}>{profileData.mobileNumber}</Text>
+                <View style={styles.valueWithIcon}>
+                  <Text style={styles.infoValue}>{profileData.mobileNumber}</Text>
+                  {profileData.mobileNumber && profileData.mobileNumber !== '-' && String(profileData.mobileNumber).trim() !== '' ? (
+                    <MaterialIcons style={styles.verifiedIcon} name="verified" size={16} color="#10B981" />
+                  ) : null}
+                </View>
               </View>
             </View>
             
@@ -618,7 +613,12 @@ const ProfileScreen = ({ navigation }) => {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{profileData.email}</Text>
+                <View style={styles.valueWithIcon}>
+                  <Text style={styles.infoValue}>{profileData.email}</Text>
+                  {profileData.email && profileData.email !== '-' && String(profileData.email).trim() !== '' ? (
+                    <MaterialIcons style={styles.verifiedIcon} name="verified" size={16} color="#10B981" />
+                  ) : null}
+                </View>
               </View>
             </View>
             
@@ -1197,7 +1197,7 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
@@ -1222,6 +1222,13 @@ const styles = StyleSheet.create({
     paddingTop: 2,
     justifyContent: 'flex-start',
   },
+  infoContentRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 2,
+  },
   infoLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -1230,12 +1237,41 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  infoLabelInline: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    flex: 1,
+  },
   infoValue: {
     fontSize: 16,
     fontWeight: '500',
     color: '#111827',
     lineHeight: 22,
     flexWrap: 'wrap',
+  },
+  valueWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verifiedIcon: {
+    marginLeft: 8,
+  },
+  infoValueInline: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginLeft: 12,
+    flex: 1,
+    textAlign: 'right',
+  },
+  infoStatusValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0D542BFF',
+    marginLeft: 12,
+    flex: 1,
+    textAlign: 'right',
   },
   statusBadge: {
     backgroundColor: '#E8F5E8',
@@ -1289,7 +1325,7 @@ const styles = StyleSheet.create({
   },
   documentCardUploaded: {
     backgroundColor: '#E8F5E8',
-    borderColor: '#0D542BFF',
+    // borderColor: '#0D542BFF',
   },
   documentImageWrapper: {
     position: 'relative',
@@ -1432,8 +1468,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#0D542BFF',
+    // borderWidth: 1,
+    // borderColor: '#0D542BFF',
   },
   emptySocialMediaContainer: {
     alignItems: 'center',

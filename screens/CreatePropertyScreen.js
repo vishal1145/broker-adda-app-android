@@ -639,7 +639,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                   {item}
                 </Text>
                 {formData.currency === item && (
-                  <MaterialIcons name="check" size={20} color="#009689" />
+                  <MaterialIcons name="check" size={20} color="#0D542BFF" />
                 )}
               </TouchableOpacity>
             )}
@@ -687,7 +687,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                   {item}
                 </Text>
                 {formData.region === item && (
-                  <MaterialIcons name="check" size={20} color="#009689" />
+                  <MaterialIcons name="check" size={20} color="#0D542BFF" />
                 )}
               </TouchableOpacity>
             )}
@@ -702,7 +702,7 @@ const CreatePropertyScreen = ({ navigation }) => {
     <View>
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="info" size={20} color="#009689" />
+          <MaterialIcons name="info" size={20} color="#0D542BFF" />
           <Text style={styles.sectionTitle}>Basic Information</Text>
         </View>
 
@@ -777,7 +777,7 @@ const CreatePropertyScreen = ({ navigation }) => {
     <View>
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="location-on" size={20} color="#009689" />
+          <MaterialIcons name="location-on" size={20} color="#0D542BFF" />
           <Text style={styles.sectionTitle}>Location & Pricing</Text>
         </View>
 
@@ -857,7 +857,7 @@ const CreatePropertyScreen = ({ navigation }) => {
       {/* Property Details Section */}
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="apartment" size={20} color="#009689" />
+          <MaterialIcons name="apartment" size={20} color="#0D542BFF" />
           <Text style={styles.sectionTitle}>Property Details</Text>
         </View>
 
@@ -985,7 +985,7 @@ const CreatePropertyScreen = ({ navigation }) => {
       {/* Amenities & Features Section */}
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="wb-sunny" size={20} color="#009689" />
+          <MaterialIcons name="wb-sunny" size={20} color="#0D542BFF" />
           <Text style={styles.sectionTitle}>Amenities & Features</Text>
         </View>
 
@@ -1013,7 +1013,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('propertyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#009689" />
+                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1044,7 +1044,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('nearbyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#009689" />
+                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1075,7 +1075,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('features', index)}>
-                  <MaterialIcons name="close" size={16} color="#009689" />
+                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1106,7 +1106,7 @@ const CreatePropertyScreen = ({ navigation }) => {
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
                 <TouchableOpacity onPress={() => handleRemoveItem('locationBenefits', index)}>
-                  <MaterialIcons name="close" size={16} color="#009689" />
+                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1121,7 +1121,7 @@ const CreatePropertyScreen = ({ navigation }) => {
     <View>
       <View style={styles.sectionContainer}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="photo-library" size={20} color="#009689" />
+          <MaterialIcons name="photo-library" size={20} color="#0D542BFF" />
           <Text style={styles.sectionTitle}>Media & Status</Text>
         </View>
 
@@ -1261,7 +1261,7 @@ const CreatePropertyScreen = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={goToPreviousStep}>
-            <MaterialIcons name="arrow-back" size={24} color="#009689" />
+            <MaterialIcons name="arrow-back" size={24} color="#0D542BFF" />
           </TouchableOpacity>
         </View>
 
@@ -1353,7 +1353,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                     {item}
                   </Text>
                   {formData.propertyType === item && (
-                    <MaterialIcons name="check" size={20} color="#009689" />
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
                   )}
                 </TouchableOpacity>
               )}
@@ -1398,7 +1398,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                     {item}
                   </Text>
                   {formData.subType === item && (
-                    <MaterialIcons name="check" size={20} color="#009689" />
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
                   )}
                 </TouchableOpacity>
               )}
@@ -1443,7 +1443,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                     {item}
                   </Text>
                   {formData.furnishing === item && (
-                    <MaterialIcons name="check" size={20} color="#009689" />
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
                   )}
                 </TouchableOpacity>
               )}
@@ -1488,7 +1488,7 @@ const CreatePropertyScreen = ({ navigation }) => {
                     {item}
                   </Text>
                   {formData.status === item && (
-                    <MaterialIcons name="check" size={20} color="#009689" />
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
                   )}
                 </TouchableOpacity>
               )}
@@ -1645,7 +1645,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   addButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1658,7 +1658,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   mediaPickerButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1685,7 +1685,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    color: '#009689',
+    color: '#0D542BFF',
     fontWeight: '500',
   },
   mediaTag: {
@@ -1714,12 +1714,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingVertical: 18,
     paddingHorizontal: 20,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1803,7 +1803,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   modalItemTextSelected: {
-    color: '#009689',
+    color: '#0D542BFF',
     fontWeight: '600',
   },
 })

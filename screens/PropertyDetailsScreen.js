@@ -110,7 +110,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1A1A" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -201,7 +201,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             <View style={styles.propertyHeaderLeft}>
               <Text style={styles.propertyTitle}>{property.title}</Text>
               <View style={styles.propertyAddress}>
-                <MaterialIcons name="location-on" size={18} color="#009689" />
+                <MaterialIcons name="location-on" size={18} color="#0D542BFF" />
                 <Text style={styles.addressText}>{property.address}</Text>
               </View>
             </View>
@@ -212,28 +212,28 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           <View style={styles.propertyDetails}>
             <View style={styles.detailCard}>
               <View style={styles.detailIcon}>
-                <MaterialIcons name="bed" size={24} color="#009689" />
+                <MaterialIcons name="bed" size={24} color="#0D542BFF" />
               </View>
               <Text style={styles.detailLabel}>Bedrooms</Text>
               <Text style={styles.detailValue}>{property.bedrooms}</Text>
             </View>
             <View style={styles.detailCard}>
               <View style={styles.detailIcon}>
-                <MaterialIcons name="bathtub" size={24} color="#009689" />
+                <MaterialIcons name="bathtub" size={24} color="#0D542BFF" />
               </View>
               <Text style={styles.detailLabel}>Bathrooms</Text>
               <Text style={styles.detailValue}>{property.bathrooms}</Text>
             </View>
             <View style={styles.detailCard}>
               <View style={styles.detailIcon}>
-                <MaterialIcons name="square-foot" size={24} color="#009689" />
+                <MaterialIcons name="square-foot" size={24} color="#0D542BFF" />
               </View>
               <Text style={styles.detailLabel}>Square Feet</Text>
               <Text style={styles.detailValue}>{property.sqft}</Text>
             </View>
             <View style={styles.detailCard}>
               <View style={styles.detailIcon}>
-                <MaterialIcons name={getTypeIcon(property.type)} size={24} color="#009689" />
+                <MaterialIcons name={getTypeIcon(property.type)} size={24} color="#0D542BFF" />
               </View>
               <Text style={styles.detailLabel}>Type</Text>
               <Text style={styles.detailValue}>{property.type}</Text>
@@ -283,7 +283,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Listing Agent</Text>
             <View style={styles.agentCard}>
               <View style={styles.agentAvatar}>
-                <MaterialIcons name="account-circle" size={50} color="#009689" />
+                <MaterialIcons name="account-circle" size={50} color="#0D542BFF" />
               </View>
               <View style={styles.agentInfo}>
                 <Text style={styles.agentName}>{property.agent}</Text>
@@ -330,15 +330,15 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                     <Text style={styles.relatedPrice}>{relatedProperty.price}</Text>
                     <View style={styles.relatedDetails}>
                       <View style={styles.relatedDetail}>
-                        <MaterialIcons name="bed" size={12} color="#009689" />
+                        <MaterialIcons name="bed" size={12} color="#0D542BFF" />
                         <Text style={styles.relatedDetailText}>{relatedProperty.bedrooms}</Text>
                       </View>
                       <View style={styles.relatedDetail}>
-                        <MaterialIcons name="bathtub" size={12} color="#009689" />
+                        <MaterialIcons name="bathtub" size={12} color="#0D542BFF" />
                         <Text style={styles.relatedDetailText}>{relatedProperty.bathrooms}</Text>
                       </View>
                       <View style={styles.relatedDetail}>
-                        <MaterialIcons name="square-foot" size={12} color="#009689" />
+                        <MaterialIcons name="square-foot" size={12} color="#0D542BFF" />
                         <Text style={styles.relatedDetailText}>{relatedProperty.sqft}</Text>
                       </View>
                     </View>
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   header: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   propertyPrice: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   
   // Property Details
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 14,
     gap: 8,
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   relatedPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#009689',
+    color: '#0D542BFF',
     marginBottom: 12,
   },
   relatedDetails: {

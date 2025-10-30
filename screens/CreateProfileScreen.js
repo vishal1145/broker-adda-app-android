@@ -130,6 +130,14 @@ const CreateProfileScreen = ({ navigation, route }) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const toggleSpecialization = (option) => {
+    const currentSpecs = Array.isArray(formData.specializations) ? formData.specializations : []
+    const newSpecs = currentSpecs.includes(option)
+      ? currentSpecs.filter(spec => spec !== option)
+      : [...currentSpecs, option]
+    updateFormData('specializations', newSpecs)
+  }
+
   // Handle keyboard events to scroll to focused input
   const handleInputFocus = () => {
     // Small delay to ensure the keyboard is fully open
@@ -398,7 +406,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
             >
               {selectedRegionId === region._id && (
                 <View style={styles.regionCardCheckmark}>
-                  <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                  <MaterialIcons name="check" size={20} color="#FFFFFF" />
                 </View>
               )}
               <Text style={styles.regionCardName} numberOfLines={2}>
@@ -1798,31 +1806,25 @@ const CreateProfileScreen = ({ navigation, route }) => {
     <View style={styles.sectionContainer}>
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>License Number *</Text>
-        <View style={styles.inputWithIcon}>
-          <MaterialIcons name="description" size={20} color="#8E8E93" style={styles.inputIcon} />
-          <TextInput
-            style={styles.inputText}
-            value={formData.licenseNumber}
-            onChangeText={(text) => updateFormData('licenseNumber', text)}
-            placeholder="BRE #01234567"
-            placeholderTextColor="#8E8E93"
-          />
-        </View>
+        <TextInput
+          style={styles.input}
+          value={formData.licenseNumber}
+          onChangeText={(text) => updateFormData('licenseNumber', text)}
+          placeholder="BRE #01234567"
+          placeholderTextColor="#8E8E93"
+        />
       </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Experience (Years)</Text>
-        <View style={styles.inputWithIcon}>
-          <MaterialIcons name="work-history" size={20} color="#8E8E93" style={styles.inputIcon} />
-          <TextInput
-            style={styles.inputText}
-            value={formData.experience}
-            onChangeText={(text) => updateFormData('experience', text)}
-            placeholder="Enter years of experience"
-            placeholderTextColor="#8E8E93"
-            keyboardType="numeric"
-          />
-        </View>
+        <TextInput
+          style={styles.input}
+          value={formData.experience}
+          onChangeText={(text) => updateFormData('experience', text)}
+          placeholder="Enter years of experience"
+          placeholderTextColor="#8E8E93"
+          keyboardType="numeric"
+        />
       </View>
 
       <View style={styles.inputGroup}>
@@ -1845,7 +1847,6 @@ const CreateProfileScreen = ({ navigation, route }) => {
         </View>
         <View style={styles.addressInputContainer}>
           <View style={styles.addressInputWrapper}>
-            <MaterialIcons name="location-on" size={20} color="#8E8E93" style={styles.addressInputIcon} />
             <TextInput
               style={styles.addressInput}
               value={formData.address}
@@ -1915,7 +1916,6 @@ const CreateProfileScreen = ({ navigation, route }) => {
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>About</Text>
         <View style={styles.textAreaContainer}>
-          <MaterialIcons name="description" size={20} color="#8E8E93" style={styles.textAreaIcon} />
           <TextInput
             style={styles.textArea}
             value={formData.about}
@@ -1932,15 +1932,21 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Specializations</Text>
-        <TouchableOpacity 
-          style={styles.input}
-          onPress={() => setShowSpecializationModal(true)}
-        >
-          <Text style={[styles.inputText, (formData.specializations || []).length === 0 && styles.placeholderText]}>
-            {(formData.specializations || []).length > 0 ? (formData.specializations || []).join(', ') : 'Select specializations...'}
-          </Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-        </TouchableOpacity>
+        <View style={styles.chipContainer}>
+          {specializations.map((option) => {
+            const selected = (formData.specializations || []).includes(option)
+            return (
+              <TouchableOpacity
+                key={option}
+                style={[styles.chip, selected && styles.chipSelected]}
+                onPress={() => toggleSpecialization(option)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
       </View>
 
       <View style={styles.inputGroup}>
@@ -2181,7 +2187,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
                         handleViewDocument(doc.key)
                       }}
                     >
-                      <MaterialIcons name="camera-alt" size={16} color="#FFFFFF" />
+                      <MaterialIcons name="file-upload" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ) : existingDoc ? (
@@ -2215,7 +2221,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
                         handleViewDocument(doc.key)
                       }}
                     >
-                      <MaterialIcons name="camera-alt" size={16} color="#FFFFFF" />
+                      <MaterialIcons name="file-upload" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -2496,7 +2502,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
         {/* Modals */}
         {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
-        {renderModal('Select Specializations', specializations, 'specializations', showSpecializationModal, () => setShowSpecializationModal(false))}
+        {/* Specializations now rendered as chips, modal removed */}
         {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
         {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
         {renderModal('Select Regions', manualRegionsList.length > 0 ? manualRegionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
@@ -2849,6 +2855,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
   },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipSelected: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#0D542BFF',
+  },
+  chipText: {
+    fontSize: 14,
+    color: '#000000',
+  },
+  chipTextSelected: {
+    color: '#0D542BFF',
+    fontWeight: '600',
+  },
+  chipCheckIcon: {
+    marginLeft: 6,
+  },
   documentsGrid: {
     flexDirection: 'column',
   },
@@ -2872,7 +2909,7 @@ const styles = StyleSheet.create({
   },
   documentCardUploaded: {
     backgroundColor: '#E8F5E8',
-    borderColor: '#0D542BFF',
+    borderWidth: 0,
   },
   documentImageWrapper: {
     position: 'relative',
@@ -3171,8 +3208,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -3184,8 +3220,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   regionCardSelected: {
-    borderColor: '#0D542BFF',
-    borderWidth: 1,
+    borderWidth: 0,
     backgroundColor: '#E8F5E8',
   },
   regionCardName: {
@@ -3208,7 +3243,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#0D542BFF',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
