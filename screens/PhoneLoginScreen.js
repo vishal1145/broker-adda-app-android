@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native'
 import { Snackbar } from '../utils/snackbar'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -130,7 +131,20 @@ const PhoneLoginScreen = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={['top','bottom']}>
+        {/* Decorative background circle - top right (wrapped for Android clipping) */}
+        <View style={styles.decorativeTopRightWrapper} pointerEvents="none">
+          <Image
+            source={require('../assets/decorativeCircle.png')}
+            style={styles.decorativeTopRight}
+          />
+        </View>
+        <View style={styles.decorativeBottomLeftWrapper} pointerEvents="none">
+          <Image
+            source={require('../assets/decorativeCircle.png')}
+            style={styles.decorativeBottomLeft}
+          />
+        </View>
         <KeyboardAvoidingView 
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -262,9 +276,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
   safeArea: {
     flex: 1,
+    position: 'relative',
   },
   keyboardView: {
     flex: 1,
@@ -525,6 +541,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#0D542BFF',
+  },
+  // Decorative background images
+  decorativeTopRightWrapper: {
+    position: 'absolute',
+    right: -120,
+    top: -120,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    overflow: 'hidden',
+    zIndex: -1,
+  },
+  decorativeTopRight: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    transform: [{ rotate: '90deg' }],
+    opacity: 1,
+  },
+  decorativeBottomLeftWrapper: {
+    position: 'absolute',
+    left: -120,
+    bottom: -120,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    overflow: 'hidden',
+    zIndex: -1,
+  },
+  decorativeBottomLeft: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    transform: [{ rotate: '90deg' }],
+    opacity: 1,
   },
   termsContainer: {
     alignItems: 'center',
