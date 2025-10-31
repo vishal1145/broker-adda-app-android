@@ -7,14 +7,13 @@ import {
   TouchableOpacity, 
   ScrollView,
   Dimensions,
-  Animated,
   ActivityIndicator,
-  Image
+  Image,
+  FlatList
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg'
+import Svg, { Circle, G, Path, Text as SvgText, Rect, Line, Polygon } from 'react-native-svg'
 import { authAPI } from '../services/api'
 import { storage } from '../services/storage'
 const { width } = Dimensions.get('window')
@@ -165,34 +164,17 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate('Profile')
   }
   
-  // Performance data matching the screenshot
-  const [performanceData] = useState({
-    totalLeadsCreated: 1250,
-    leadsReceived: 890,
-    leadsClosed: 450,
-    leadsInProgress: 210,
-    leadsCreatedChange: 8.5,
-    leadsReceivedChange: 12.3,
-    leadsClosedChange: 5.1,
-    leadsInProgressChange: 2.8
+  // Dashboard cards data matching the image
+  const [dashboardCards] = useState({
+    totalLeads: 1,
+    totalLeadsChange: 12.5,
+    propertiesListed: 0,
+    propertiesListedChange: 8.2,
+    inquiriesReceived: 743,
+    inquiriesReceivedChange: 3.1,
+    connections: 45,
+    connectionsChange: 20
   })
-
-  // Properties data
-  const [propertiesData] = useState({
-    activeProperties: 75,
-    soldExpired: 15,
-    pendingApproval: 8,
-    activeChange: 4.5,
-    soldChange: 4.5,
-    pendingChange: 4.5
-  })
-
-  // Messages data
-  const [messagesData] = useState({
-    unreadMessages: 12,
-    customerInquiries: 5
-  })
-
 
   // Leads by status data
   const [leadsStatusData] = useState({
@@ -201,6 +183,111 @@ const HomeScreen = ({ navigation }) => {
     new: 18,
     rejected: 12
   })
+
+  // Charts data
+  const [leadsByMonthData] = useState([
+    { month: 'Jan', leads: 110 },
+    { month: 'Feb', leads: 140 },
+    { month: 'Mar', leads: 160 },
+    { month: 'Apr', leads: 140 },
+    { month: 'May', leads: 160 },
+    { month: 'Jun', leads: 180 }
+  ])
+
+  const [leadSourcesData] = useState({
+    website: 42,
+    referral: 24,
+    social: 18,
+    other: 16
+  })
+
+  const [closedDealData] = useState([
+    { period: 'Jan', deals: 5 },
+    { period: 'Feb', deals: 7 },
+    { period: 'Mar', deals: 6.5 },
+    { period: 'Apr', deals: 8.5 },
+    { period: 'May', deals: 9 }
+  ])
+
+  // Recent Leads data
+  const [recentLeads] = useState([
+    {
+      id: 1,
+      title: 'Residential for Buy',
+      requirement: 'Buy',
+      propertyType: 'Residential',
+      timeAgo: '2h ago',
+      preferredLocation: 'Noida Sector 62',
+      secondaryLocation: 'Noida Sector 62',
+      budget: '₹19,00,000',
+      contactName: 'Shivani Jayshwal',
+      avatar: null
+    },
+    {
+      id: 2,
+      title: 'Commercial for Rent',
+      requirement: 'Rent',
+      propertyType: 'Commercial',
+      timeAgo: '5h ago',
+      preferredLocation: 'Gurgaon Sector 44',
+      secondaryLocation: 'Gurgaon Sector 43',
+      budget: '₹45,000',
+      contactName: 'Rajesh Kumar',
+      avatar: null
+    },
+    {
+      id: 3,
+      title: 'Residential for Buy',
+      requirement: 'Buy',
+      propertyType: 'Residential',
+      timeAgo: '1d ago',
+      preferredLocation: 'Delhi NCR',
+      secondaryLocation: 'Greater Noida',
+      budget: '₹25,00,000',
+      contactName: 'Priya Sharma',
+      avatar: null
+    }
+  ])
+
+  // Recent Properties data
+  const [recentProperties] = useState([
+    {
+      id: 1,
+      title: 'gggh',
+      location: 'Sector 62, Noida, Uttar Pradesh, India',
+      price: '₹33,900,000',
+      status: 'Pending',
+      beds: 2,
+      baths: 2,
+      parking: 'Parking',
+      views: 0,
+      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'
+    },
+    {
+      id: 2,
+      title: 'Modern Apartment',
+      location: 'Sector 18, Noida, Uttar Pradesh, India',
+      price: '₹25,500,000',
+      status: 'Active',
+      beds: 3,
+      baths: 2,
+      parking: 'Parking',
+      views: 12,
+      image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'
+    },
+    {
+      id: 3,
+      title: 'Luxury Villa',
+      location: 'Greater Noida, Uttar Pradesh, India',
+      price: '₹45,000,000',
+      status: 'Pending',
+      beds: 4,
+      baths: 3,
+      parking: 'Parking',
+      views: 8,
+      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
+    }
+  ])
 
   const DonutChart = ({ data, size = 200 }) => {
     const colors = {
@@ -295,21 +382,501 @@ const HomeScreen = ({ navigation }) => {
     )
   }
 
-  const MetricCard = ({ title, value, change, icon, iconColor, isDownward = false }) => (
-    <View style={styles.metricCard}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.iconContainer, { backgroundColor: iconColor }]}>
-          <MaterialIcons name={icon} size={16} color={iconColor === "#0D542BFF" ? "#FFFFFF" : "#0D542BFF"} />
+  // Dashboard Card Component - matching LeadsScreen style exactly
+  const DashboardCard = ({ title, value, icon, colorClass }) => (
+    <View style={[styles.statCard, styles[colorClass]]}>
+      <View style={styles.statCardContent}>
+        <View style={styles.statTopRow}>
+          <MaterialIcons name={icon} size={22} color="#FFFFFF" />
+          <Text style={styles.statCount}>{value.toLocaleString()}</Text>
         </View>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <View style={styles.changePill}>
-          <MaterialIcons name={isDownward ? 'keyboard-arrow-down' : 'keyboard-arrow-up'} size={12} color="#0D542BFF" />
-          <Text style={styles.changeText}>{change}%</Text>
-        </View>
+        <Text style={styles.statTitle}>{title}</Text>
       </View>
-      <Text style={styles.cardValue}>{value.toLocaleString()}</Text>
     </View>
   )
+
+  // Bar Chart Component - Leads by Month
+  const BarChart = ({ data, width: chartWidth = width - 80, height = 220 }) => {
+    const maxValue = 220 // Fixed max value to match Y-axis
+    const chartHeight = height - 60
+    const availableWidth = chartWidth - 60 // Leave space for Y-axis labels
+    const gap = 8 // Gap between bars
+    const totalGaps = (data.length - 1) * gap
+    const barWidth = (availableWidth - totalGaps) / data.length
+    const xAxisY = chartHeight + 20
+
+    return (
+      <View style={styles.chartWrapper}>
+        <Svg width={chartWidth} height={height}>
+          {/* Y-axis labels */}
+          {[0, 55, 110, 165, 220].map((value) => {
+            const y = chartHeight - (value / maxValue) * chartHeight + 20
+            return (
+              <G key={value}>
+                <Line
+                  x1={30}
+                  y1={y}
+                  x2={chartWidth - 10}
+                  y2={y}
+                  stroke="#E5E7EB"
+                  strokeWidth="1"
+                  strokeDasharray="4,4"
+                />
+                <SvgText
+                  x={25}
+                  y={y + 4}
+                  fontSize="12"
+                  fill="#6B7280"
+                  textAnchor="end"
+                >
+                  {value}
+                </SvgText>
+              </G>
+            )
+          })}
+
+          {/* Bars */}
+          {data.map((item, index) => {
+            const barHeight = (item.leads / maxValue) * chartHeight
+            const x = 40 + index * (barWidth + gap)
+            const y = chartHeight - barHeight + 20
+
+            return (
+              <G key={index}>
+                <Rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill="#3B82F6"
+                  rx={4}
+                />
+                <SvgText
+                  x={x + barWidth / 2}
+                  y={y - 5}
+                  fontSize="11"
+                  fill="#1F2937"
+                  textAnchor="middle"
+                  fontWeight="600"
+                >
+                  {item.leads}
+                </SvgText>
+              </G>
+            )
+          })}
+
+          {/* X-axis labels */}
+          {data.map((item, index) => {
+            const x = 40 + index * (barWidth + gap) + barWidth / 2
+            return (
+              <SvgText
+                key={index}
+                x={x}
+                y={xAxisY + 15}
+                fontSize="12"
+                fill="#6B7280"
+                textAnchor="middle"
+              >
+                {item.month}
+              </SvgText>
+            )
+          })}
+        </Svg>
+      </View>
+    )
+  }
+
+  // Lead Sources Donut Chart
+  const LeadSourcesDonutChart = ({ data, size = 180 }) => {
+    const colors = {
+      website: '#3B82F6',
+      referral: '#10B981',
+      social: '#F59E0B',
+      other: '#EF4444'
+    }
+
+    const segments = [
+      { color: colors.website, percentage: data.website, label: 'Website' },
+      { color: colors.referral, percentage: data.referral, label: 'Referral' },
+      { color: colors.social, percentage: data.social, label: 'Social' },
+      { color: colors.other, percentage: data.other, label: 'Other' }
+    ]
+
+    const radius = size / 2 - 20
+    const innerRadius = radius - 30
+    const centerX = size / 2
+    const centerY = size / 2
+
+    return (
+      <View style={styles.donutChartWrapper}>
+        <Svg width={size} height={size} style={styles.donutSvg}>
+          <G transform={`translate(${centerX}, ${centerY})`}>
+            <Circle
+              r={radius}
+              stroke="#F5F5F5"
+              strokeWidth={30}
+              fill="transparent"
+            />
+            
+            {segments.map((segment, index) => {
+              const circumference = 2 * Math.PI * radius
+              const segmentLength = (segment.percentage / 100) * circumference
+              const strokeDasharray = `${segmentLength} ${circumference}`
+              const strokeDashoffset = -((segments.slice(0, index).reduce((sum, s) => sum + s.percentage, 0) / 100) * circumference)
+              
+              return (
+                <Circle
+                  key={index}
+                  r={radius}
+                  stroke={segment.color}
+                  strokeWidth={30}
+                  fill="transparent"
+                  strokeDasharray={strokeDasharray}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  transform={`rotate(-90)`}
+                />
+              )
+            })}
+            
+            <Circle
+              r={innerRadius}
+              fill="#FFFFFF"
+            />
+          </G>
+        </Svg>
+        
+        <View style={styles.sourcesLegendContainer}>
+          {segments.map((segment, index) => (
+            <View key={index} style={styles.sourcesLegendItem}>
+              <View style={[styles.sourcesLegendColor, { backgroundColor: segment.color }]} />
+              <Text style={styles.sourcesLegendText}>{segment.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    )
+  }
+
+  // Recent Lead Card Component
+  const RecentLeadCard = ({ lead }) => {
+    const getRequirementColor = (req) => {
+      return req === 'Buy' ? '#0D542BFF' : '#F59E0B'
+    }
+
+    const getRequirementTextColor = (req) => {
+      return req === 'Buy' ? '#FFFFFF' : '#1F2937'
+    }
+
+    return (
+      <View style={styles.recentLeadCard}>
+        {/* Header Section */}
+        <View style={styles.recentLeadHeader}>
+          <View style={styles.recentLeadHeaderLeft}>
+            <Text style={styles.recentLeadTitle}>{lead.title}</Text>
+            <View style={styles.recentLeadTags}>
+              <View style={[styles.recentLeadTag, { backgroundColor: getRequirementColor(lead.requirement) }]}>
+                <Text style={[styles.recentLeadTagText, { color: getRequirementTextColor(lead.requirement) }]}>
+                  {lead.requirement}
+                </Text>
+              </View>
+              <View style={[styles.recentLeadTag, { backgroundColor: '#FCD34D' }]}>
+                <Text style={styles.recentLeadTagTextYellow}>{lead.propertyType}</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.recentLeadTime}>
+            <MaterialIcons name="schedule" size={14} color="#6B7280" />
+            <Text style={styles.recentLeadTimeText}>{lead.timeAgo}</Text>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={styles.recentLeadDivider} />
+
+        {/* Details Section */}
+        <View style={styles.recentLeadDetails}>
+          <View style={styles.recentLeadDetailItem}>
+            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <Text style={styles.recentLeadDetailText}>
+              Preferred: {lead.preferredLocation}
+            </Text>
+          </View>
+          <View style={styles.recentLeadDetailItem}>
+            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <Text style={styles.recentLeadDetailText}>
+              Secondary: {lead.secondaryLocation}
+            </Text>
+          </View>
+          <View style={styles.recentLeadDetailItem}>
+            <MaterialIcons name="business" size={16} color="#6B7280" />
+            <Text style={styles.recentLeadDetailText}>
+              Budget: {lead.budget}
+            </Text>
+          </View>
+        </View>
+
+        {/* Divider */}
+        <View style={styles.recentLeadDivider} />
+
+        {/* Contact Section */}
+        <View style={styles.recentLeadContact}>
+          <View style={styles.recentLeadAvatar}>
+            <Text style={styles.recentLeadAvatarText}>
+              {lead.contactName.split(' ').map(n => n[0]).join('')}
+            </Text>
+          </View>
+          <View style={styles.recentLeadContactInfo}>
+            <Text style={styles.recentLeadContactName}>{lead.contactName}</Text>
+            <View style={styles.recentLeadActions}>
+              <TouchableOpacity style={styles.recentLeadAction}>
+                <MaterialIcons name="phone" size={16} color="#6B7280" />
+                <Text style={styles.recentLeadActionText}>Connect</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.recentLeadAction}>
+                <MaterialIcons name="chat" size={16} color="#6B7280" />
+                <Text style={styles.recentLeadActionText}>Chat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
+  // Recent Property Card Component - Matching PropertiesScreen design
+  const RecentPropertyCard = ({ property }) => {
+    const getStatusBackgroundColor = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'pending':
+          return '#FEF3C7'
+        case 'active':
+          return '#D1FAE5'
+        case 'sold':
+          return '#DBEAFE'
+        case 'expired':
+          return '#FEE2E2'
+        default:
+          return '#F3F4F6'
+      }
+    }
+
+    const getStatusTextColor = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'pending':
+          return '#92400E'
+        case 'active':
+          return '#065F46'
+        case 'sold':
+          return '#1E40AF'
+        case 'expired':
+          return '#991B1B'
+        default:
+          return '#6B7280'
+      }
+    }
+
+    const getStatusDisplayText = (status) => {
+      return status || 'Pending'
+    }
+
+    return (
+      <View style={styles.recentPropertyCard}>
+        <View style={styles.recentCardTopSection}>
+          {/* Property Image - Left Side */}
+          <View style={styles.recentPropertyImageContainer}>
+            {property.image ? (
+              <Image 
+                source={{ uri: property.image }} 
+                style={styles.recentPropertyImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.recentPropertyImagePlaceholder}>
+                <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                <Text style={styles.recentPlaceholderText}>No Image</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Property Content - Right Side */}
+          <View style={styles.recentPropertyContent}>
+            {/* Title with Icon */}
+            <View style={styles.recentTitleRow}>
+              <MaterialIcons name="home" size={16} color="#1F2937" />
+              <Text style={styles.recentPropertyTitle} numberOfLines={1}>
+                {property.title}
+              </Text>
+            </View>
+            
+            {/* Address with Icon */}
+            <View style={styles.recentAddressRow}>
+              <MaterialIcons name="location-on" size={14} color="#6B7280" />
+              <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
+                {property.location}
+              </Text>
+            </View>
+            
+            {/* Price */}
+            <Text style={styles.recentPropertyPrice}>
+              {property.price}
+            </Text>
+            
+            {/* Status Row */}
+            <View style={styles.recentStatusRow}>
+              <Text style={styles.recentStatusLabel}>Status</Text>
+              <View style={[styles.recentStatusBadge, { backgroundColor: getStatusBackgroundColor(property.status) }]}>
+                <Text style={[styles.recentStatusBadgeText, { color: getStatusTextColor(property.status) }]}>
+                  {getStatusDisplayText(property.status)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        
+        {/* Divider - Full Width */}
+        <View style={styles.recentDivider} />
+        
+        {/* Features Below - Starting from Image Position */}
+        <View style={styles.recentPropertyFeatures}>
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="bed" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.beds} Bed</Text>
+          </View>
+          
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.baths} Bath</Text>
+          </View>
+          
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="directions-car" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.parking}</Text>
+          </View>
+          
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="visibility" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.views} Views</Text>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
+  // Line Chart Component - Closed Deal
+  const LineChart = ({ data, width: chartWidth = width - 80, height = 200 }) => {
+    const maxValue = Math.max(...data.map(d => d.deals))
+    const minValue = Math.min(...data.map(d => d.deals))
+    const range = maxValue - minValue || 1
+    const chartHeight = height - 50
+    const pointSpacing = (chartWidth - 60) / (data.length - 1)
+
+    // Generate path for line
+    let pathData = ''
+    data.forEach((item, index) => {
+      const x = 40 + index * pointSpacing
+      const y = chartHeight - ((item.deals - minValue) / range) * chartHeight + 20
+      if (index === 0) {
+        pathData = `M ${x} ${y}`
+      } else {
+        pathData += ` L ${x} ${y}`
+      }
+    })
+
+    // Generate points
+    const points = data.map((item, index) => {
+      const x = 40 + index * pointSpacing
+      const y = chartHeight - ((item.deals - minValue) / range) * chartHeight + 20
+      return { x, y, value: item.deals }
+    })
+
+    return (
+      <View style={styles.chartWrapper}>
+        <Svg width={chartWidth} height={height}>
+          {/* Y-axis labels */}
+          {[5, 7, 9, 11].map((value) => {
+            if (value < minValue || value > maxValue) return null
+            const y = chartHeight - ((value - minValue) / range) * chartHeight + 20
+            return (
+              <G key={value}>
+                <Line
+                  x1={30}
+                  y1={y}
+                  x2={chartWidth - 10}
+                  y2={y}
+                  stroke="#E5E7EB"
+                  strokeWidth="1"
+                  strokeDasharray="4,4"
+                />
+                <SvgText
+                  x={25}
+                  y={y + 4}
+                  fontSize="12"
+                  fill="#6B7280"
+                  textAnchor="end"
+                >
+                  {value}
+                </SvgText>
+              </G>
+            )
+          })}
+
+          {/* Grid line */}
+          <Line
+            x1={30}
+            y1={chartHeight + 20}
+            x2={chartWidth - 10}
+            y2={chartHeight + 20}
+            stroke="#E5E7EB"
+            strokeWidth="1"
+          />
+
+          {/* Line path */}
+          <Path
+            d={pathData}
+            stroke="#3B82F6"
+            strokeWidth="2"
+            fill="none"
+          />
+
+          {/* Points */}
+          {points.map((point, index) => (
+            <G key={index}>
+              <Circle
+                cx={point.x}
+                cy={point.y}
+                r="5"
+                fill="#3B82F6"
+              />
+              <Circle
+                cx={point.x}
+                cy={point.y}
+                r="3"
+                fill="#FFFFFF"
+              />
+            </G>
+          ))}
+
+          {/* X-axis labels */}
+          {data.map((item, index) => {
+            const x = 40 + index * pointSpacing
+            return (
+              <SvgText
+                key={index}
+                x={x}
+                y={chartHeight + 35}
+                fontSize="12"
+                fill="#6B7280"
+                textAnchor="middle"
+              >
+                {item.period}
+              </SvgText>
+            )
+          })}
+        </Svg>
+      </View>
+    )
+  }
 
 
   return (
@@ -367,265 +934,103 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
 
-        {/* Performance Summary - Modern Design */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Performance Summary</Text>
+        {/* Dashboard Cards - Matching LeadsScreen Style */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsGrid}>
+            <DashboardCard
+              title="Total Leads"
+              value={dashboardCards.totalLeads}
+              icon="people"
+              colorClass="statCardGreen"
+            />
+            <DashboardCard
+              title="Properties Listed"
+              value={dashboardCards.propertiesListed}
+              icon="home"
+              colorClass="statCardBlue"
+            />
+            <DashboardCard
+              title="Inquiries Received"
+              value={dashboardCards.inquiriesReceived}
+              icon="mail"
+              colorClass="statCardYellow"
+            />
+            <DashboardCard
+              title="Connections"
+              value={dashboardCards.connections}
+              icon="chat"
+              colorClass="statCardPurple"
+            />
             </View>
           </View>
+
+        {/* Lead Performance Overview */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Lead Performance Overview</Text>
+          </View>
           
-          <View style={styles.performanceGrid}>
-            <View style={styles.metricCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.metricGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.metricCardHeader}>
-                  <View style={styles.metricIconContainer}>
-                    <MaterialIcons name="trending-up" size={20} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.changeIndicator}>
-                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
-                    <Text style={styles.changeTextWhite}>+{performanceData.leadsCreatedChange}%</Text>
-                  </View>
-                </View>
-                <Text style={styles.metricValue}>{performanceData.totalLeadsCreated.toLocaleString()}</Text>
-                <Text style={styles.metricLabel}>Total Leads Created</Text>
-              </LinearGradient>
-            </View>
+          {/* Leads by Month Chart */}
+          <View style={[styles.chartCardContainer, { marginTop: 0 }]}>
+            <Text style={styles.chartCardTitle}>Leads by Month</Text>
+            <BarChart data={leadsByMonthData} />
+          </View>
 
-            <View style={styles.metricCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.metricGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.metricCardHeader}>
-                  <View style={styles.metricIconContainer}>
-                    <MaterialIcons name="attach-money" size={20} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.changeIndicator}>
-                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
-                    <Text style={styles.changeTextWhite}>+{performanceData.leadsReceivedChange}%</Text>
-                  </View>
-                </View>
-                <Text style={styles.metricValue}>{performanceData.leadsReceived.toLocaleString()}</Text>
-                <Text style={styles.metricLabel}>Leads Received</Text>
-              </LinearGradient>
-            </View>
+          {/* Lead Sources Chart */}
+          <View style={styles.chartCardContainer}>
+            <Text style={styles.chartCardTitle}>Lead Sources</Text>
+            <LeadSourcesDonutChart data={leadSourcesData} />
+          </View>
 
-            <View style={styles.metricCard}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706', '#B45309']}
-                style={styles.metricGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.metricCardHeader}>
-                  <View style={styles.metricIconContainer}>
-                    <MaterialIcons name="assignment-turned-in" size={20} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.changeIndicator}>
-                    <MaterialIcons name="keyboard-arrow-up" size={16} color="#FFFFFF" />
-                    <Text style={styles.changeTextWhite}>+{performanceData.leadsClosedChange}%</Text>
-                  </View>
-                </View>
-                <Text style={styles.metricValue}>{performanceData.leadsClosed.toLocaleString()}</Text>
-                <Text style={styles.metricLabel}>Leads Closed</Text>
-              </LinearGradient>
-            </View>
-
-            <View style={styles.metricCard}>
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-                style={styles.metricGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.metricCardHeader}>
-                  <View style={styles.metricIconContainer}>
-                    <MaterialIcons name="group" size={20} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.changeIndicator}>
-                    <MaterialIcons name="keyboard-arrow-down" size={16} color="#FFFFFF" />
-                    <Text style={styles.changeTextWhite}>-{performanceData.leadsInProgressChange}%</Text>
-                  </View>
-                </View>
-                <Text style={styles.metricValue}>{performanceData.leadsInProgress.toLocaleString()}</Text>
-                <Text style={styles.metricLabel}>Leads In Progress</Text>
-              </LinearGradient>
-            </View>
+          {/* Closed Deal Chart */}
+          <View style={styles.chartCardContainer}>
+            <Text style={styles.chartCardTitle}>Closed Deal</Text>
+            <LineChart data={closedDealData} />
           </View>
         </View>
 
-        {/* Properties Summary - Modern Design */}
+        {/* Recent Leads */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="business" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Properties Summary</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Recent Leads</Text>
+            <TouchableOpacity 
+              style={styles.manageButton}
+              onPress={() => navigation.navigate('Leads')}
+            >
+              <Text style={styles.manageButtonText}>Manage</Text>
+            </TouchableOpacity>
           </View>
-          
-          <View style={styles.propertiesContainer}>
-            <View style={styles.propertyCard}>
-              <View style={styles.propertyCardHeader}>
-                <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="business" size={24} color="#0D542BFF" />
-                </View>
-                <View style={styles.propertyChangeContainer}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.propertyChangeText}>+{propertiesData.activeChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.propertyValue}>{propertiesData.activeProperties}</Text>
-              <Text style={styles.propertyLabel}>Active Properties</Text>
-              <View style={styles.propertyProgressBar}>
-                <View style={[styles.propertyProgressFill, { width: '75%' }]} />
-              </View>
-            </View>
-
-            <View style={styles.propertyCard}>
-              <View style={styles.propertyCardHeader}>
-                <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="home" size={24} color="#0D542BFF" />
-                </View>
-                <View style={styles.propertyChangeContainer}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.propertyChangeText}>+{propertiesData.soldChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.propertyValue}>{propertiesData.soldExpired}</Text>
-              <Text style={styles.propertyLabel}>Sold/Expired</Text>
-              <View style={styles.propertyProgressBar}>
-                <View style={[styles.propertyProgressFill, { width: '15%' }]} />
-              </View>
-            </View>
-
-            <View style={styles.propertyCard}>
-              <View style={styles.propertyCardHeader}>
-                <View style={styles.propertyIconContainer}>
-                  <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
-                </View>
-                <View style={styles.propertyChangeContainer}>
-                  <MaterialIcons name="keyboard-arrow-up" size={16} color="#10B981" />
-                  <Text style={styles.propertyChangeText}>+{propertiesData.pendingChange}%</Text>
-                </View>
-              </View>
-              <Text style={styles.propertyValue}>{propertiesData.pendingApproval}</Text>
-              <Text style={styles.propertyLabel}>Pending Approval</Text>
-              <View style={styles.propertyProgressBar}>
-                <View style={[styles.propertyProgressFill, { width: '8%' }]} />
-              </View>
-            </View>
-          </View>
+          <FlatList
+            data={recentLeads}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <RecentLeadCard lead={item} />}
+            contentContainerStyle={styles.recentLeadsList}
+            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+          />
         </View>
 
-        {/* Messages & Inquiries - Modern Design */}
+        {/* Recent Properties */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="mail" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Messages & Inquiries</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Recent Properties</Text>
+            <TouchableOpacity 
+              style={styles.manageButton}
+              onPress={() => navigation.navigate('Properties')}
+            >
+              <Text style={styles.manageButtonText}>Manage</Text>
+            </TouchableOpacity>
           </View>
-          
-          <View style={styles.messagesContainer}>
-            <View style={styles.messageCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.messageGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.messageCardContent}>
-                  <View style={styles.messageIconContainer}>
-                    <MaterialIcons name="mail" size={24} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.messageInfo}>
-                    <Text style={styles.messageTitle}>Unread Messages</Text>
-                    <Text style={styles.messageSubtitle}>New messages waiting</Text>
-                  </View>
-                  <View style={styles.messageBadgeContainer}>
-                    <Text style={styles.messageBadgeText}>{messagesData.unreadMessages}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
-
-            <View style={styles.messageCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.messageGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.messageCardContent}>
-                  <View style={styles.messageIconContainer}>
-                    <MaterialIcons name="chat" size={24} color="#FFFFFF" />
-                  </View>
-                  <View style={styles.messageInfo}>
-                    <Text style={styles.messageTitle}>Customer Inquiries</Text>
-                    <Text style={styles.messageSubtitle}>Pending responses</Text>
-                  </View>
-                  <View style={styles.messageBadgeContainer}>
-                    <Text style={styles.messageBadgeText}>{messagesData.customerInquiries}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </View>
-          </View>
-        </View>
-
-        {/* Leads by Status - Modern Design */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="pie-chart" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Leads by Status</Text>
-            </View>
-          </View>
-          
-          <View style={styles.chartContainer}>
-            <View style={styles.chartCard}>
-              <DonutChart data={leadsStatusData} size={200} />
-            </View>
-            <View style={styles.chartStats}>
-              <View style={styles.chartStatItem}>
-                <View style={[styles.chartStatColor, { backgroundColor: '#2E7D32' }]} />
-                <Text style={styles.chartStatLabel}>Closed</Text>
-                <Text style={styles.chartStatValue}>{leadsStatusData.closed}%</Text>
-              </View>
-              <View style={styles.chartStatItem}>
-                <View style={[styles.chartStatColor, { backgroundColor: '#FFD700' }]} />
-                <Text style={styles.chartStatLabel}>In Progress</Text>
-                <Text style={styles.chartStatValue}>{leadsStatusData.inProgress}%</Text>
-              </View>
-              <View style={styles.chartStatItem}>
-                <View style={[styles.chartStatColor, { backgroundColor: '#2196F3' }]} />
-                <Text style={styles.chartStatLabel}>New</Text>
-                <Text style={styles.chartStatValue}>{leadsStatusData.new}%</Text>
-              </View>
-              <View style={styles.chartStatItem}>
-                <View style={[styles.chartStatColor, { backgroundColor: '#F44336' }]} />
-                <Text style={styles.chartStatLabel}>Rejected</Text>
-                <Text style={styles.chartStatValue}>{leadsStatusData.rejected}%</Text>
-              </View>
-            </View>
-          </View>
+          <FlatList
+            data={recentProperties}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <RecentPropertyCard property={item} />}
+            contentContainerStyle={styles.recentPropertiesList}
+            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+          />
         </View>
       </ScrollView>
       </View>
@@ -704,13 +1109,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   welcomeContainer: {
-    marginBottom: 8,
+    marginBottom: 0,
   },
   welcomeGreeting: {
     fontSize: 16,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   welcomeName: {
     fontSize: 28,
@@ -772,32 +1177,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  sectionIconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0D542BFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#0D542BFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 8,
-    letterSpacing: 0.5,
   },
   sectionBadge: {
     backgroundColor: '#F0FDFA',
@@ -813,77 +1198,58 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
 
-  // Performance Grid Styles
-  performanceGrid: {
+  // Stats Section Styles - Matching LeadsScreen exactly
+  statsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     gap: 12,
   },
-  metricCard: {
+  statCard: {
     width: (width - 52) / 2,
-    borderRadius: 20,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
   },
-  metricGradient: {
-    padding: 20,
-    minHeight: 140,
+  statCardGreen: {
+    backgroundColor: '#34D399',
   },
-  metricCardHeader: {
+  statCardBlue: {
+    backgroundColor: '#3B82F6',
+  },
+  statCardYellow: {
+    backgroundColor: '#FCD34D',
+  },
+  statCardPurple: {
+    backgroundColor: '#A78BFA',
+  },
+  statCardContent: {
+    padding: 16,
+    minHeight: 88,
+  },
+  statTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
-  metricIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  changeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  changeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#10B981',
-    marginLeft: 2,
-  },
-  changeTextDown: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#EF4444',
-    marginLeft: 2,
-  },
-  changeTextWhite: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 2,
-  },
-  metricValue: {
-    fontSize: 28,
+  statCount: {
+    fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
   },
-  metricLabel: {
+  statTitle: {
     fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Properties Container Styles
@@ -1117,6 +1483,316 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+  },
+
+  // New Chart Card Styles
+  chartCardContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 16,
+  },
+  chartCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  chartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutChartWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  sourcesLegendContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 16,
+  },
+  sourcesLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sourcesLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  sourcesLegendText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+
+  // Recent Leads Styles
+  recentLeadsList: {
+    paddingVertical: 8,
+  },
+  recentLeadCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    width: width - 60,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  recentLeadHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  recentLeadHeaderLeft: {
+    flex: 1,
+  },
+  recentLeadTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  recentLeadTags: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  recentLeadTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  recentLeadTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  recentLeadTagTextYellow: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  recentLeadTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  recentLeadTimeText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  recentLeadDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 12,
+  },
+  recentLeadDetails: {
+    gap: 10,
+  },
+  recentLeadDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recentLeadDetailText: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  recentLeadContact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  recentLeadAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentLeadAvatarText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  recentLeadContactInfo: {
+    flex: 1,
+  },
+  recentLeadContactName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  recentLeadActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  recentLeadAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  recentLeadActionText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+
+  // Manage Button Styles - Matching badge style
+  manageButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#FCD34D',
+  },
+  manageButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+
+  // Recent Properties Styles
+  recentPropertiesList: {
+    paddingVertical: 8,
+  },
+  recentPropertyCard: {
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    width: width - 60,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  recentCardTopSection: {
+    flexDirection: 'row',
+    marginBottom: 0,
+  },
+  recentPropertyImageContainer: {
+    width: 130,
+    height: 130,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  recentPropertyImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recentPropertyImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentPlaceholderText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  recentPropertyContent: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  recentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  recentPropertyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    flex: 1,
+  },
+  recentAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  recentPropertyAddressText: {
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
+  },
+  recentPropertyPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  recentStatusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  recentStatusLabel: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  recentStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  recentStatusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  recentDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 10,
+    marginTop: 10,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  recentPropertyFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingTop: 4,
+    paddingLeft: 0,
+    alignItems: 'center',
+  },
+  recentFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  recentFeatureText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '500',
   },
 })
 
