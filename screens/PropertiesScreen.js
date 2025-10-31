@@ -11,11 +11,11 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  RefreshControl
+  RefreshControl,
+  Modal
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { propertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 
@@ -28,6 +28,16 @@ const PropertiesScreen = ({ navigation }) => {
   const [propertiesData, setPropertiesData] = useState([])
   const [brokerId, setBrokerId] = useState(null)
   const [token, setToken] = useState(null)
+  const [selectedType, setSelectedType] = useState('All Types')
+  const [selectedStatus, setSelectedStatus] = useState('All Status')
+  const [selectedDate, setSelectedDate] = useState('Date')
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showDateDropdown, setShowDateDropdown] = useState(false)
+
+  const typeOptions = ['All Types', 'House', 'Condo', 'Apartment', 'Villa', 'Townhouse']
+  const statusOptions = ['All Status', 'Approved', 'Pending', 'Rejected', 'Active', 'Sold']
+  const dateOptions = ['Date', 'Newest First', 'Oldest First', 'Price: Low to High', 'Price: High to Low']
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 5,
@@ -276,123 +286,143 @@ const PropertiesScreen = ({ navigation }) => {
         return prop.status === selectedFilter
       })
 
+  const getStatusBackgroundColor = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved') || statusLower.includes('active')) return '#D1FAE5' // Light Green
+    if (statusLower.includes('pending')) return '#FEF3C7' // Soft Light Yellow
+    if (statusLower.includes('rejected')) return '#FEE2E2' // Light Red
+    if (statusLower.includes('sold')) return '#F3F4F6' // Light Gray
+    return '#D1FAE5'
+  }
+
+  const getStatusTextColor = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved') || statusLower.includes('active')) return '#059669' // Dark Green
+    if (statusLower.includes('pending')) return '#F59E0B' // Muted Orange/Yellow
+    if (statusLower.includes('rejected')) return '#DC2626' // Dark Red
+    if (statusLower.includes('sold')) return '#6B7280' // Gray
+    return '#059669'
+  }
+
+  const getStatusDisplayText = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved')) return 'Approved'
+    if (statusLower.includes('pending')) return 'Pending'
+    if (statusLower.includes('rejected')) return 'Rejected'
+    if (statusLower.includes('active')) return 'Active'
+    if (statusLower.includes('sold')) return 'Sold'
+    return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
+  }
+
+  const hasParking = (property) => {
+    // Check if property has parking in features, amenities, or other fields
+    const parkingKeywords = ['parking', 'garage', 'driveway']
+    const allText = [
+      ...(property.features || []),
+      ...(property.amenities || []),
+      ...(property.description || '').toLowerCase()
+    ].join(' ').toLowerCase()
+    
+    return parkingKeywords.some(keyword => allText.includes(keyword))
+  }
+
   const PropertyCard = ({ property }) => {
     const hasImages = property.images && property.images.length > 0
+    const statusBgColor = getStatusBackgroundColor(property.status)
+    const statusTextColor = getStatusTextColor(property.status)
+    const parkingAvailable = hasParking(property)
     
     return (
-    <TouchableOpacity 
-      style={styles.propertyCard}
-      onPress={() => navigation.navigate('PropertyDetails', { property })}
-      activeOpacity={0.8}
-    >
-      <View style={styles.propertyImageContainer}>
-          {hasImages ? (
-        <Image 
-          source={{ uri: property.images[0] }} 
-          style={styles.propertyImage}
-          resizeMode="cover"
-        />
-          ) : (
-            <View style={styles.propertyImagePlaceholder}>
-              <MaterialIcons name="home" size={48} color="#D1D5DB" />
-              <Text style={styles.placeholderText}>No Image</Text>
-            </View>
-          )}
-        <View style={styles.propertyOverlay}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(property.status) + '20' }]}>
-            <MaterialIcons name="circle" size={8} color={getStatusColor(property.status)} />
-            <Text style={[styles.statusText, { color: getStatusColor(property.status) }]}>
-              {property.status.toUpperCase()}
-            </Text>
+      <TouchableOpacity 
+        style={styles.propertyCard}
+        onPress={() => navigation.navigate('PropertyDetails', { property })}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardTopSection}>
+          {/* Property Image - Left Side */}
+          <View style={styles.propertyImageContainer}>
+            {hasImages ? (
+              <Image 
+                source={{ uri: property.images[0] }} 
+                style={styles.propertyImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.propertyImagePlaceholder}>
+                <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                <Text style={styles.placeholderText}>No Image</Text>
+              </View>
+            )}
           </View>
-          <TouchableOpacity style={styles.favoriteButton}>
-            <MaterialIcons name="favorite-border" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
 
-      <View style={styles.propertyContent}>
-        <View style={styles.propertyHeader}>
-          <Text style={styles.propertyTitle}>{property.title}</Text>
-          <Text style={styles.propertyPrice}>{property.price}</Text>
+          {/* Property Content - Right Side */}
+          <View style={styles.propertyContent}>
+            {/* Title with Icon */}
+            <View style={styles.titleRow}>
+              <MaterialIcons name="home" size={16} color="#1F2937" />
+              <Text style={styles.propertyTitle} numberOfLines={1}>
+                {property.title}
+              </Text>
+            </View>
+            
+            {/* Address with Icon */}
+            <View style={styles.addressRow}>
+              <MaterialIcons name="location-on" size={14} color="#6B7280" />
+              <Text style={styles.propertyAddressText} numberOfLines={1}>
+                {property.address}
+              </Text>
+            </View>
+            
+            {/* Price */}
+            <Text style={styles.propertyPrice}>
+              {property.price}
+            </Text>
+            
+            {/* Status Row */}
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>Status</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
+                <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
+                  {getStatusDisplayText(property.status)}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
         
-        <View style={styles.propertyAddress}>
-          <MaterialIcons name="location-on" size={16} color="#6B7280" />
-          <Text style={styles.addressText}>{property.address}</Text>
-        </View>
-
-        <View style={styles.propertyDetails}>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="bed" size={16} color="#0D542BFF" />
-            <Text style={styles.detailText}>{property.bedrooms} beds</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="bathtub" size={16} color="#0D542BFF" />
-            <Text style={styles.detailText}>{property.bathrooms} baths</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <MaterialIcons name="square-foot" size={16} color="#0D542BFF" />
-            <Text style={styles.detailText}>{property.sqft} sqft</Text>
-          </View>
-          <View style={styles.detailItem}>
-            <MaterialIcons name={getTypeIcon(property.type)} size={16} color="#0D542BFF" />
-            <Text style={styles.detailText}>{property.type}</Text>
-          </View>
-        </View>
-
+        {/* Divider - Full Width */}
+        <View style={styles.divider} />
+        
+        {/* Features Below - Starting from Image Position */}
         <View style={styles.propertyFeatures}>
-          {property.features.map((feature, index) => (
-            <View key={index} style={styles.featureTag}>
-              <Text style={styles.featureText}>{feature}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.propertyStats}>
-          <View style={styles.statItem}>
+          <View style={styles.featureItem}>
+            <MaterialIcons name="bed" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <MaterialIcons 
+              name={parkingAvailable ? "directions-car" : "block"} 
+              size={16} 
+              color="#6B7280" 
+            />
+            <Text style={styles.featureText}>
+              {parkingAvailable ? "Parking" : "No Parking"}
+            </Text>
+          </View>
+          
+          <View style={styles.featureItem}>
             <MaterialIcons name="visibility" size={16} color="#6B7280" />
-            <Text style={styles.statText}>{property.views} views</Text>
-          </View>
-          <View style={styles.statItem}>
-            <MaterialIcons name="favorite" size={16} color="#6B7280" />
-            <Text style={styles.statText}>{property.favorites} favorites</Text>
-          </View>
-          <View style={styles.statItem}>
-            <MaterialIcons name="schedule" size={16} color="#6B7280" />
-            <Text style={styles.statText}>{property.listedDate}</Text>
+            <Text style={styles.featureText}>{property.views || 0} Views</Text>
           </View>
         </View>
-
-        <View style={styles.propertyFooter}>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={(e) => {
-              e.stopPropagation()
-              navigation.navigate('PropertyDetails', { property })
-            }}
-          >
-            <MaterialIcons name="visibility" size={18} color="#0D542BFF" />
-            <Text style={styles.actionButtonText}>View Details</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={(e) => {
-              e.stopPropagation()
-              navigation.navigate('CreateProperty', { property })
-            }}
-          >
-            <MaterialIcons name="edit" size={18} color="#0D542BFF" />
-            <Text style={styles.actionButtonText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialIcons name="share" size={18} color="#0D542BFF" />
-            <Text style={styles.actionButtonText}>Share</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
+      </TouchableOpacity>
+    )
   }
 
   // Show loading state
@@ -455,102 +485,214 @@ const PropertiesScreen = ({ navigation }) => {
         {/* Stats Overview */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="home" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{propertiesData.length}</Text>
-                <Text style={styles.statLabel}>Total Properties</Text>
-              </LinearGradient>
+            {/* Total Properties - Light Green */}
+            <View style={[styles.statCard, styles.statCardGreen]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="home" size={22} color="#10B981" />
+                  <Text style={styles.statCount}>{propertiesData.length}</Text>
+                </View>
+                <Text style={styles.statTitle}>Total Properties</Text>
+              </View>
             </View>
             
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="visibility" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{propertiesData.reduce((sum, prop) => sum + prop.views, 0)}</Text>
-                <Text style={styles.statLabel}>Total Views</Text>
-              </LinearGradient>
+            {/* Approved - White */}
+            <View style={[styles.statCard, styles.statCardWhite]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="check-circle" size={22} color="#10B981" />
+                  <Text style={styles.statCount}>{propertiesData.filter(prop => {
+                    const status = prop.status?.toLowerCase() || ''
+                    return status.includes('approved') || status.includes('active')
+                  }).length}</Text>
+                </View>
+                <Text style={styles.statTitle}>Approved</Text>
+              </View>
             </View>
             
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706', '#B45309']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="favorite" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{propertiesData.reduce((sum, prop) => sum + prop.favorites, 0)}</Text>
-                <Text style={styles.statLabel}>Total Favorites</Text>
-              </LinearGradient>
+            {/* Pending - Light Yellow/Beige */}
+            <View style={[styles.statCard, styles.statCardYellow]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="schedule" size={22} color="#F59E0B" />
+                  <Text style={styles.statCount}>{propertiesData.filter(prop => {
+                    const status = prop.status?.toLowerCase() || ''
+                    return status.includes('pending')
+                  }).length}</Text>
+                </View>
+                <Text style={styles.statTitle}>Pending</Text>
+              </View>
             </View>
             
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#8B5CF6', '#7C3AED', '#6D28D9']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="trending-up" size={24} color="#FFFFFF" />
-                <Text style={styles.statValue}>{propertiesData.filter(prop => prop.status === 'active').length}</Text>
-                <Text style={styles.statLabel}>Active Listings</Text>
-              </LinearGradient>
+            {/* Rejected - Light Red/Pink with Red Text */}
+            <View style={[styles.statCard, styles.statCardRed]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="cancel" size={22} color="#DC2626" />
+                  <Text style={[styles.statCount, styles.statCountRed]}>
+                    {propertiesData.filter(prop => {
+                      const status = prop.status?.toLowerCase() || ''
+                      return status.includes('rejected')
+                    }).length}
+                  </Text>
+                </View>
+                <Text style={[styles.statTitle, styles.statTitleRed]}>Rejected</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Filter Tabs */}
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {filterOptions.map((filter) => (
-              <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.filterTab,
-                  selectedFilter === filter.key && styles.filterTabActive
-                ]}
-                onPress={() => setSelectedFilter(filter.key)}
-              >
-                <Text style={[
-                  styles.filterTabText,
-                  selectedFilter === filter.key && styles.filterTabTextActive
-                ]}>
-                  {filter.label}
-                </Text>
-                <View style={[
-                  styles.filterBadge,
-                  selectedFilter === filter.key && styles.filterBadgeActive
-                ]}>
-                  <Text style={[
-                    styles.filterBadgeText,
-                    selectedFilter === filter.key && styles.filterBadgeTextActive
-                  ]}>
-                    {filter.count}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        {/* Filter Section Above Property Listings */}
+        <View style={styles.newFilterSection}>
+          <TouchableOpacity 
+            style={styles.filterDropdown}
+            onPress={() => setShowTypeDropdown(true)}
+          >
+            <Text style={styles.filterDropdownText}>{selectedType}</Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.filterDropdown}
+            onPress={() => setShowStatusDropdown(true)}
+          >
+            <Text style={styles.filterDropdownText}>{selectedStatus}</Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.filterDropdown}
+            onPress={() => setShowDateDropdown(true)}
+          >
+            <Text style={styles.filterDropdownText}>{selectedDate}</Text>
+            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
+          </TouchableOpacity>
         </View>
+
+        {/* Type Dropdown Modal */}
+        <Modal
+          visible={showTypeDropdown}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowTypeDropdown(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowTypeDropdown(false)}
+          >
+            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
+              {typeOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.dropdownOption,
+                    selectedType === option && styles.dropdownOptionSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedType(option)
+                    setShowTypeDropdown(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownOptionText,
+                    selectedType === option && styles.dropdownOptionTextSelected
+                  ]}>
+                    {option}
+                  </Text>
+                  {selectedType === option && (
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Status Dropdown Modal */}
+        <Modal
+          visible={showStatusDropdown}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowStatusDropdown(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowStatusDropdown(false)}
+          >
+            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
+              {statusOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.dropdownOption,
+                    selectedStatus === option && styles.dropdownOptionSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedStatus(option)
+                    setShowStatusDropdown(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownOptionText,
+                    selectedStatus === option && styles.dropdownOptionTextSelected
+                  ]}>
+                    {option}
+                  </Text>
+                  {selectedStatus === option && (
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* Date Dropdown Modal */}
+        <Modal
+          visible={showDateDropdown}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowDateDropdown(false)}
+        >
+          <TouchableOpacity 
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowDateDropdown(false)}
+          >
+            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
+              {dateOptions.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.dropdownOption,
+                    selectedDate === option && styles.dropdownOptionSelected
+                  ]}
+                  onPress={() => {
+                    setSelectedDate(option)
+                    setShowDateDropdown(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownOptionText,
+                    selectedDate === option && styles.dropdownOptionTextSelected
+                  ]}>
+                    {option}
+                  </Text>
+                  {selectedDate === option && (
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
 
         {/* Properties List */}
         <View style={styles.propertiesSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Properties ({filteredProperties.length})</Text>
-            <TouchableOpacity style={styles.sortButton}>
-              <MaterialIcons name="sort" size={20} color="#0D542BFF" />
-              <Text style={styles.sortText}>Sort</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Property Listings</Text>
           </View>
           
           {filteredProperties.length === 0 ? (
@@ -741,82 +883,120 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: (width - 52) / 2,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
   },
-  statGradient: {
-    padding: 20,
+  statCardGreen: {
+    backgroundColor: '#D1FAE5', // Light green
+  },
+  statCardWhite: {
+    backgroundColor: '#FFFFFF', // White
+  },
+  statCardYellow: {
+    backgroundColor: '#FEF3C7', // Light yellow/beige
+  },
+  statCardRed: {
+    backgroundColor: '#FEE2E2', // Light red/pink
+  },
+  statCardContent: {
+    padding: 16,
+    minHeight: 88,
+  },
+  statTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 100,
+    marginBottom: 10,
   },
-  statValue: {
-    fontSize: 24,
+  statCount: {
+    fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginVertical: 8,
+    color: '#1F2937',
   },
-  statLabel: {
+  statCountRed: {
+    color: '#DC2626', // Red color for rejected
+  },
+  statTitle: {
     fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  statTitleRed: {
+    color: '#DC2626', // Red color for rejected
   },
 
-  // Filter Section
-  filterSection: {
+  // New Filter Section
+  newFilterSection: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingBottom: 20,
+    marginBottom: 0,
+    gap: 12,
   },
-  filterScroll: {
+  filterDropdown: {
     flexDirection: 'row',
-  },
-  filterTab: {
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 12,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  filterTabActive: {
-    backgroundColor: '#0D542BFF',
-    borderColor: '#0D542BFF',
-  },
-  filterTabText: {
+  filterDropdownText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginRight: 8,
+    fontWeight: '500',
+    color: '#1F2937',
   },
-  filterTabTextActive: {
-    color: '#FFFFFF',
-  },
-  filterBadge: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  filterBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  dropdownModal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    width: width - 80,
+    maxHeight: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+    overflow: 'hidden',
   },
-  filterBadgeText: {
-    fontSize: 12,
+  dropdownOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dropdownOptionSelected: {
+    backgroundColor: '#F0FDFA',
+  },
+  dropdownOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  dropdownOptionTextSelected: {
     fontWeight: '600',
-    color: '#6B7280',
-  },
-  filterBadgeTextActive: {
-    color: '#FFFFFF',
+    color: '#0D542BFF',
   },
 
   // Properties Section
@@ -854,9 +1034,11 @@ const styles = StyleSheet.create({
 
   // Property Card Styles
   propertyCard: {
+    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    marginBottom: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -866,9 +1048,16 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     overflow: 'hidden',
   },
+  cardTopSection: {
+    flexDirection: 'row',
+    marginBottom: 0,
+  },
   propertyImageContainer: {
-    position: 'relative',
-    height: 200,
+    width: 130,
+    height: 130,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
   },
   propertyImage: {
     width: '100%',
@@ -883,143 +1072,93 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     marginTop: 8,
-    fontSize: 14,
+    fontSize: 12,
     color: '#9CA3AF',
   },
-  propertyOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 16,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  favoriteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   propertyContent: {
-    padding: 20,
+    flex: 1,
+    justifyContent: 'flex-start',
   },
-  propertyHeader: {
+  titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
   },
   propertyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
     flex: 1,
-    marginRight: 12,
   },
-  propertyPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0D542BFF',
-  },
-  propertyAddress: {
+  addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
     gap: 4,
+    marginBottom: 8,
   },
-  addressText: {
-    fontSize: 14,
+  propertyAddressText: {
+    fontSize: 13,
     color: '#6B7280',
     flex: 1,
   },
-  propertyDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
-    gap: 16,
-  },
-  detailItem: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    marginBottom: 8,
   },
-  detailText: {
+  propertyPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statusLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#1F2937',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 10,
+    marginTop: 10,
+    marginLeft: 0,
+    marginRight: 0,
   },
   propertyFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 12,
-    gap: 8,
+    gap: 16,
+    paddingTop: 4,
+    paddingLeft: 0,
+    alignItems: 'center',
   },
-  featureTag: {
-    backgroundColor: '#F0FDFA',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  featureText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#059669',
-  },
-  propertyStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  statItem: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  statText: {
+  featureText: {
     fontSize: 12,
     color: '#6B7280',
-  },
-  propertyFooter: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0FDFA',
-    borderRadius: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    gap: 6,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0D542BFF',
+    lineHeight: 16,
   },
   
   // Empty State Styles
