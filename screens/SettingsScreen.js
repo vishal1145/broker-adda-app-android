@@ -123,7 +123,7 @@ const SettingsScreen = ({ navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerTitle}>Settings</Text>
-              <Text style={styles.headerSubtitle}>Customize your experience</Text>
+              <Text style={styles.headerSubtitle}>App settings</Text>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.headerButton}>

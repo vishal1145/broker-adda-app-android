@@ -256,14 +256,6 @@ const LeadsScreen = ({ navigation }) => {
     transfersByMe: 0
   })
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 5,
-    total: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false
-  })
 
   // Calculate dropdown position based on available space
   const calculateDropdownPosition = (dropdownKey, event) => {
@@ -555,7 +547,7 @@ const LeadsScreen = ({ navigation }) => {
         // Refresh leads list
         const statusOption = statusOptions.find(option => option.key === selectedStatus)
         const apiStatus = statusOption ? statusOption.apiValue : 'all'
-        await fetchLeads(1, false, searchQuery, apiStatus)
+        await fetchLeads(false, searchQuery, apiStatus)
         
         // Also refresh metrics
         await fetchMetrics()
@@ -603,11 +595,12 @@ const LeadsScreen = ({ navigation }) => {
       // For transferred leads, we need to use the transferred leads API with filters
       // For regular leads, use the filtered leads API
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(1, pagination.limit, token, userId, searchQuery, apiStatus, filters)
-        : await leadsAPI.getLeadsWithFilters(1, pagination.limit, token, userId, filters)
+        ? await leadsAPI.getTransferredLeads(token, userId, searchQuery, apiStatus, filters)
+        : await leadsAPI.getLeadsWithFilters(token, userId, filters)
       
       if (response.success && response.data) {
-        const mappedLeads = response.data.items.map(lead => {
+        const leadsArray = Array.isArray(response.data.items) ? response.data.items : (Array.isArray(response.data) ? response.data : [])
+        const mappedLeads = leadsArray.map(lead => {
           // Build region string with both primary and secondary regions
           let regionString = 'Not specified'
           if (lead.primaryRegion?.name) {
@@ -645,15 +638,6 @@ const LeadsScreen = ({ navigation }) => {
         })
 
         setLeadsData(mappedLeads)
-
-        setPagination({
-          page: response.data.page,
-          limit: response.data.limit,
-          total: response.data.total,
-          totalPages: response.data.totalPages,
-          hasNextPage: response.data.hasNextPage,
-          hasPrevPage: response.data.hasPrevPage
-        })
       } else {
         throw new Error(response.message || 'Failed to fetch filtered leads')
       }
@@ -668,7 +652,7 @@ const LeadsScreen = ({ navigation }) => {
   }
 
   // Apply filters with specific status (used when status changes but advanced filters are active)
-  const applyFiltersWithStatus = async (apiStatus, page = 1) => {
+  const applyFiltersWithStatus = async (apiStatus) => {
     try {
       setIsLoading(true)
       setError(null)
@@ -696,11 +680,12 @@ const LeadsScreen = ({ navigation }) => {
       // For transferred leads, we need to use the transferred leads API with filters
       // For regular leads, use the filtered leads API
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchQuery, apiStatus, filters)
-        : await leadsAPI.getLeadsWithFilters(page, pagination.limit, token, userId, filters)
+        ? await leadsAPI.getTransferredLeads(token, userId, searchQuery, apiStatus, filters)
+        : await leadsAPI.getLeadsWithFilters(token, userId, filters)
       
       if (response.success && response.data) {
-        const mappedLeads = response.data.items.map(lead => {
+        const leadsArray = Array.isArray(response.data.items) ? response.data.items : (Array.isArray(response.data) ? response.data : [])
+        const mappedLeads = leadsArray.map(lead => {
           // Build region string with both primary and secondary regions
           let regionString = 'Not specified'
           if (lead.primaryRegion?.name) {
@@ -738,15 +723,6 @@ const LeadsScreen = ({ navigation }) => {
         })
 
         setLeadsData(mappedLeads)
-
-        setPagination({
-          page: response.data.page,
-          limit: response.data.limit,
-          total: response.data.total,
-          totalPages: response.data.totalPages,
-          hasNextPage: response.data.hasNextPage,
-          hasPrevPage: response.data.hasPrevPage
-        })
       } else {
         throw new Error(response.message || 'Failed to fetch filtered leads')
       }
@@ -798,7 +774,7 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
-  const fetchLeads = async (page = 1, refresh = false, searchTerm = '', status = 'all') => {
+  const fetchLeads = async (refresh = false, searchTerm = '', status = 'all') => {
     try {
       if (refresh) {
         setIsRefreshing(true)
@@ -821,11 +797,12 @@ const LeadsScreen = ({ navigation }) => {
       }
 
       const response = showTransferredLeads 
-        ? await leadsAPI.getTransferredLeads(page, pagination.limit, token, userId, searchTerm, status)
-        : await leadsAPI.getLeads(page, pagination.limit, token, userId, searchTerm, status)
+        ? await leadsAPI.getTransferredLeads(token, userId, searchTerm, status)
+        : await leadsAPI.getLeads(token, userId, searchTerm, status)
       
       if (response.success && response.data) {
-        const mappedLeads = response.data.items.map(lead => {
+        const leadsArray = Array.isArray(response.data.items) ? response.data.items : (Array.isArray(response.data) ? response.data : [])
+        const mappedLeads = leadsArray.map(lead => {
           // Build region string with both primary and secondary regions
           let regionString = 'Not specified'
           if (lead.primaryRegion?.name) {
@@ -862,20 +839,7 @@ const LeadsScreen = ({ navigation }) => {
           }
         })
 
-        if (refresh) {
-          setLeadsData(mappedLeads)
-        } else {
-          setLeadsData(mappedLeads)
-        }
-
-        setPagination({
-          page: response.data.page,
-          limit: response.data.limit,
-          total: response.data.total,
-          totalPages: response.data.totalPages,
-          hasNextPage: response.data.hasNextPage,
-          hasPrevPage: response.data.hasPrevPage
-        })
+        setLeadsData(mappedLeads)
       } else {
         throw new Error(response.message || 'Failed to fetch leads')
       }
@@ -906,7 +870,7 @@ const LeadsScreen = ({ navigation }) => {
         // Refresh the leads list from server
         const statusOption = statusOptions.find(option => option.key === selectedStatus)
         const apiStatus = statusOption ? statusOption.apiValue : 'all'
-        await fetchLeads(pagination.page, false, searchQuery, apiStatus)
+        await fetchLeads(false, searchQuery, apiStatus)
         
         Snackbar.showSuccess('Success', response.message || 'Lead deleted successfully')
       } else {
@@ -945,14 +909,6 @@ const LeadsScreen = ({ navigation }) => {
     setSelectedStatus('all') // Reset status when switching data source
     setLeadsData([]) // Clear current data to show loading state
     setSearchQuery('') // Clear search when switching
-    setPagination({
-      page: 1,
-      limit: 5,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false
-    })
     // Don't call fetchLeads here as useEffect will handle it
   }
 
@@ -970,16 +926,6 @@ const LeadsScreen = ({ navigation }) => {
       const statusOption = statusOptions.find(option => option.key === selectedStatus)
       const apiStatus = statusOption ? statusOption.apiValue : 'all'
       
-      // Reset pagination when searching
-      setPagination({
-        page: 1,
-        limit: 5,
-        total: 0,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPrevPage: false
-      })
-      
       // Check if advanced filters are applied and use them
       const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
                                 filterData.requirement !== 'All Requirements' || 
@@ -992,9 +938,9 @@ const LeadsScreen = ({ navigation }) => {
       } else {
         // Apply only search filter
         if (text.trim()) {
-          fetchLeads(1, false, text.trim(), apiStatus)
+          fetchLeads(false, text.trim(), apiStatus)
         } else {
-          fetchLeads(1, false, '', apiStatus)
+          fetchLeads(false, '', apiStatus)
           // Hide search bar when search is empty
           setIsSearchVisible(false)
         }
@@ -1010,21 +956,13 @@ const LeadsScreen = ({ navigation }) => {
       setSearchQuery('')
       const statusOption = statusOptions.find(option => option.key === selectedStatus)
       const apiStatus = statusOption ? statusOption.apiValue : 'all'
-      fetchLeads(1, false, '', apiStatus)
+      fetchLeads(false, '', apiStatus)
     }
   }
 
   // Clear search
   const clearSearch = () => {
     setSearchQuery('')
-    setPagination({
-      page: 1,
-      limit: 5,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false
-    })
     const statusOption = statusOptions.find(option => option.key === selectedStatus)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
     
@@ -1039,7 +977,7 @@ const LeadsScreen = ({ navigation }) => {
       applyFiltersWithStatus(apiStatus)
     } else {
       // Apply only status filter
-      fetchLeads(1, false, '', apiStatus)
+      fetchLeads(false, '', apiStatus)
     }
     setIsSearchVisible(false) // Hide search bar when clearing
   }
@@ -1208,7 +1146,7 @@ const LeadsScreen = ({ navigation }) => {
         // Refresh leads list
         const statusOption = statusOptions.find(option => option.key === selectedStatus)
         const apiStatus = statusOption ? statusOption.apiValue : 'all'
-        await fetchLeads(1, false, searchQuery, apiStatus)
+        await fetchLeads(false, searchQuery, apiStatus)
       } else {
         Snackbar.showError('Error', response.message || 'Failed to share lead')
       }
@@ -1242,14 +1180,6 @@ const LeadsScreen = ({ navigation }) => {
     setSelectedStatus(statusKey)
     setShowStatusDropdown(false)
     setLeadsData([]) // Clear current data to show loading state
-    setPagination({
-      page: 1,
-      limit: 5,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false
-    })
     const statusOption = statusOptions.find(option => option.key === statusKey)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
     
@@ -1264,7 +1194,7 @@ const LeadsScreen = ({ navigation }) => {
       applyFiltersWithStatus(apiStatus)
     } else {
       // Apply only status filter
-      fetchLeads(1, false, searchQuery, apiStatus)
+      fetchLeads(false, searchQuery, apiStatus)
     }
   }
 
@@ -1273,7 +1203,7 @@ const LeadsScreen = ({ navigation }) => {
     const loadData = async () => {
       await Promise.all([
         fetchMetrics(),
-        fetchLeads(1, false, '', 'all')
+        fetchLeads(false, '', 'all')
       ])
     }
     loadData()
@@ -1298,7 +1228,7 @@ const LeadsScreen = ({ navigation }) => {
     // Always refetch when toggle state changes, regardless of current data
     const statusOption = statusOptions.find(option => option.key === selectedStatus)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
-    fetchLeads(1, false, searchQuery, apiStatus)
+    fetchLeads(false, searchQuery, apiStatus)
   }, [showTransferredLeads])
 
   // Status options for dropdown
@@ -1606,7 +1536,7 @@ const LeadsScreen = ({ navigation }) => {
               
               await Promise.all([
                 fetchMetrics(),
-                hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(1, true, searchQuery, apiStatus)
+                hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(true, searchQuery, apiStatus)
               ])
             }}
             colors={['#0D542BFF']}
@@ -1625,8 +1555,8 @@ const LeadsScreen = ({ navigation }) => {
           
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Text style={styles.headerTitle}>Leads Management</Text>
-              <Text style={styles.headerSubtitle}>Track and manage your leads</Text>
+              <Text style={styles.headerTitle}>Leads</Text>
+              <Text style={styles.headerSubtitle}>Your leads</Text>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity 
@@ -1676,49 +1606,40 @@ const LeadsScreen = ({ navigation }) => {
         {/* Stats Overview */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#10B981', '#059669', '#047857']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="people" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>
-                  {isLoadingMetrics ? '...' : metrics.totalLeads}
-                </Text>
-                <Text style={styles.statLabel}>Total Leads</Text>
-              </LinearGradient>
+            <View style={[styles.statCard, styles.statCardGreen]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="people" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>
+                    {isLoadingMetrics ? '...' : metrics.totalLeads}
+                  </Text>
+                </View>
+                <Text style={styles.statTitle}>Total Leads</Text>
+              </View>
             </View>
             
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#3B82F6', '#2563EB', '#1D4ED8']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="share" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>
-                  {isLoadingMetrics ? '...' : metrics.transfersToMe}
-                </Text>
-                <Text style={styles.statLabel}>Share with me</Text>
-              </LinearGradient>
+            <View style={[styles.statCard, styles.statCardBlue]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="share" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>
+                    {isLoadingMetrics ? '...' : metrics.transfersToMe}
+                  </Text>
+                </View>
+                <Text style={styles.statTitle}>Share with me</Text>
+              </View>
             </View>
             
-            <View style={styles.statCard}>
-              <LinearGradient
-                colors={['#F59E0B', '#D97706', '#B45309']}
-                style={styles.statGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <MaterialIcons name="send" size={20} color="#FFFFFF" />
-                <Text style={styles.statValue}>
-                  {isLoadingMetrics ? '...' : metrics.transfersByMe}
-                </Text>
-                <Text style={styles.statLabel}>Share by me</Text>
-              </LinearGradient>
+            <View style={[styles.statCard, styles.statCardYellow]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="send" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>
+                    {isLoadingMetrics ? '...' : metrics.transfersByMe}
+                  </Text>
+                </View>
+                <Text style={styles.statTitle}>Share by me</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -1821,7 +1742,7 @@ const LeadsScreen = ({ navigation }) => {
                   if (hasAdvancedFilters) {
                     applyFiltersWithStatus(apiStatus)
                   } else {
-                    fetchLeads(1, false, searchQuery, apiStatus)
+                    fetchLeads(false, searchQuery, apiStatus)
                   }
                 }}
               >
@@ -1850,75 +1771,6 @@ const LeadsScreen = ({ navigation }) => {
             />
           )}
 
-          {/* Pagination Controls */}
-          {!isLoading && !error && filteredLeads.length > 0 && (
-            <View style={styles.paginationContainer}>
-              <TouchableOpacity 
-                style={[styles.paginationButton, !pagination.hasPrevPage && styles.paginationButtonDisabled]}
-                onPress={() => {
-                  if (pagination.hasPrevPage) {
-                    const statusOption = statusOptions.find(option => option.key === selectedStatus)
-                    const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                    
-                    // Check if advanced filters are applied and use them
-                    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
-                                              filterData.requirement !== 'All Requirements' || 
-                                              filterData.propertyType !== 'All Property Types' || 
-                                              filterData.budgetMax !== 0
-                    
-                    if (hasAdvancedFilters) {
-                      applyFiltersWithStatus(apiStatus, pagination.page - 1)
-                    } else {
-                      fetchLeads(pagination.page - 1, false, searchQuery, apiStatus)
-                    }
-                  }
-                }}
-                disabled={!pagination.hasPrevPage}
-              >
-                <MaterialIcons name="chevron-left" size={20} color={pagination.hasPrevPage ? "#0D542BFF" : "#9CA3AF"} />
-                <Text style={[styles.paginationButtonText, !pagination.hasPrevPage && styles.paginationButtonTextDisabled]}>
-                  Previous
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.paginationInfo}>
-                <Text style={styles.paginationText}>
-                  Page {pagination.page} of {pagination.totalPages}
-                </Text>
-                <Text style={styles.paginationCount}>
-                  {filteredLeads.length} of {pagination.total} leads
-                </Text>
-              </View>
-
-              <TouchableOpacity 
-                style={[styles.paginationButton, !pagination.hasNextPage && styles.paginationButtonDisabled]}
-                onPress={() => {
-                  if (pagination.hasNextPage) {
-                    const statusOption = statusOptions.find(option => option.key === selectedStatus)
-                    const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                    
-                    // Check if advanced filters are applied and use them
-                    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
-                                              filterData.requirement !== 'All Requirements' || 
-                                              filterData.propertyType !== 'All Property Types' || 
-                                              filterData.budgetMax !== 0
-                    
-                    if (hasAdvancedFilters) {
-                      applyFiltersWithStatus(apiStatus, pagination.page + 1)
-                    } else {
-                      fetchLeads(pagination.page + 1, false, searchQuery, apiStatus)
-                    }
-                  }
-                }}
-                disabled={!pagination.hasNextPage}
-              >
-                <Text style={[styles.paginationButtonText, !pagination.hasNextPage && styles.paginationButtonTextDisabled]}>
-                  Next
-                </Text>
-                <MaterialIcons name="chevron-right" size={20} color={pagination.hasNextPage ? "#0D542BFF" : "#9CA3AF"} />
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </ScrollView>
       </View>
@@ -2878,7 +2730,7 @@ const styles = StyleSheet.create({
   // Header Styles
   modernHeader: {
     backgroundColor: '#0D542BFF',
-    paddingTop: 40,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -3004,40 +2856,53 @@ const styles = StyleSheet.create({
 
   // Stats Section
   statsSection: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 24,
   },
   statsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   statCard: {
-    flex: 1,
-    borderRadius: 16,
+    width: (width - 52) / 2,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
   },
-  statGradient: {
-    padding: 16,
-    alignItems: 'center',
-    minHeight: 90,
+  statCardGreen: {
+    backgroundColor: '#34D399',
   },
-  statValue: {
-    fontSize: 20,
+  statCardBlue: {
+    backgroundColor: '#3B82F6',
+  },
+  statCardYellow: {
+    backgroundColor: '#FCD34D',
+  },
+  statCardContent: {
+    padding: 16,
+    minHeight: 88,
+  },
+  statTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statCount: {
+    fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginVertical: 6,
   },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 16,
+  statTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Filter Section

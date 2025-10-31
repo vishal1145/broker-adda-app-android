@@ -210,14 +210,11 @@ const NotificationsScreen = ({ navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerTitle}>Notifications</Text>
-              <Text style={styles.headerSubtitle}>Stay updated with latest activities</Text>
+              <Text style={styles.headerSubtitle}>Latest updates</Text>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.headerButton}>
                 <MaterialIcons name="mark-email-read" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton} onPress={() => navigation.navigate('Settings')}>
-                <MaterialIcons name="settings" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>

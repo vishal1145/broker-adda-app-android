@@ -38,14 +38,6 @@ const PropertiesScreen = ({ navigation }) => {
   const typeOptions = ['All Types', 'House', 'Condo', 'Apartment', 'Villa', 'Townhouse']
   const statusOptions = ['All Status', 'Approved', 'Pending', 'Rejected', 'Active', 'Sold']
   const dateOptions = ['Date', 'Newest First', 'Oldest First', 'Price: Low to High', 'Price: High to Low']
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 5,
-    total: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPrevPage: false
-  })
 
   // Transform API data to match screen expectations
   const transformPropertyData = (apiProperties) => {
@@ -73,7 +65,7 @@ const PropertiesScreen = ({ navigation }) => {
   }
 
   // Fetch properties from API
-  const fetchProperties = async (page = 1, refresh = false) => {
+  const fetchProperties = async (refresh = false) => {
     try {
       if (refresh) {
         setRefreshing(true)
@@ -93,22 +85,13 @@ const PropertiesScreen = ({ navigation }) => {
       setToken(token)
       setBrokerId(userId)
 
-      const response = await propertiesAPI.getProperties(userId, token, page, pagination.limit, selectedFilter)
+      // Fetch all properties with a high limit
+      const response = await propertiesAPI.getProperties(userId, token, 1, 1000, selectedFilter)
       
       if (response.success && response.data) {
         const transformedData = transformPropertyData(response.data)
         
         setPropertiesData(transformedData)
-
-        // Update pagination state
-        setPagination({
-          page: response.pagination?.page || page,
-          limit: response.pagination?.limit || pagination.limit,
-          total: response.pagination?.total || 0,
-          totalPages: response.pagination?.totalPages || 0,
-          hasNextPage: response.pagination?.hasNextPage || false,
-          hasPrevPage: response.pagination?.hasPrevPage || false
-        })
       }
     } catch (error) {
       console.error('Error fetching properties:', error)
@@ -122,48 +105,18 @@ const PropertiesScreen = ({ navigation }) => {
   // Initial load
   useEffect(() => {
     setPropertiesData([])
-    setPagination({
-      page: 1,
-      limit: 5,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false
-    })
-    fetchProperties(1, false)
+    fetchProperties(false)
   }, [])
 
   // Refresh when filter changes
   useEffect(() => {
     setPropertiesData([])
-    setPagination({
-      page: 1,
-      limit: 5,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
-      hasPrevPage: false
-    })
-    fetchProperties(1, false)
+    fetchProperties(false)
   }, [selectedFilter])
 
   // Handle pull to refresh
   const onRefresh = async () => {
-    await fetchProperties(1, true)
-  }
-
-  // Load more properties
-  const loadMoreProperties = async () => {
-    if (pagination.hasNextPage && !loading) {
-      await fetchProperties(pagination.page + 1, false)
-    }
-  }
-
-  // Load previous properties
-  const loadPrevProperties = async () => {
-    if (pagination.hasPrevPage && !loading) {
-      await fetchProperties(pagination.page - 1, false)
-    }
+    await fetchProperties(true)
   }
 
   // Load sample data if API fails
@@ -469,7 +422,7 @@ const PropertiesScreen = ({ navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.headerTitle}>Properties</Text>
-              <Text style={styles.headerSubtitle}>Manage your property listings</Text>
+              <Text style={styles.headerSubtitle}>Your properties</Text>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity 
@@ -719,50 +672,6 @@ const PropertiesScreen = ({ navigation }) => {
             showsVerticalScrollIndicator={false}
             scrollEnabled={false}
           />
-          )}
-
-          {/* Pagination Controls */}
-          {!loading && filteredProperties.length > 0 && (
-            <View style={styles.paginationContainer}>
-              <TouchableOpacity 
-                style={[styles.paginationButton, !pagination.hasPrevPage && styles.paginationButtonDisabled]}
-                onPress={() => {
-                  if (pagination.hasPrevPage) {
-                    loadPrevProperties()
-                  }
-                }}
-                disabled={!pagination.hasPrevPage}
-              >
-                <MaterialIcons name="chevron-left" size={20} color={pagination.hasPrevPage ? "#0D542BFF" : "#9CA3AF"} />
-                <Text style={[styles.paginationButtonText, !pagination.hasPrevPage && styles.paginationButtonTextDisabled]}>
-                  Previous
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.paginationInfo}>
-                <Text style={styles.paginationText}>
-                  Page {pagination.page} of {pagination.totalPages}
-                </Text>
-                <Text style={styles.paginationCount}>
-                  {filteredProperties.length} of {pagination.total} properties
-                </Text>
-              </View>
-
-              <TouchableOpacity 
-                style={[styles.paginationButton, !pagination.hasNextPage && styles.paginationButtonDisabled]}
-                onPress={() => {
-                  if (pagination.hasNextPage) {
-                    loadMoreProperties()
-                  }
-                }}
-                disabled={!pagination.hasNextPage}
-              >
-                <Text style={[styles.paginationButtonText, !pagination.hasNextPage && styles.paginationButtonTextDisabled]}>
-                  Next
-                </Text>
-                <MaterialIcons name="chevron-right" size={20} color={pagination.hasNextPage ? "#0D542BFF" : "#9CA3AF"} />
-              </TouchableOpacity>
-            </View>
           )}
         </View>
       </ScrollView>
@@ -1202,57 +1111,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
-  },
-
-  // Pagination Styles
-  paginationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingHorizontal: 0,
-    marginTop: 16,
-  },
-  paginationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  paginationButtonDisabled: {
-    backgroundColor: '#F9FAFB',
-    borderColor: '#F3F4F6',
-  },
-  paginationButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0D542BFF',
-    marginHorizontal: 4,
-  },
-  paginationButtonTextDisabled: {
-    color: '#9CA3AF',
-  },
-  paginationInfo: {
-    alignItems: 'center',
-  },
-  paginationText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  paginationCount: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
   },
 })
 

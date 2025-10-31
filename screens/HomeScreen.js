@@ -193,36 +193,6 @@ const HomeScreen = ({ navigation }) => {
     customerInquiries: 5
   })
 
-  // Notifications data
-  const [notifications] = useState([
-    {
-      id: 1,
-      title: 'New Announcement: Q3 Performance Review',
-      description: 'Read the latest company-wide performance update.',
-      time: '2 hours ago',
-      type: 'announcement',
-      icon: 'notifications',
-      iconColor: '#FFD700'
-    },
-    {
-      id: 2,
-      title: 'Lead Transfer: John Doe from Sarah K.',
-      description: 'New lead for \'123 Oak St\' transferred to you.',
-      time: '5 hours ago',
-      type: 'transfer',
-      icon: 'flash-on',
-      iconColor: '#FF9800'
-    },
-    {
-      id: 3,
-      title: 'Action Required: Incomplete Lead Profile',
-      description: 'Update missing details for \'Jane Smith\'.',
-      time: '1 day ago',
-      type: 'action',
-      icon: 'warning',
-      iconColor: '#F44336'
-    }
-  ])
 
   // Leads by status data
   const [leadsStatusData] = useState({
@@ -341,18 +311,6 @@ const HomeScreen = ({ navigation }) => {
     </View>
   )
 
-  const NotificationItem = ({ notification }) => (
-    <View style={styles.notificationItem}>
-      <View style={styles.notificationIcon}>
-        <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
-      </View>
-      <View style={styles.notificationContent}>
-        <Text style={styles.notificationTitle}>{notification.title}</Text>
-        <Text style={styles.notificationDescription}>{notification.description}</Text>
-        <Text style={styles.notificationTime}>{notification.time}</Text>
-      </View>
-    </View>
-  )
 
   return (
     <SafeAreaView style={styles.wrapper} edges={['top']}>
@@ -387,12 +345,6 @@ const HomeScreen = ({ navigation }) => {
               </View>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.notificationButton} onPress={() => navigation.navigate('Notifications')}>
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.badgeNumber}>3</Text>
-                </View>
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
               <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
                 <View style={styles.profileImageContainer}>
                   {profileImage ? (
@@ -636,44 +588,6 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Notifications - Modern Design */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleContainer}>
-              <View style={styles.sectionIconWrapper}>
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
-              </View>
-              <Text style={styles.sectionTitle}>Notifications</Text>
-            </View>
-            <TouchableOpacity style={styles.seeAllButton} onPress={() => navigation.navigate('Notifications')}>
-              <Text style={styles.seeAllText}>See All</Text>
-              <MaterialIcons name="arrow-forward" size={16} color="#0D542BFF" />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.notificationsContainer}>
-            {notifications.map((notification, index) => (
-              <View key={notification.id} style={styles.notificationCard}>
-                <View style={styles.notificationCardHeader}>
-                  <View style={[styles.notificationIconContainer, { backgroundColor: notification.iconColor + '20' }]}>
-                    <MaterialIcons name={notification.icon} size={20} color={notification.iconColor} />
-                  </View>
-                  <View style={styles.notificationTimeContainer}>
-                    <Text style={styles.notificationTime}>{notification.time}</Text>
-                  </View>
-                </View>
-                <Text style={styles.notificationTitle}>{notification.title}</Text>
-                <Text style={styles.notificationDescription}>{notification.description}</Text>
-                <View style={styles.notificationTypeContainer}>
-                  <Text style={[styles.notificationType, { color: notification.iconColor }]}>
-                    {notification.type.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
         {/* Leads by Status - Modern Design */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -812,27 +726,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 8,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#EF4444',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  badgeNumber: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   profileButton: {
     padding: 4,
@@ -1118,79 +1011,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
-  },
-
-  // Notifications Styles
-  seeAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0D542BFF',
-  },
-  notificationsContainer: {
-    gap: 16,
-  },
-  notificationCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  notificationCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  notificationIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationTimeContainer: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  notificationTime: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  notificationDescription: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#6B7280',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  notificationTypeContainer: {
-    alignSelf: 'flex-start',
-  },
-  notificationType: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 
   // Chart Styles

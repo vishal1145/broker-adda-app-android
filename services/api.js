@@ -212,11 +212,11 @@ export const authAPI = {
 
 // Leads API functions
 export const leadsAPI = {
-  // Get leads with pagination, search and status filter
-  getLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all') => {
+  // Get leads with search and status filter (no pagination)
+  getLeads: async (token, userId, search = '', status = 'all') => {
     try {
-      console.log('Fetching leads:', { page, limit, userId, search, status });
-      let url = `/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`;
+      console.log('Fetching leads:', { userId, search, status });
+      let url = `/api/leads?createdBy=${userId}`;
       if (search && search.trim()) {
         url += `&search=${encodeURIComponent(search.trim())}`;
       }
@@ -274,11 +274,11 @@ export const leadsAPI = {
     }
   },
 
-  // Get transferred leads with search, status, and advanced filters
-  getTransferredLeads: async (page = 1, limit = 5, token, userId, search = '', status = 'all', filters = {}) => {
+  // Get transferred leads with search, status, and advanced filters (no pagination)
+  getTransferredLeads: async (token, userId, search = '', status = 'all', filters = {}) => {
     try {
-      console.log('Fetching transferred leads:', { page, limit, userId, search, status, filters });
-      let url = `/api/leads/transferred?toBroker=${userId}&page=${page}&limit=${limit}`;
+      console.log('Fetching transferred leads:', { userId, search, status, filters });
+      let url = `/api/leads/transferred?toBroker=${userId}`;
       
       // Add search parameter
       if (search && search.trim()) {
@@ -318,11 +318,11 @@ export const leadsAPI = {
     }
   },
 
-  // Get leads with advanced filters
-  getLeadsWithFilters: async (page = 1, limit = 5, token, userId, filters = {}) => {
+  // Get leads with advanced filters (no pagination)
+  getLeadsWithFilters: async (token, userId, filters = {}) => {
     try {
-      console.log('Fetching leads with filters:', { page, limit, userId, filters });
-      let url = `/api/leads?page=${page}&limit=${limit}&createdBy=${userId}`;
+      console.log('Fetching leads with filters:', { userId, filters });
+      let url = `/api/leads?createdBy=${userId}`;
       
       // Add filter parameters
       if (filters.regionId) {

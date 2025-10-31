@@ -747,97 +747,69 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-        {/* Lead Information Card */}
-        <View style={styles.leadCard}>
-          <View style={styles.leadHeader}>
-            <View style={styles.leadAvatarContainer}>
-              <View style={styles.leadAvatar}>
-                <Text style={styles.leadAvatarText}>
+        {/* Lead Information Card - Matching LeadsScreen style */}
+        <View style={styles.leadInfoCard}>
+          <View style={styles.leadInfoHeader}>
+            <View style={styles.leadInfoAvatarContainer}>
+              <View style={styles.leadInfoAvatar}>
+                <Text style={styles.leadInfoAvatarText}>
                   {leadData.customerName ? leadData.customerName.split(' ').map(n => n[0]).join('') : 'N/A'}
                 </Text>
               </View>
             </View>
-            <View style={styles.leadInfo}>
-              <Text style={styles.leadName}>{leadData.customerName || 'Unknown Lead'}</Text>
-              <Text style={styles.leadEmail}>{leadData.customerEmail || 'No email'}</Text>
-              <Text style={styles.leadPhone}>{leadData.customerPhone || 'No phone'}</Text>
+            <View style={styles.leadInfoContent}>
+              <Text style={styles.leadInfoName}>{leadData.customerName || 'Unknown Lead'}</Text>
+              <Text style={styles.leadInfoEmail}>{leadData.customerEmail || 'No email'}</Text>
+              <Text style={styles.leadInfoPhone}>{leadData.customerPhone || 'No phone'}</Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(leadData.status) }]}>
-              <Text style={styles.statusText}>
-                {leadData.status?.toUpperCase() || 'UNKNOWN'}
+            <View style={[styles.leadInfoStatusBadge, { backgroundColor: getStatusColor(leadData.status) }]}>
+              <Text style={styles.leadInfoStatusText}>
+                {leadData.status?.replace('-', ' ').toUpperCase() || 'UNKNOWN'}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Lead Details Grid */}
-        <View style={styles.detailsSection}>
-          <Text style={styles.sectionTitle}>Lead Information</Text>
-          
-          <View style={styles.detailsGrid}>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIconContainer}>
-                <MaterialIcons name="trending-up" size={24} color="#0D542BFF" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Requirement</Text>
-                <Text style={styles.detailValue}>{leadData.requirement || 'Not specified'}</Text>
+          {/* Lead Details Grid */}
+          <View style={styles.leadInfoDetailsGrid}>
+            <View style={styles.leadInfoDetailRow}>
+              <View style={styles.leadInfoDetailItem}>
+                <MaterialIcons name="trending-up" size={16} color="#0D542BFF" />
+                <View style={styles.leadInfoDetailContent}>
+                  <Text style={styles.leadInfoDetailLabel}>REQUIREMENT</Text>
+                  <Text style={styles.leadInfoDetailValue}>{leadData.requirement || 'Not specified'}</Text>
+                </View>
               </View>
             </View>
-
-            <View style={styles.detailCard}>
-              <View style={styles.detailIconContainer}>
-                <MaterialIcons name="home" size={24} color="#0D542BFF" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Property Type</Text>
-                <Text style={styles.detailValue}>{leadData.propertyType || 'Not specified'}</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailCard}>
-              <View style={styles.detailIconContainer}>
-                <MaterialIcons name="attach-money" size={24} color="#0D542BFF" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Budget</Text>
-                <Text style={styles.detailValue}>{formatBudget(leadData.budget)}</Text>
+            <View style={styles.leadInfoDetailRow}>
+              <View style={styles.leadInfoDetailItem}>
+                <MaterialIcons name="home" size={16} color="#0D542BFF" />
+                <View style={styles.leadInfoDetailContent}>
+                  <Text style={styles.leadInfoDetailLabel}>PROPERTY TYPE</Text>
+                  <Text style={styles.leadInfoDetailValue}>{leadData.propertyType || 'Not specified'}</Text>
+                </View>
               </View>
             </View>
-
-            <View style={styles.detailCard}>
-              <View style={styles.detailIconContainer}>
-                <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
+            <View style={styles.leadInfoDetailRow}>
+              <View style={styles.leadInfoDetailItem}>
+                <MaterialIcons name="attach-money" size={16} color="#0D542BFF" />
+                <View style={styles.leadInfoDetailContent}>
+                  <Text style={styles.leadInfoDetailLabel}>BUDGET</Text>
+                  <Text style={styles.leadInfoDetailValue}>{formatBudget(leadData.budget)}</Text>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Primary Region</Text>
-                <Text style={styles.detailValue}>
-                  {leadData.primaryRegion?.name || leadData.region?.name || 'Not specified'}
-                </Text>
-                {leadData.primaryRegion?.city && (
-                  <Text style={styles.detailSubValue}>
-                    {leadData.primaryRegion.city}, {leadData.primaryRegion.state}
+            </View>
+            <View style={styles.leadInfoDetailRow}>
+              <View style={styles.leadInfoDetailItem}>
+                <MaterialIcons name="location-on" size={16} color="#0D542BFF" />
+                <View style={styles.leadInfoDetailContent}>
+                  <Text style={styles.leadInfoDetailLabel}>REGION(S)</Text>
+                  <Text style={styles.leadInfoDetailValue}>
+                    {leadData.primaryRegion?.name || leadData.region?.name || 'Not specified'}
+                    {leadData.secondaryRegion ? `, ${leadData.secondaryRegion.name}` : ''}
                   </Text>
-                )}
+                </View>
               </View>
             </View>
-
-            {leadData.secondaryRegion && (
-              <View style={styles.detailCard}>
-                <View style={styles.detailIconContainer}>
-                  <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
-                </View>
-                <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Secondary Region</Text>
-                  <Text style={styles.detailValue}>{leadData.secondaryRegion.name}</Text>
-                  {leadData.secondaryRegion.city && (
-                    <Text style={styles.detailSubValue}>
-                      {leadData.secondaryRegion.city}, {leadData.secondaryRegion.state}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            )}
           </View>
         </View>
 
@@ -1463,11 +1435,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Lead Card Styles
-  leadCard: {
+  // Lead Information Card Styles - Matching LeadsScreen
+  leadInfoCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     marginHorizontal: 20,
     marginBottom: 20,
     shadowColor: '#000',
@@ -1478,58 +1450,83 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  leadHeader: {
+  leadInfoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
   },
-  leadAvatarContainer: {
-    marginRight: 16,
+  leadInfoAvatarContainer: {
+    marginRight: 12,
   },
-  leadAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  leadInfoAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#D1FAE5',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  leadAvatarText: {
-    fontSize: 20,
+  leadInfoAvatarText: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#065F46',
   },
-  leadAvatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  leadInfo: {
+  leadInfoContent: {
     flex: 1,
   },
-  leadName: {
-    fontSize: 20,
+  leadInfoName: {
+    fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 4,
-  },
-  leadEmail: {
-    fontSize: 16,
-    color: '#6B7280',
     marginBottom: 2,
   },
-  leadPhone: {
-    fontSize: 16,
+  leadInfoEmail: {
+    fontSize: 14,
     color: '#6B7280',
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  leadInfoPhone: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 2,
   },
-  statusText: {
+  leadInfoStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  leadInfoStatusText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  leadInfoDetailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  leadInfoDetailRow: {
+    width: '50%',
+    marginBottom: 12,
+    paddingRight: 8,
+  },
+  leadInfoDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leadInfoDetailContent: {
+    flex: 1,
+  },
+  leadInfoDetailLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#9CA3AF',
+    marginBottom: 2,
+  },
+  leadInfoDetailValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
   },
 
   // Details Section
@@ -1573,15 +1570,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#9CA3AF',
     marginBottom: 4,
   },
   detailValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
   },
   detailSubValue: {
     fontSize: 14,
