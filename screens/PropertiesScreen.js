@@ -428,19 +428,22 @@ const PropertiesScreen = ({ navigation }) => {
   // Show loading state
   if (loading && propertiesData.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0D542BFF" />
-          <Text style={styles.loadingText}>Loading properties...</Text>
+      <SafeAreaView style={styles.wrapper} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0D542BFF" />
+            <Text style={styles.loadingText}>Loading properties...</Text>
+          </View>
         </View>
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.wrapper} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <View style={styles.container}>
       
       <ScrollView 
         style={styles.scrollView} 
@@ -763,11 +766,16 @@ const PropertiesScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#0D542BFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',

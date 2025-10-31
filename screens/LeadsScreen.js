@@ -1583,8 +1583,9 @@ const LeadsScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.wrapper} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <View style={styles.container}>
       
       <ScrollView 
         style={styles.scrollView} 
@@ -1920,6 +1921,7 @@ const LeadsScreen = ({ navigation }) => {
           )}
         </View>
       </ScrollView>
+      </View>
 
       {/* Advanced Filter Modal */}
       <Modal
@@ -2858,6 +2860,10 @@ const LeadsScreen = ({ navigation }) => {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#0D542BFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',

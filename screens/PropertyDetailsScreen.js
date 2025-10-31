@@ -108,10 +108,10 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header */}
+    <SafeAreaView style={styles.wrapper} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <View style={styles.container}>
+        {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerPattern}>
           <View style={styles.patternCircle1} />
@@ -358,11 +358,16 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#0D542BFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',

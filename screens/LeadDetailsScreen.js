@@ -650,11 +650,13 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0D542BFF" />
           <Text style={styles.loadingText}>Loading lead details...</Text>
+          </View>
         </View>
       </SafeAreaView>
     )
@@ -662,9 +664,10 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <View style={styles.errorContainer}>
           <MaterialIcons name="error-outline" size={48} color="#EF4444" />
           <Text style={styles.errorTitle}>Failed to Load Lead Details</Text>
           <Text style={styles.errorMessage}>{error}</Text>
@@ -674,6 +677,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     )
@@ -681,20 +685,23 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   if (!leadData) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
-          <Text style={styles.emptyTitle}>Lead Not Found</Text>
-          <Text style={styles.emptyMessage}>The requested lead could not be found.</Text>
+      <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <View style={styles.emptyContainer}>
+            <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
+            <Text style={styles.emptyTitle}>Lead Not Found</Text>
+            <Text style={styles.emptyMessage}>The requested lead could not be found.</Text>
+          </View>
         </View>
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <View style={styles.container}>
       
       <ScrollView 
         style={styles.scrollView} 
@@ -945,6 +952,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
         </View>
 
       </ScrollView>
+      </View>
 
       {/* Edit Lead Modal */}
       <Modal
@@ -1354,6 +1362,10 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#0D542BFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',

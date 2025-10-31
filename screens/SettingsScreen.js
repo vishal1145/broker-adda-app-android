@@ -103,10 +103,10 @@ const SettingsScreen = ({ navigation }) => {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      <ScrollView 
+    <SafeAreaView style={styles.wrapper} edges={['top']}>
+      <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+      <View style={styles.container}>
+        <ScrollView 
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
@@ -190,11 +190,16 @@ Updates are automatic.</Text>
           </View>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#0D542BFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
