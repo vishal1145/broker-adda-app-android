@@ -139,7 +139,7 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
           <MaterialIcons name="person" size={20} color="#065F46" />
         )}
         <TouchableOpacity 
-          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#009689', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
           onPress={retry}
         >
           <MaterialIcons name="refresh" size={10} color="#FFFFFF" />
@@ -653,7 +653,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#009689" />
+          <ActivityIndicator size="large" color="#0D542BFF" />
           <Text style={styles.loadingText}>Loading lead details...</Text>
         </View>
       </SafeAreaView>
@@ -704,8 +704,8 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => fetchLeadDetails(true)}
-            colors={['#009689']}
-            tintColor="#009689"
+            colors={['#0D542BFF']}
+            tintColor="#0D542BFF"
           />
         }
       >
@@ -770,7 +770,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.detailsGrid}>
             <View style={styles.detailCard}>
               <View style={styles.detailIconContainer}>
-                <MaterialIcons name="trending-up" size={24} color="#009689" />
+                <MaterialIcons name="trending-up" size={24} color="#0D542BFF" />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Requirement</Text>
@@ -780,7 +780,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
             <View style={styles.detailCard}>
               <View style={styles.detailIconContainer}>
-                <MaterialIcons name="home" size={24} color="#009689" />
+                <MaterialIcons name="home" size={24} color="#0D542BFF" />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Property Type</Text>
@@ -790,7 +790,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
             <View style={styles.detailCard}>
               <View style={styles.detailIconContainer}>
-                <MaterialIcons name="attach-money" size={24} color="#009689" />
+                <MaterialIcons name="attach-money" size={24} color="#0D542BFF" />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Budget</Text>
@@ -800,7 +800,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
             <View style={styles.detailCard}>
               <View style={styles.detailIconContainer}>
-                <MaterialIcons name="location-on" size={24} color="#009689" />
+                <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Primary Region</Text>
@@ -818,7 +818,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             {leadData.secondaryRegion && (
               <View style={styles.detailCard}>
                 <View style={styles.detailIconContainer}>
-                  <MaterialIcons name="location-on" size={24} color="#009689" />
+                  <MaterialIcons name="location-on" size={24} color="#0D542BFF" />
                 </View>
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Secondary Region</Text>
@@ -869,7 +869,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.timelineCard}>
             <View style={styles.timelineItem}>
               <View style={styles.timelineIcon}>
-                <MaterialIcons name="add" size={20} color="#009689" />
+                <MaterialIcons name="add" size={20} color="#0D542BFF" />
               </View>
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>Lead Created</Text>
@@ -894,7 +894,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.shareHistoryCard}>
             <View style={styles.shareHistoryHeader}>
               <View style={styles.shareHistoryIcon}>
-                <MaterialIcons name="share" size={20} color="#009689" />
+                <MaterialIcons name="share" size={20} color="#0D542BFF" />
               </View>
               <Text style={styles.shareHistoryTitle}>Share History</Text>
             </View>
@@ -1233,7 +1233,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                             >
                               {isLoadingRegions ? (
                                 <View style={styles.editLeadDropdownItem}>
-                                  <ActivityIndicator size="small" color="#009689" />
+                                  <ActivityIndicator size="small" color="#0D542BFF" />
                                   <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
                                 </View>
                               ) : (
@@ -1290,7 +1290,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                             >
                               {isLoadingRegions ? (
                                 <View style={styles.editLeadDropdownItem}>
-                                  <ActivityIndicator size="small" color="#009689" />
+                                  <ActivityIndicator size="small" color="#0D542BFF" />
                                   <Text style={styles.editLeadDropdownItemText}>Loading regions...</Text>
                                 </View>
                               ) : (
@@ -1367,7 +1367,7 @@ const styles = StyleSheet.create({
 
   // Header Styles
   header: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
@@ -1459,10 +1459,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1542,9 +1542,9 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1588,9 +1588,9 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1628,7 +1628,7 @@ const styles = StyleSheet.create({
   },
   createdByFirm: {
     fontSize: 14,
-    color: '#009689',
+    color: '#0D542BFF',
     marginBottom: 2,
   },
   createdByEmail: {
@@ -1652,9 +1652,9 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1697,9 +1697,9 @@ const styles = StyleSheet.create({
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1793,7 +1793,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -1839,7 +1839,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1976,8 +1976,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   editLeadButtonActive: {
-    backgroundColor: '#009689',
-    borderColor: '#009689',
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
   },
   editLeadButtonText: {
     fontSize: 14,
@@ -2059,7 +2059,7 @@ const styles = StyleSheet.create({
   },
   editLeadSubmitButton: {
     flex: 1,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -2101,7 +2101,7 @@ const styles = StyleSheet.create({
   sliderValueText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#009689',
+    color: '#0D542BFF',
   },
   sliderWrapper: {
     marginBottom: 8,
@@ -2125,7 +2125,7 @@ const styles = StyleSheet.create({
   },
   sliderProgress: {
     height: 8,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 4,
     position: 'absolute',
     top: 12,
@@ -2136,10 +2136,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 20,
     height: 20,
-    backgroundColor: '#009689',
+    backgroundColor: '#0D542BFF',
     borderRadius: 10,
     top: 8,
-    shadowColor: '#009689',
+    shadowColor: '#0D542BFF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
     shadowRadius: 6,

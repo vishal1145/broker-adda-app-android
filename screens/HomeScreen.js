@@ -424,9 +424,6 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <Text style={styles.sectionTitle}>Performance Summary</Text>
             </View>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>Live</Text>
-            </View>
           </View>
           
           <View style={styles.performanceGrid}>
@@ -525,9 +522,6 @@ const HomeScreen = ({ navigation }) => {
               </View>
               <Text style={styles.sectionTitle}>Properties Summary</Text>
             </View>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>Real Estate</Text>
-            </View>
           </View>
           
           <View style={styles.propertiesContainer}>
@@ -592,9 +586,6 @@ const HomeScreen = ({ navigation }) => {
                 <MaterialIcons name="mail" size={24} color="#FFFFFF" />
               </View>
               <Text style={styles.sectionTitle}>Messages & Inquiries</Text>
-            </View>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>Communication</Text>
             </View>
           </View>
           
@@ -691,9 +682,6 @@ const HomeScreen = ({ navigation }) => {
                 <MaterialIcons name="pie-chart" size={24} color="#FFFFFF" />
               </View>
               <Text style={styles.sectionTitle}>Leads by Status</Text>
-            </View>
-            <View style={styles.sectionBadge}>
-              <Text style={styles.sectionBadgeText}>Analytics</Text>
             </View>
           </View>
           
@@ -939,10 +927,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   metricGradient: {
     padding: 20,
@@ -1009,10 +997,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1078,10 +1066,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
   },
   messageGradient: {
     padding: 20,
@@ -1146,10 +1134,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -1206,10 +1194,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },

@@ -19,7 +19,6 @@ const { width } = Dimensions.get('window')
 const PropertyDetailsScreen = ({ navigation, route }) => {
   const { property } = route.params
   
-  const [isFavorite, setIsFavorite] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   // Sample related properties (in a real app, this would be fetched from an API)
@@ -114,32 +113,30 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.headerButton}
-          onPress={() => navigation.goBack()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Property Details</Text>
+        <View style={styles.headerPattern}>
+          <View style={styles.patternCircle1} />
+          <View style={styles.patternCircle2} />
+          <View style={styles.patternCircle3} />
         </View>
-        <View style={styles.headerButtons}>
+        <View style={styles.headerContent}>
           <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={() => setIsFavorite(!isFavorite)}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <MaterialIcons 
-              name={isFavorite ? "favorite" : "favorite-border"} 
-              size={24} 
-              color={isFavorite ? "#EF4444" : "#FFFFFF"} 
-            />
+            <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={handleShare}
-          >
-            <MaterialIcons name="share" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>Property Details</Text>
+            <Text style={styles.headerSubtitle}>Complete property information</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.headerActionButton}
+              onPress={handleShare}
+            >
+              <MaterialIcons name="share" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -372,32 +369,87 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#0D542BFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  patternCircle1: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    top: -30,
+    right: -30,
+  },
+  patternCircle2: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    top: 100,
+    left: -20,
+  },
+  patternCircle3: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    bottom: 20,
+    right: 50,
+  },
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    position: 'relative',
+    zIndex: 2,
   },
-  headerButton: {
+  backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 16,
   },
-  headerCenter: {
+  headerText: {
     flex: 1,
-    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
+    marginBottom: 4,
   },
-  headerButtons: {
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  headerRight: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
+  },
+  headerActionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
@@ -498,6 +550,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -589,6 +646,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     gap: 12,
@@ -676,9 +738,9 @@ const styles = StyleSheet.create({
     marginRight: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
