@@ -2187,7 +2187,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
                         handleViewDocument(doc.key)
                       }}
                     >
-                      <MaterialIcons name="file-upload" size={16} color="#FFFFFF" />
+                      <MaterialIcons name="cloud-upload" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ) : existingDoc ? (
@@ -2221,7 +2221,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
                         handleViewDocument(doc.key)
                       }}
                     >
-                      <MaterialIcons name="file-upload" size={16} color="#FFFFFF" />
+                      <MaterialIcons name="cloud-upload" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -2762,6 +2762,8 @@ const styles = StyleSheet.create({
     color: '#000000',
     minHeight: 80,
     textAlignVertical: 'top',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
   addressHeader: {
     flexDirection: 'row',
@@ -2873,7 +2875,7 @@ const styles = StyleSheet.create({
   },
   chipSelected: {
     backgroundColor: '#E8F5E8',
-    borderColor: '#0D542BFF',
+    borderColor: '#E5E5EA',
   },
   chipText: {
     fontSize: 14,
@@ -2927,7 +2929,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#0D542BFF',
+    backgroundColor: '#8E8E93',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -3124,7 +3126,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5EA',
     borderRadius: 8,
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 50,
@@ -3133,8 +3135,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#000000',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     minHeight: 40,
     textAlignVertical: 'top',
   },

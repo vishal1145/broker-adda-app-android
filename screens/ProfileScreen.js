@@ -47,9 +47,9 @@ const ProfileScreen = ({ navigation }) => {
     licenseNumber: '',
     specializations: [],
     regions: [],
-    yearsExperience: '8 Years',
-    totalClients: '245',
-    activeDeals: '12',
+    yearsExperience: '0',
+    totalClients: '0',
+    totalProperty: '0',
     commissionEarned: '$1.2M',
     rating: 4.8,
     socialMedia: {},
@@ -192,7 +192,7 @@ const ProfileScreen = ({ navigation }) => {
             website: broker.website || '-',
             firm: broker.firmName || '-',
             content: broker.content || '',
-            gender: broker.gender || '-',
+            gender: broker.gender ? broker.gender.charAt(0).toUpperCase() + broker.gender.slice(1).toLowerCase() : '-',
             status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
             joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
               day: 'numeric',
@@ -202,9 +202,9 @@ const ProfileScreen = ({ navigation }) => {
             licenseNumber: broker.licenseNumber || '-',
             specializations: broker.specializations || [],
             regions: broker.region ? broker.region.map(r => r.name) : [],
-            yearsExperience: broker.experience?.years ? broker.experience.years.toString() : '8',
-            totalClients: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '245',
-            activeDeals: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '12',
+            yearsExperience: broker.experience?.years ? broker.experience.years.toString() : '0',
+            totalClients: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '0',
+            totalProperty: broker.propertyCount !== undefined ? broker.propertyCount.toString() : (broker.propertiesListed?.count ? broker.propertiesListed.count.toString() : '0'),
             commissionEarned: '$1.2M', // Default
             rating: 4.8, // Default
             socialMedia: broker.socialMedia || {},
@@ -477,9 +477,31 @@ const ProfileScreen = ({ navigation }) => {
                     </View>
                     <View style={styles.profileStatDivider} />
                     <View style={styles.profileStatItem}>
-                      <Text style={styles.profileStatValue}>{profileData.activeDeals}</Text>
-                      <Text style={styles.profileStatLabel}>Deals</Text>
+                      <Text style={styles.profileStatValue}>{profileData.totalProperty}</Text>
+                      <Text style={styles.profileStatLabel}>Total Property</Text>
                     </View>
+                  </View>
+                  
+                  {/* Additional Info in Header */}
+                  <View style={styles.headerAdditionalInfo}>
+                    {profileData.gender && profileData.gender !== '-' && (
+                      <View style={styles.headerInfoItem}>
+                        <MaterialIcons name="person" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <Text style={styles.headerInfoText}>{profileData.gender}</Text>
+                      </View>
+                    )}
+                    {profileData.joinedDate && profileData.joinedDate !== '-' && (
+                      <View style={styles.headerInfoItem}>
+                        <MaterialIcons name="calendar-today" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <Text style={styles.headerInfoText}>{profileData.joinedDate}</Text>
+                      </View>
+                    )}
+                    {profileData.licenseNumber && profileData.licenseNumber !== '-' && (
+                      <View style={styles.headerInfoItem}>
+                        <MaterialIcons name="description" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <Text style={styles.headerInfoText}>{profileData.licenseNumber}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
@@ -487,63 +509,6 @@ const ProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-
-        {/* Professional Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Professional Information</Text>
-          
-          <View style={styles.infoContainer}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <MaterialIcons name="business" size={22} color="#6B7280" />
-              </View>
-              <View style={styles.infoContentRow}>
-                <Text style={styles.infoLabelInline}>Firm</Text>
-                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.firm}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <MaterialIcons name="person" size={22} color="#6B7280" />
-              </View>
-              <View style={styles.infoContentRow}>
-                <Text style={styles.infoLabelInline}>Gender</Text>
-                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.gender}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <MaterialIcons name="verified" size={22} color="#6B7280" />
-              </View>
-              <View style={styles.infoContentRow}>
-                <Text style={styles.infoLabelInline}>Status</Text>
-                <Text style={styles.infoStatusValue} numberOfLines={1} ellipsizeMode="tail">{profileData.status === 'Unblock' ? 'Active' : 'Blocked'}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.infoRow}>
-              <View style={styles.infoIconWrapper}>
-                <MaterialIcons name="calendar-today" size={22} color="#6B7280" />
-              </View>
-              <View style={styles.infoContentRow}>
-                <Text style={styles.infoLabelInline}>Joined Date</Text>
-                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.joinedDate}</Text>
-              </View>
-            </View>
-            
-            <View style={[styles.infoRow, styles.infoRowLast]}>
-              <View style={styles.infoIconWrapper}>
-                <MaterialIcons name="description" size={22} color="#6B7280" />
-              </View>
-              <View style={styles.infoContentRow}>
-                <Text style={styles.infoLabelInline}>License Number</Text>
-                <Text style={styles.infoValueInline} numberOfLines={1} ellipsizeMode="tail">{profileData.licenseNumber}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
 
         {/* Specializations Section */}
         <View style={styles.section}>
@@ -1084,6 +1049,30 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     marginHorizontal: 16,
   },
+  headerAdditionalInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  headerInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  headerInfoText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
 
   // Advanced Statistics Section
   statsSection: {
@@ -1410,8 +1399,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#0D542BFF',
+    borderWidth: 0,
   },
   tagText: {
     fontSize: 14,
@@ -1420,7 +1408,6 @@ const styles = StyleSheet.create({
   },
   regionTag: {
     backgroundColor: '#E8F5E8',
-    borderColor: '#0D542BFF',
   },
   regionTagText: {
     color: '#0D542BFF',

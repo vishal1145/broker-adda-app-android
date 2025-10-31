@@ -228,13 +228,7 @@ const OtpScreen = ({ phoneNumber, onBack, onOtpVerified, onResendOtp, onEditPhon
                       <TextInput
                         key={index}
                         ref={(ref) => (inputRefs.current[index] = ref)}
-                        style={[
-                          styles.otpBox,
-                          { 
-                            borderColor: otp[index] ? '#0D542BFF' : (focusedIndex === index ? '#0D542BFF' : '#E5E5EA'),
-                            backgroundColor: 'transparent'
-                          }
-                        ]}
+                        style={styles.otpBox}
                         value={otp[index]}
                         onChangeText={(text) => handleOtpChange(text, index)}
                         onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
@@ -404,6 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 8,
     borderWidth: 1,
+    borderColor: '#E5E5EA',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 20,

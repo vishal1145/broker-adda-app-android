@@ -194,22 +194,14 @@ const PhoneLoginScreen = ({ navigation }) => {
                 {/* Phone Number Input */}
                 <View style={styles.phoneInputContainer}>
                   <View style={styles.inputRow}>
-                    <View 
-                      style={[
-                        styles.countryCode,
-                        { borderColor: '#0D542BFF' }
-                      ]}
-                    >
+                    <View style={styles.countryCode}>
                       <Text style={styles.countryCodeText}>+91</Text>
                     </View>
                     
                     <View style={styles.inputGap} />
                     
                     <TextInput
-                      style={[
-                        styles.phoneInput,
-                        { borderColor: phoneNumber.length > 0 ? '#0D542BFF' : '#E5E5EA' }
-                      ]}
+                      style={styles.phoneInput}
                       placeholder="Enter your phone number"
                       value={phoneNumber}
                       onChangeText={formatPhoneNumber}
