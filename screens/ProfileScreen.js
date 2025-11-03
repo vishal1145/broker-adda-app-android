@@ -31,7 +31,7 @@ const ProfileScreen = ({ navigation }) => {
   }, []);
 
   const [profileData, setProfileData] = useState({
-    name: '',
+    name: 'User',
     brokerId: '',
     role: 'Senior Broker',
     mobileNumber: '',
@@ -421,7 +421,7 @@ const ProfileScreen = ({ navigation }) => {
                     ) : (
                       <View style={[styles.modernProfileImage, styles.profileImagePlaceholder]}>
                         <Text style={styles.profileImagePlaceholderText}>
-                          {isLoading ? '?' : (profileData.name[0] || 'U').toUpperCase()}
+                          {(profileData.name && profileData.name[0]) ? profileData.name[0].toUpperCase() : 'U'}
                         </Text>
                       </View>
                     )}
@@ -430,14 +430,7 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
                 
                 <View style={styles.profileInfoContainer}>
-                  {isLoading ? (
-                    <View style={styles.nameLoadingContainer}>
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                      <Text style={styles.modernProfileName}>Loading...</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.modernProfileName}>{profileData.name}</Text>
-                  )}
+                  <Text style={styles.modernProfileName}>{profileData.name || 'User'}</Text>
                   <View style={styles.companyContainer}>
                     <MaterialIcons name="business" size={16} color="#FFFFFF" />
                     <Text style={styles.modernFirmName}>{profileData.firm}</Text>
@@ -449,36 +442,20 @@ const ProfileScreen = ({ navigation }) => {
                     </View>
                   )}
                   
-                  <View style={styles.modernRatingContainer}>
-                    <View style={styles.ratingStars}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <FontAwesome5 
-                          key={star} 
-                          name="star" 
-                          size={14} 
-                          color={star <= Math.floor(profileData.rating) ? "#FFD700" : "#FFFFFF"} 
-                          style={styles.ratingStar}
-                        />
-                      ))}
-                    </View>
-                    <Text style={styles.modernRatingText}>{profileData.rating}</Text>
-                    <Text style={styles.modernRatingLabel}>(245 reviews)</Text>
-                  </View>
-                  
                   <View style={styles.profileStats}>
                     <View style={styles.profileStatItem}>
                       <Text style={styles.profileStatValue}>{profileData.yearsExperience}</Text>
-                      <Text style={styles.profileStatLabel}>Experience</Text>
+                      <Text style={styles.profileStatLabel} numberOfLines={1}>Experience</Text>
                     </View>
                     <View style={styles.profileStatDivider} />
                     <View style={styles.profileStatItem}>
                       <Text style={styles.profileStatValue}>{profileData.totalClients}</Text>
-                      <Text style={styles.profileStatLabel}>Total Leads</Text>
+                      <Text style={styles.profileStatLabel} numberOfLines={1}>Total Leads</Text>
                     </View>
                     <View style={styles.profileStatDivider} />
                     <View style={styles.profileStatItem}>
                       <Text style={styles.profileStatValue}>{profileData.totalProperty}</Text>
-                      <Text style={styles.profileStatLabel}>Total Property</Text>
+                      <Text style={styles.profileStatLabel} numberOfLines={1}>Total Property</Text>
                     </View>
                   </View>
                   
@@ -486,19 +463,19 @@ const ProfileScreen = ({ navigation }) => {
                   <View style={styles.headerAdditionalInfo}>
                     {profileData.gender && profileData.gender !== '-' && (
                       <View style={styles.headerInfoItem}>
-                        <MaterialIcons name="person" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <MaterialIcons name="person" size={12} color="rgba(255, 255, 255, 0.9)" />
                         <Text style={styles.headerInfoText}>{profileData.gender}</Text>
                       </View>
                     )}
                     {profileData.joinedDate && profileData.joinedDate !== '-' && (
                       <View style={styles.headerInfoItem}>
-                        <MaterialIcons name="calendar-today" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <MaterialIcons name="calendar-today" size={12} color="rgba(255, 255, 255, 0.9)" />
                         <Text style={styles.headerInfoText}>{profileData.joinedDate}</Text>
                       </View>
                     )}
                     {profileData.licenseNumber && profileData.licenseNumber !== '-' && (
                       <View style={styles.headerInfoItem}>
-                        <MaterialIcons name="description" size={14} color="rgba(255, 255, 255, 0.9)" />
+                        <MaterialIcons name="description" size={12} color="rgba(255, 255, 255, 0.9)" />
                         <Text style={styles.headerInfoText}>{profileData.licenseNumber}</Text>
                       </View>
                     )}
@@ -789,11 +766,11 @@ const styles = StyleSheet.create({
   
   // Modern Header Styles
   modernHeaderContainer: {
-    marginBottom: 32,
+    marginBottom: 20,
   },
   modernHeaderGradient: {
     backgroundColor: '#0D542BFF',
-    paddingBottom: 50,
+    paddingBottom: 30,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -852,26 +829,26 @@ const styles = StyleSheet.create({
   },
   modernProfileSection: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 12,
   },
   modernProfileImageContainer: {
     position: 'relative',
-    marginBottom: 24,
-    width: 120,
-    height: 120,
+    marginBottom: 16,
+    width: 100,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   profileImageWrapper: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     position: 'relative',
   },
   modernProfileImage: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     borderWidth: 1,
     borderColor: '#FFFFFF',
   },
@@ -881,7 +858,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 58,
+    borderRadius: 48,
     backgroundColor: 'rgba(102, 126, 234, 0.1)',
   },
   modernStatusIndicator: {
@@ -930,12 +907,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   modernProfileName: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: '900',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 4,
     textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
@@ -947,9 +924,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   profileImagePlaceholder: {
-    width: 116,
-    height: 116,
-    borderRadius: 58,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -976,7 +953,7 @@ const styles = StyleSheet.create({
   companyContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
     gap: 8,
   },
   modernFirmName: {
@@ -987,22 +964,22 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   contentContainer: {
-    marginTop: 12,
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 10,
     paddingHorizontal: 20,
   },
   modernContentText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '400',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
     fontStyle: 'italic',
   },
   modernRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
     gap: 8,
   },
   ratingStars: {
@@ -1026,6 +1003,7 @@ const styles = StyleSheet.create({
   profileStats: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
     paddingVertical: 12,
@@ -1035,22 +1013,27 @@ const styles = StyleSheet.create({
   },
   profileStatItem: {
     alignItems: 'center',
+    justifyContent: 'center',
     flex: 1,
+    minWidth: 0,
   },
   profileStatValue: {
     fontSize: 20,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   profileStatLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+    flexShrink: 1,
   },
   profileStatDivider: {
     width: 1,
-    height: 30,
+    height: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     marginHorizontal: 16,
   },
@@ -1059,22 +1042,22 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    gap: 12,
+    marginTop: 12,
+    gap: 8,
   },
   headerInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   headerInfoText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.9)',
   },
@@ -1398,7 +1381,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tag: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#F3F4F6',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -1407,13 +1390,13 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#0D542BFF',
+    color: '#374151',
   },
   regionTag: {
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#F3F4F6',
   },
   regionTagText: {
-    color: '#0D542BFF',
+    color: '#374151',
   },
   emptyStateText: {
     fontSize: 14,

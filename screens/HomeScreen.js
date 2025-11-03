@@ -1971,16 +1971,17 @@ const styles = StyleSheet.create({
 
   // Add Property Card Styles
   addPropertyCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FEF9C3',
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
+    borderColor: '#FCD34D',
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     minHeight: 100,
+    width: width - 80,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -1996,16 +1997,17 @@ const styles = StyleSheet.create({
 
   // Add Lead Card Styles
   addLeadCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FEF9C3',
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
+    borderColor: '#FCD34D',
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     minHeight: 100,
+    width: width - 80,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

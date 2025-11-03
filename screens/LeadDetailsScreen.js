@@ -1901,7 +1901,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingHorizontal: 20,
     maxHeight: '90%',
-    minHeight: 500,
+    minHeight: 400,
     flex: 1,
     flexGrow: 1,
   },
@@ -1929,6 +1929,7 @@ const styles = StyleSheet.create({
   editLeadModalBodyContent: {
     flexGrow: 1,
     paddingBottom: 20,
+    paddingTop: 10,
     minHeight: '100%',
   },
   editLeadModalFooter: {

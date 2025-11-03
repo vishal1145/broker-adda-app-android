@@ -26,8 +26,56 @@ import storage from '../services/storage'
 
 const { width } = Dimensions.get('window')
 
+// Custom Price Slider Component
+const PriceSlider = ({ value, onValueChange, min = 0, max = 100000000, step = 100000 }) => {
+  const [sliderWidth, setSliderWidth] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const currentValue = value ? parseFloat(value) : 0
+  const clampedValue = Math.max(min, Math.min(max, currentValue))
+  const percentage = ((clampedValue - min) / (max - min)) * 100
+  const sliderPosition = ((sliderWidth) * percentage) / 100
+
+  const handleSliderPress = (evt) => {
+    if (sliderWidth === 0) return
+    
+    const newPosition = Math.max(0, Math.min(sliderWidth, evt.nativeEvent.locationX))
+    const newPercentage = (newPosition / sliderWidth) * 100
+    const newValue = Math.round((newPercentage / 100) * (max - min) + min)
+    const steppedValue = Math.round(newValue / step) * step
+    onValueChange(steppedValue.toString())
+  }
+
+  return (
+    <View style={styles.sliderContainer}>
+      {/* Slider track */}
+      <View style={styles.sliderWrapper}>
+        <TouchableOpacity
+          style={styles.sliderTrack}
+          onLayout={(event) => setSliderWidth(event.nativeEvent.layout.width)}
+          onPress={handleSliderPress}
+          activeOpacity={1}
+        >
+          {/* Unselected range - shows the full track */}
+          <View style={styles.sliderTrackBackground} />
+          {/* Selected range - shows the progress */}
+          <View style={[styles.sliderProgress, { width: `${Math.min(100, percentage)}%` }]} />
+          {/* Thumb */}
+          <View
+            style={[
+              styles.sliderThumb,
+              { left: Math.max(0, Math.min(sliderWidth - 20, sliderPosition - 10)) },
+              isDragging && styles.sliderThumbActive
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+}
+
 const CreatePropertyScreen = ({ navigation }) => {
-  const [currentStep, setCurrentStep] = useState(1) // Step 1: Basic Info, Step 2: Location & Pricing, Step 3: Property Details
+  const [currentStep, setCurrentStep] = useState(1) // Step 1: Basic Info, Step 2: Amenities & Features, Step 3: Media & Publishing
   const scrollViewRef = useRef(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
   const [showCurrencyModal, setShowCurrencyModal] = useState(false)
@@ -66,20 +114,22 @@ const CreatePropertyScreen = ({ navigation }) => {
     // Basic Information (Step 1)
     propertyTitle: '',
     region: '',
-    shortDescription: '',
-    detailedDescription: '',
-    // Location & Pricing (Step 2)
     address: '',
     city: '',
+    facingDirection: '',
     price: '',
-    currency: 'INR',
-    // Property Details (Step 3)
     propertySize: '',
+    possessionStatus: '',
+    propertyAge: '',
     bedrooms: '',
     bathrooms: '',
     propertyType: '',
     subType: '',
     furnishing: '',
+    shortDescription: '',
+    detailedDescription: '',
+    // Additional fields (moved to other steps)
+    currency: 'INR',
     propertyAmenities: [],
     nearbyAmenities: [],
     features: [],
@@ -127,6 +177,41 @@ const CreatePropertyScreen = ({ navigation }) => {
     'Active',
     'Sold',
     'Draft'
+  ]
+
+  const facingDirectionOptions = [
+    'North',
+    'East',
+    'South',
+    'West'
+  ]
+
+  const possessionStatusOptions = [
+    'Ready to Move',
+    'Under Construction',
+    'Upcoming'
+  ]
+
+  const propertyAgeOptions = [
+    'New',
+    '<5 Years',
+    '<10 Years',
+    '>10 Years'
+  ]
+
+  const bedroomOptions = ['1', '2', '3', '4', '5+']
+  const bathroomOptions = ['1', '2', '3', '4', '5+']
+
+  // Pre-defined Property Amenities
+  const predefinedAmenities = [
+    'Parking',
+    'Power Backup',
+    'Lift',
+    'Garden',
+    'Security',
+    'Gym',
+    'Water Supply',
+    'Swimming Pool'
   ]
 
   // Fetch regions on component mount
@@ -241,6 +326,28 @@ const CreatePropertyScreen = ({ navigation }) => {
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index)
     }))
+  }
+
+  // Handle toggling predefined amenities
+  const handleTogglePredefinedAmenity = (amenity) => {
+    setFormData(prev => {
+      const currentAmenities = prev.propertyAmenities || []
+      const isSelected = currentAmenities.includes(amenity)
+      
+      if (isSelected) {
+        // Remove if already selected
+        return {
+          ...prev,
+          propertyAmenities: currentAmenities.filter(a => a !== amenity)
+        }
+      } else {
+        // Add if not selected
+        return {
+          ...prev,
+          propertyAmenities: [...currentAmenities, amenity]
+        }
+      }
+    })
   }
 
   // Handle adding media items (images and videos)
@@ -406,30 +513,53 @@ const CreatePropertyScreen = ({ navigation }) => {
 
   // Step validation
   const isStep1Valid = () => {
-    return formData.propertyTitle.trim() && 
-           formData.region.trim()
-  }
-
-  const isStep2Valid = () => {
-    const priceValid = formData.price.trim() && !isNaN(formData.price) && parseFloat(formData.price) > 0
-    return formData.city.trim() && priceValid
-  }
-
-  const isStep3Valid = () => {
     const sizeValid = formData.propertySize.trim() && !isNaN(formData.propertySize) && parseFloat(formData.propertySize) > 0
-    const bedroomsValid = formData.bedrooms.trim() && !isNaN(formData.bedrooms) && parseFloat(formData.bedrooms) > 0
-    const bathroomsValid = formData.bathrooms.trim() && !isNaN(formData.bathrooms) && parseFloat(formData.bathrooms) > 0
-    return formData.propertyType.trim() !== '' &&
-           formData.subType.trim() !== '' &&
-           formData.furnishing.trim() !== '' &&
+    const bedroomsValid = formData.bedrooms.trim() !== ''
+    const bathroomsValid = formData.bathrooms.trim() !== ''
+    
+    return formData.propertyTitle.trim() && 
+           formData.region.trim() &&
+           formData.address.trim() &&
+           formData.price.trim() &&
+           !isNaN(formData.price) &&
+           parseFloat(formData.price) > 0 &&
+           formData.propertyType.trim() &&
            sizeValid &&
            bedroomsValid &&
            bathroomsValid
   }
 
-  const isStep4Valid = () => {
-    // Step 4 has no required fields, all optional
+  // Render radio button group
+  const renderRadioGroup = (options, selectedValue, onSelect, fieldName) => (
+    <View style={styles.radioGroup}>
+      {options.map((option) => (
+        <TouchableOpacity
+          key={option}
+          style={[
+            styles.radioButton,
+            selectedValue === option && styles.radioButtonActive
+          ]}
+          onPress={() => onSelect(option)}
+        >
+          <Text style={[
+            styles.radioButtonText,
+            selectedValue === option && styles.radioButtonTextActive
+          ]}>
+            {option}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  )
+
+  const isStep2Valid = () => {
+    // Step 2 (Amenities & Features) has no required fields, all optional
     return true
+  }
+
+  const isStep3Valid = () => {
+    // Step 3 requires minimum 3 images
+    return formData.images.length >= 3
   }
 
   const goToNextStep = () => {
@@ -444,11 +574,6 @@ const CreatePropertyScreen = ({ navigation }) => {
         scrollViewRef.current?.scrollTo({ y: 0, animated: true })
       }, 100)
     } else if (currentStep === 3 && isStep3Valid()) {
-      setCurrentStep(4)
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
-      }, 100)
-    } else if (currentStep === 4 && isStep4Valid()) {
       handleCompleteProperty()
     }
   }
@@ -571,8 +696,6 @@ const CreatePropertyScreen = ({ navigation }) => {
         return isStep2Valid()
       case 3:
         return isStep3Valid()
-      case 4:
-        return isStep4Valid()
       default:
         return false
     }
@@ -585,8 +708,6 @@ const CreatePropertyScreen = ({ navigation }) => {
       case 2:
         return 'Continue'
       case 3:
-        return 'Continue'
-      case 4:
         return 'Create Property'
       default:
         return 'Continue'
@@ -594,10 +715,23 @@ const CreatePropertyScreen = ({ navigation }) => {
   }
 
   const getButtonIcon = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       return <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
     } else {
       return <MaterialIcons name="check" size={20} color="#FFFFFF" />
+    }
+  }
+
+  const getStepTitleDisplay = () => {
+    switch (currentStep) {
+      case 1:
+        return 'Basic Information'
+      case 2:
+        return 'Amenities & Features'
+      case 3:
+        return 'Media & Publishing'
+      default:
+        return 'Add New Property'
     }
   }
 
@@ -701,164 +835,138 @@ const CreatePropertyScreen = ({ navigation }) => {
   const renderStep1 = () => (
     <View>
       <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <MaterialIcons name="info" size={20} color="#0D542BFF" />
-          <Text style={styles.sectionTitle}>Basic Information</Text>
-        </View>
-
         {/* Property Title */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Property Title *</Text>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              !formData.propertyTitle.trim() && styles.inputError
+            ]}
             value={formData.propertyTitle}
             onChangeText={(text) => updateFormData('propertyTitle', text)}
             onFocus={handleInputFocus}
             placeholder="Enter property title"
             placeholderTextColor="#8E8E93"
           />
+          {!formData.propertyTitle.trim() && (
+            <Text style={styles.errorText}>Title is required.</Text>
+          )}
+        </View>
+
+        {/* Address */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Address *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              !formData.address.trim() && styles.inputError
+            ]}
+            value={formData.address}
+            onChangeText={(text) => updateFormData('address', text)}
+            onFocus={handleInputFocus}
+            placeholder="Search address..."
+            placeholderTextColor="#8E8E93"
+          />
+          {!formData.address.trim() && (
+            <Text style={styles.errorText}>Address is required.</Text>
+          )}
         </View>
 
         {/* Region */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Region *</Text>
           <TouchableOpacity 
-            style={styles.input}
+            style={[
+              styles.input,
+              !formData.region && styles.inputError
+            ]}
             onPress={() => setShowRegionModal(true)}
           >
             <Text style={[styles.inputText, !formData.region && styles.placeholderText]}>
-              {formData.region || 'Select region'}
+              {formData.region || 'Select a region...'}
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
           </TouchableOpacity>
-        </View>
-
-        {/* Short Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Short Description</Text>
-          <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              value={formData.shortDescription}
-              onChangeText={(text) => updateFormData('shortDescription', text)}
-              onFocus={handleInputFocus}
-              placeholder="Enter short description"
-              placeholderTextColor="#8E8E93"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-
-        {/* Detailed Description */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Detailed Description</Text>
-          <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              value={formData.detailedDescription}
-              onChangeText={(text) => updateFormData('detailedDescription', text)}
-              onFocus={handleInputFocus}
-              placeholder="Enter detailed description"
-              placeholderTextColor="#8E8E93"
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  )
-
-  // Step 2: Location & Pricing
-  const renderStep2 = () => (
-    <View>
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <MaterialIcons name="location-on" size={20} color="#0D542BFF" />
-          <Text style={styles.sectionTitle}>Location & Pricing</Text>
-        </View>
-
-        {/* Address */}
-          <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Address</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.address}
-            onChangeText={(text) => updateFormData('address', text)}
-            onFocus={handleInputFocus}
-            placeholder="Street address"
-            placeholderTextColor="#8E8E93"
-          />
-        </View>
-
-        {/* City */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>City *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              !formData.city.trim() && styles.inputError
-            ]}
-            value={formData.city}
-            onChangeText={(text) => updateFormData('city', text)}
-            onFocus={handleInputFocus}
-            placeholder="City"
-            placeholderTextColor="#8E8E93"
-          />
-          {!formData.city.trim() && (
-            <Text style={styles.errorText}>City is required.</Text>
+          {!formData.region && (
+            <Text style={styles.errorText}>Region is required.</Text>
           )}
         </View>
 
-        {/* Two-column layout for Price and Currency */}
-        <View style={styles.formRow}>
-          {/* Price */}
-          <View style={[styles.formColumn, { flex: 2 }]}>
-            <Text style={styles.inputLabel}>Price *</Text>
+        {/* City (auto) */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>City (auto)</Text>
             <TextInput
-              style={[
-                styles.input,
-                (!formData.price.trim() || (formData.price && isNaN(formData.price))) && styles.inputError
-              ]}
+            style={[styles.input, styles.disabledInput]}
+            value={formData.city || 'Agra'}
+            editable={false}
+              placeholderTextColor="#8E8E93"
+            />
+        </View>
+
+        {/* Facing Direction */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Facing Direction</Text>
+          {renderRadioGroup(
+            facingDirectionOptions,
+            formData.facingDirection,
+            (value) => updateFormData('facingDirection', value),
+            'facingDirection'
+          )}
+          </View>
+
+        {/* Possession Status */}
+          <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Possession Status</Text>
+          {renderRadioGroup(
+            possessionStatusOptions,
+            formData.possessionStatus,
+            (value) => updateFormData('possessionStatus', value),
+            'possessionStatus'
+          )}
+        </View>
+
+          {/* Price */}
+        <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Price *</Text>
+          <View style={[
+            styles.priceInputContainer,
+            (!formData.price.trim() || isNaN(formData.price) || parseFloat(formData.price) <= 0) && styles.inputError
+          ]}>
+            <Text style={styles.currencySymbol}>₹</Text>
+            <TextInput
+              style={styles.priceInput}
               value={formData.price}
-              onChangeText={(text) => updateFormData('price', text)}
+              onChangeText={(text) => {
+                updateFormData('price', text)
+              }}
               onFocus={handleInputFocus}
-              placeholder="e.g. 42000000"
+              placeholder="Enter price"
               placeholderTextColor="#8E8E93"
               keyboardType="numeric"
             />
-            {(!formData.price.trim() || (formData.price && isNaN(formData.price))) && (
+          </View>
+          <PriceSlider
+            value={formData.price}
+            onValueChange={(value) => updateFormData('price', value)}
+            min={0}
+            max={100000000}
+            step={100000}
+          />
+          {(!formData.price.trim() || isNaN(formData.price) || parseFloat(formData.price) <= 0) && (
               <Text style={styles.errorText}>Enter a valid price.</Text>
             )}
           </View>
 
-          {/* Currency */}
-          <View style={styles.formColumn}>
-            <Text style={styles.inputLabel}>Currency</Text>
-            <TouchableOpacity 
-              style={styles.input}
-              onPress={() => setShowCurrencyModal(true)}
-            >
-              <Text style={styles.inputText}>{formData.currency}</Text>
-              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </View>
-  )
-
-  // Step 3: Property Details
-  const renderStep3 = () => (
-    <View>
-      {/* Property Details Section */}
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <MaterialIcons name="apartment" size={20} color="#0D542BFF" />
-          <Text style={styles.sectionTitle}>Property Details</Text>
+        {/* Property Age */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Property Age</Text>
+          {renderRadioGroup(
+            propertyAgeOptions,
+            formData.propertyAge,
+            (value) => updateFormData('propertyAge', value),
+            'propertyAge'
+          )}
         </View>
 
         {/* Property Size */}
@@ -867,36 +975,30 @@ const CreatePropertyScreen = ({ navigation }) => {
           <TextInput
             style={[
               styles.input,
-              (!formData.propertySize.trim() || (formData.propertySize && isNaN(formData.propertySize))) && styles.inputError
+              (!formData.propertySize.trim() || isNaN(formData.propertySize) || parseFloat(formData.propertySize) <= 0) && styles.inputError
             ]}
             value={formData.propertySize}
             onChangeText={(text) => updateFormData('propertySize', text)}
             onFocus={handleInputFocus}
-            placeholder="Enter property size"
+            placeholder="e.g. 1200"
             placeholderTextColor="#8E8E93"
             keyboardType="numeric"
           />
-          {(!formData.propertySize.trim() || (formData.propertySize && isNaN(formData.propertySize))) && (
+          {(!formData.propertySize.trim() || isNaN(formData.propertySize) || parseFloat(formData.propertySize) <= 0) && (
             <Text style={styles.errorText}>Property size is required.</Text>
           )}
         </View>
 
-        {/* Bedrooms */}
+        {/* Bedrooms (BHK) */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Bedrooms *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              (!formData.bedrooms.trim() || (formData.bedrooms && isNaN(formData.bedrooms))) && styles.inputError
-            ]}
-            value={formData.bedrooms}
-            onChangeText={(text) => updateFormData('bedrooms', text)}
-            onFocus={handleInputFocus}
-            placeholder="Enter number of bedrooms"
-            placeholderTextColor="#8E8E93"
-            keyboardType="numeric"
-          />
-          {(!formData.bedrooms.trim() || (formData.bedrooms && isNaN(formData.bedrooms))) && (
+          <Text style={styles.inputLabel}>Bedrooms (BHK) *</Text>
+          {renderRadioGroup(
+            bedroomOptions,
+            formData.bedrooms,
+            (value) => updateFormData('bedrooms', value),
+            'bedrooms'
+          )}
+          {!formData.bedrooms && (
             <Text style={styles.errorText}>Bedrooms is required.</Text>
           )}
         </View>
@@ -904,19 +1006,13 @@ const CreatePropertyScreen = ({ navigation }) => {
         {/* Bathrooms */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Bathrooms *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              (!formData.bathrooms.trim() || (formData.bathrooms && isNaN(formData.bathrooms))) && styles.inputError
-            ]}
-            value={formData.bathrooms}
-            onChangeText={(text) => updateFormData('bathrooms', text)}
-            onFocus={handleInputFocus}
-            placeholder="Enter number of bathrooms"
-            placeholderTextColor="#8E8E93"
-            keyboardType="numeric"
-          />
-          {(!formData.bathrooms.trim() || (formData.bathrooms && isNaN(formData.bathrooms))) && (
+          {renderRadioGroup(
+            bathroomOptions,
+            formData.bathrooms,
+            (value) => updateFormData('bathrooms', value),
+            'bathrooms'
+          )}
+          {!formData.bathrooms && (
             <Text style={styles.errorText}>Bathrooms is required.</Text>
           )}
         </View>
@@ -943,12 +1039,9 @@ const CreatePropertyScreen = ({ navigation }) => {
 
         {/* Sub Type */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Sub Type *</Text>
+          <Text style={styles.inputLabel}>Sub Type</Text>
           <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.subType && styles.inputError
-            ]}
+            style={styles.input}
             onPress={() => setShowSubTypeModal(true)}
           >
             <Text style={[styles.inputText, !formData.subType && styles.placeholderText]}>
@@ -956,19 +1049,13 @@ const CreatePropertyScreen = ({ navigation }) => {
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
           </TouchableOpacity>
-          {!formData.subType && (
-            <Text style={styles.errorText}>Sub type is required.</Text>
-          )}
         </View>
 
         {/* Furnishing */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Furnishing *</Text>
+          <Text style={styles.inputLabel}>Furnishing</Text>
           <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.furnishing && styles.inputError
-            ]}
+            style={styles.input}
             onPress={() => setShowFurnishingModal(true)}
           >
             <Text style={[styles.inputText, !formData.furnishing && styles.placeholderText]}>
@@ -976,69 +1063,132 @@ const CreatePropertyScreen = ({ navigation }) => {
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
           </TouchableOpacity>
-          {!formData.furnishing && (
-            <Text style={styles.errorText}>Furnishing is required.</Text>
-          )}
+        </View>
+
+        {/* Short Description */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Short Description</Text>
+          <View style={styles.textAreaContainer}>
+            <TextInput
+              style={styles.textArea}
+              value={formData.shortDescription}
+              onChangeText={(text) => updateFormData('shortDescription', text)}
+              onFocus={handleInputFocus}
+              placeholder="Brief description of the property"
+              placeholderTextColor="#8E8E93"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+        </View>
+
+        {/* Detailed Description */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Detailed Description</Text>
+          <View style={styles.textAreaContainer}>
+            <TextInput
+              style={styles.textArea}
+              value={formData.detailedDescription}
+              onChangeText={(text) => updateFormData('detailedDescription', text)}
+              onFocus={handleInputFocus}
+              placeholder="Comprehensive description with all details"
+              placeholderTextColor="#8E8E93"
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+          </View>
         </View>
       </View>
+    </View>
+  )
 
-      {/* Amenities & Features Section */}
+  // Step 2: Amenities & Features
+  const renderStep2 = () => (
+    <View>
       <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <MaterialIcons name="wb-sunny" size={20} color="#0D542BFF" />
-          <Text style={styles.sectionTitle}>Amenities & Features</Text>
-        </View>
-
         {/* Property Amenities */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Property Amenities</Text>
-          <View style={styles.addItemContainer}>
+          
+          {/* Pre-defined Amenities */}
+          <View style={styles.predefinedAmenitiesContainer}>
+            {predefinedAmenities.map((amenity) => {
+              const isSelected = formData.propertyAmenities.includes(amenity)
+              return (
+          <TouchableOpacity 
+                  key={amenity}
+            style={[
+                    styles.predefinedAmenityTag,
+                    isSelected && styles.predefinedAmenityTagSelected
+                  ]}
+                  onPress={() => handleTogglePredefinedAmenity(amenity)}
+                >
+                  <Text style={[
+                    styles.predefinedAmenityText,
+                    isSelected && styles.predefinedAmenityTextSelected
+                  ]}>
+                    {amenity}
+            </Text>
+                  {isSelected && (
+                    <MaterialIcons name="check" size={16} color="#FFFFFF" style={styles.checkmarkIcon} />
+                  )}
+                </TouchableOpacity>
+              )
+            })}
+      </View>
+
+          {/* Custom Amenity Input */}
             <TextInput
-              style={styles.addItemInput}
-              placeholder="Type amenity "
+            style={styles.addItemInputFullWidth}
+            placeholder="Type amenity and press Enter to add"
               placeholderTextColor="#8E8E93"
               value={tempAmenityInputs.propertyAmenities}
               onChangeText={(text) => setTempAmenityInputs(prev => ({ ...prev, propertyAmenities: text }))}
               onSubmitEditing={(e) => handleAddItem('propertyAmenities', e.nativeEvent.text)}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddItem('propertyAmenities', tempAmenityInputs.propertyAmenities)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+          
+          {/* All Selected Amenities (both predefined and custom) */}
+          {formData.propertyAmenities.length > 0 && (
           <View style={styles.tagContainer}>
-            {formData.propertyAmenities.map((item, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveItem('propertyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                </TouchableOpacity>
-              </View>
-            ))}
+            {formData.propertyAmenities.map((item, index) => {
+              const isPredefined = predefinedAmenities.includes(item)
+              return (
+                <View key={index} style={[
+                  styles.tag,
+                  isPredefined && styles.tagPredefined
+                ]}>
+                  <Text style={[
+                    styles.tagText,
+                    isPredefined && styles.tagTextPredefined
+                  ]}>{item}</Text>
+                  <TouchableOpacity onPress={() => handleRemoveItem('propertyAmenities', index)}>
+                    <MaterialIcons 
+                      name="close" 
+                      size={16} 
+                      color="#0D542BFF" 
+                    />
+                  </TouchableOpacity>
+                </View>
+              )
+            })}
           </View>
+          )}
         </View>
 
         {/* Nearby Amenities */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Nearby Amenities</Text>
-          <View style={styles.addItemContainer}>
             <TextInput
-              style={styles.addItemInput}
-              placeholder="Add nearby amenity"
+            style={styles.addItemInputFullWidth}
+            placeholder="Type nearby amenity and press Enter to add"
               placeholderTextColor="#8E8E93"
               value={tempAmenityInputs.nearbyAmenities}
               onChangeText={(text) => setTempAmenityInputs(prev => ({ ...prev, nearbyAmenities: text }))}
               onSubmitEditing={(e) => handleAddItem('nearbyAmenities', e.nativeEvent.text)}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddItem('nearbyAmenities', tempAmenityInputs.nearbyAmenities)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+          {formData.nearbyAmenities.length > 0 && (
           <View style={styles.tagContainer}>
             {formData.nearbyAmenities.map((item, index) => (
               <View key={index} style={styles.tag}>
@@ -1049,27 +1199,21 @@ const CreatePropertyScreen = ({ navigation }) => {
               </View>
             ))}
           </View>
+          )}
         </View>
 
         {/* Features */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Features</Text>
-          <View style={styles.addItemContainer}>
             <TextInput
-              style={styles.addItemInput}
-              placeholder="Add feature"
+            style={styles.addItemInputFullWidth}
+            placeholder="Type feature and press Enter to add"
               placeholderTextColor="#8E8E93"
               value={tempAmenityInputs.features}
               onChangeText={(text) => setTempAmenityInputs(prev => ({ ...prev, features: text }))}
               onSubmitEditing={(e) => handleAddItem('features', e.nativeEvent.text)}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddItem('features', tempAmenityInputs.features)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+          {formData.features.length > 0 && (
           <View style={styles.tagContainer}>
             {formData.features.map((item, index) => (
               <View key={index} style={styles.tag}>
@@ -1080,27 +1224,21 @@ const CreatePropertyScreen = ({ navigation }) => {
               </View>
             ))}
           </View>
+          )}
         </View>
 
         {/* Location Benefits */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Location Benefits</Text>
-          <View style={styles.addItemContainer}>
             <TextInput
-              style={styles.addItemInput}
-              placeholder="Add location benefit"
+            style={styles.addItemInputFullWidth}
+            placeholder="Type location benefit and press Enter to add"
               placeholderTextColor="#8E8E93"
               value={tempAmenityInputs.locationBenefits}
               onChangeText={(text) => setTempAmenityInputs(prev => ({ ...prev, locationBenefits: text }))}
               onSubmitEditing={(e) => handleAddItem('locationBenefits', e.nativeEvent.text)}
             />
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddItem('locationBenefits', tempAmenityInputs.locationBenefits)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+          {formData.locationBenefits.length > 0 && (
           <View style={styles.tagContainer}>
             {formData.locationBenefits.map((item, index) => (
               <View key={index} style={styles.tag}>
@@ -1111,126 +1249,110 @@ const CreatePropertyScreen = ({ navigation }) => {
               </View>
             ))}
           </View>
+          )}
         </View>
       </View>
     </View>
   )
 
-  // Step 4: Images, Videos, Status & Notes
-  const renderStep4 = () => (
-    <View>
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <MaterialIcons name="photo-library" size={20} color="#0D542BFF" />
-          <Text style={styles.sectionTitle}>Media & Status</Text>
-        </View>
 
-        {/* Images Section */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Images</Text>
-          <View style={styles.addItemContainer}>
-            <TextInput
-              style={styles.addItemInput}
-              placeholder="Paste image URL or tap icon to choose files"
-              placeholderTextColor="#8E8E93"
-              value={tempMediaInputs.images}
-              onChangeText={(text) => setTempMediaInputs(prev => ({ ...prev, images: text }))}
-              onSubmitEditing={(e) => handleAddMedia('images', e.nativeEvent.text)}
-            />
+  // Step 3: Media & Publishing
+  const renderStep3 = () => {
+    const imageCount = formData.images.length
+    const videoCount = formData.videos.length
+    const minImages = 3
+    
+    return (
+      <View>
+        <View style={styles.sectionContainer}>
+          {/* Add Images */}
+          <View style={styles.inputGroup}>
+            <View style={styles.stepHeader}>
+              <Text style={styles.stepTitle}>Add Images (min {minImages})</Text>
+              <Text style={styles.stepCount}>
+                {imageCount}/{minImages} minimum
+              </Text>
+            </View>
             <TouchableOpacity 
-              style={styles.mediaPickerButton}
+              style={[
+                styles.mediaUploadArea,
+                imageCount >= minImages && styles.mediaUploadAreaComplete
+              ]}
               onPress={() => showMediaPickerOptions('images')}
             >
-              <MaterialIcons name="photo-library" size={20} color="#FFFFFF" />
+              <MaterialIcons name="add" size={48} color="#8E8E93" />
+              <Text style={styles.mediaUploadText}>Add Images</Text>
+              <Text style={styles.mediaUploadHint}>Click to upload or drag and drop</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddMedia('images', tempMediaInputs.images)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tagContainer}>
-            {formData.images.map((item, index) => (
-              <View key={index} style={styles.mediaTag}>
-                <Text style={styles.mediaTagText} numberOfLines={1}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveMedia('images', index)}>
-                  <MaterialIcons name="close" size={16} color="#3B82F6" />
-                </TouchableOpacity>
+            {formData.images.length > 0 && (
+              <View style={styles.tagContainer}>
+                {formData.images.map((item, index) => {
+                  const fileName = item.substring(item.lastIndexOf('/') + 1)
+                  return (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText} numberOfLines={1}>{fileName}</Text>
+                      <TouchableOpacity onPress={() => handleRemoveMedia('images', index)}>
+                        <MaterialIcons name="close" size={16} color="#0D542BFF" />
+                      </TouchableOpacity>
+                    </View>
+                  )
+                })}
               </View>
-            ))}
+            )}
           </View>
-        </View>
 
-        {/* Videos Section */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Videos</Text>
-          <View style={styles.addItemContainer}>
-            <TextInput
-              style={styles.addItemInput}
-              placeholder="Paste video URL or tap icon to choose files"
-              placeholderTextColor="#8E8E93"
-              value={tempMediaInputs.videos}
-              onChangeText={(text) => setTempMediaInputs(prev => ({ ...prev, videos: text }))}
-              onSubmitEditing={(e) => handleAddMedia('videos', e.nativeEvent.text)}
-            />
+          {/* Add Videos */}
+          <View style={styles.inputGroup}>
+            <View style={styles.stepHeader}>
+              <Text style={styles.stepTitle}>Add Videos (optional)</Text>
+              <Text style={styles.stepCount}>{videoCount} added</Text>
+            </View>
             <TouchableOpacity 
-              style={styles.mediaPickerButton}
+              style={styles.mediaUploadArea}
               onPress={() => showMediaPickerOptions('videos')}
             >
-              <MaterialIcons name="videocam" size={20} color="#FFFFFF" />
+              <MaterialIcons name="videocam" size={48} color="#8E8E93" />
+              <Text style={styles.mediaUploadText}>Add Videos</Text>
+              <Text style={styles.mediaUploadHint}>Click to upload video files</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => handleAddMedia('videos', tempMediaInputs.videos)}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.tagContainer}>
-            {formData.videos.map((item, index) => (
-              <View key={index} style={styles.mediaTag}>
-                <Text style={styles.mediaTagText} numberOfLines={1}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveMedia('videos', index)}>
-                  <MaterialIcons name="close" size={16} color="#3B82F6" />
-                </TouchableOpacity>
+            {formData.videos.length > 0 && (
+              <View style={styles.tagContainer}>
+                {formData.videos.map((item, index) => {
+                  const fileName = item.substring(item.lastIndexOf('/') + 1)
+                  return (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText} numberOfLines={1}>{fileName}</Text>
+                      <TouchableOpacity onPress={() => handleRemoveMedia('videos', index)}>
+                        <MaterialIcons name="close" size={16} color="#0D542BFF" />
+                      </TouchableOpacity>
+                    </View>
+                  )
+                })}
               </View>
-            ))}
+            )}
           </View>
-        </View>
 
-        {/* Status Section */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Status</Text>
-          <TouchableOpacity 
-            style={styles.input}
-            onPress={() => setShowStatusModal(true)}
-          >
-            <Text style={styles.inputText}>{formData.status}</Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Notes Section */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Notes</Text>
-          <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              value={formData.notes}
-              onChangeText={(text) => updateFormData('notes', text)}
-              onFocus={handleInputFocus}
-              placeholder="Internal notes"
-              placeholderTextColor="#8E8E93"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+          {/* Notes Section */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Notes</Text>
+            <View style={styles.textAreaContainer}>
+              <TextInput
+                style={styles.textArea}
+                value={formData.notes}
+                onChangeText={(text) => updateFormData('notes', text)}
+                onFocus={handleInputFocus}
+                placeholder="Internal notes (optional)"
+                placeholderTextColor="#8E8E93"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
           </View>
-        </View>
       </View>
     </View>
   )
+  }
 
   // Render step content based on current step
   const renderStepContent = () => {
@@ -1241,8 +1363,6 @@ const CreatePropertyScreen = ({ navigation }) => {
         return renderStep2()
       case 3:
         return renderStep3()
-      case 4:
-        return renderStep4()
       default:
         return null
     }
@@ -1276,7 +1396,7 @@ const CreatePropertyScreen = ({ navigation }) => {
           <View style={styles.singlePageForm}>
             {/* Title Section */}
             <View style={styles.titleSection}>
-              <Text style={styles.title} numberOfLines={1}>Add New Property</Text>
+              <Text style={styles.title}>{getStepTitleDisplay()}</Text>
             </View>
             
             {/* Step Content */}
@@ -1566,7 +1686,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 48,
   },
   inputText: {
     flex: 1,
@@ -1574,22 +1693,86 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: '#FF3B30',
+    borderWidth: 1,
   },
   placeholderText: {
     color: '#8E8E93',
   },
   errorText: {
-    fontSize: 14,
-    color: '#EF4444',
+    fontSize: 12,
+    color: '#FF3B30',
     marginTop: 4,
+    marginLeft: 4,
   },
   formRow: {
     flexDirection: 'row',
-    gap: 16,
+    marginBottom: 16,
   },
   formColumn: {
     flex: 1,
+    marginHorizontal: 4,
+  },
+  twoColumnLayout: {
+    flexDirection: 'row',
+    marginHorizontal: -8,
+  },
+  column: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  disabledInput: {
+    backgroundColor: '#F5F5F5',
+    color: '#8E8E93',
+    borderColor: '#E0E0E0',
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    paddingHorizontal: 16,
+  },
+  currencySymbol: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginRight: 8,
+  },
+  priceInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#000000',
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  radioButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#F8F9FA',
+    marginHorizontal: 4,
+    marginBottom: 8,
+  },
+  radioButtonActive: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#E5E5EA',
+  },
+  radioButtonText: {
+    fontSize: 14,
+    color: '#000000',
+  },
+  radioButtonTextActive: {
+    color: '#0D542BFF',
+    fontWeight: '600',
   },
   textAreaContainer: {
     backgroundColor: '#F8F9FA',
@@ -1598,13 +1781,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     minHeight: 100,
   },
   textArea: {
+    flex: 1,
     fontSize: 16,
     color: '#000000',
     minHeight: 80,
     textAlignVertical: 'top',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
 
   // Section Styles
@@ -1640,6 +1828,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
   },
+  addItemInputFullWidth: {
+    width: '100%',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    fontSize: 16,
+    color: '#000000',
+  },
   addButton: {
     backgroundColor: '#0D542BFF',
     paddingHorizontal: 20,
@@ -1664,6 +1863,39 @@ const styles = StyleSheet.create({
   },
   
   // Tag Styles
+  predefinedAmenitiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+    gap: 8,
+  },
+  predefinedAmenityTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    gap: 6,
+  },
+  predefinedAmenityTagSelected: {
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
+  },
+  predefinedAmenityText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  predefinedAmenityTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  checkmarkIcon: {
+    marginLeft: 2,
+  },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1673,16 +1905,29 @@ const styles = StyleSheet.create({
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E0F7FA',
+    backgroundColor: '#E8F5E8',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
     gap: 6,
+  },
+  tagPredefined: {
+    backgroundColor: '#E8F5E8',
+    borderRadius: 20,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
   },
   tagText: {
     fontSize: 14,
     color: '#0D542BFF',
     fontWeight: '500',
+  },
+  tagTextPredefined: {
+    color: '#0D542BFF',
+    fontWeight: '600',
   },
   mediaTag: {
     flexDirection: 'row',
@@ -1725,7 +1970,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   actionButtonDisabled: {
-    backgroundColor: '#C7C7CC',
+    backgroundColor: '#0D542BFF',
+    opacity: 0.4,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1755,25 +2001,134 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
+  // Media Upload Styles
+  stepHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  stepTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  stepCount: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  mediaUploadArea: {
+    width: '100%',
+    minHeight: 180,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  mediaUploadAreaComplete: {
+    borderColor: '#0D542BFF',
+    backgroundColor: '#F0FDFA',
+  },
+  videoUploadArea: {
+    width: '100%',
+    minHeight: 180,
+    backgroundColor: '#F0FDFA',
+    borderWidth: 2,
+    borderColor: '#0D542BFF',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  mediaUploadText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  videoUploadText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0D542BFF',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  mediaUploadHint: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginTop: 4,
+  },
+  videoUploadHint: {
+    fontSize: 14,
+    color: '#0D542BFF',
+    marginTop: 4,
+  },
+  mediaPreviewContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 12,
+    marginHorizontal: -4,
+  },
+  mediaPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    marginHorizontal: 4,
+    marginBottom: 8,
+    maxWidth: '48%',
+  },
+  mediaPreviewText: {
+    fontSize: 12,
+    color: '#000000',
+    flex: 1,
+  },
+  notesInput: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    fontSize: 16,
+    color: '#000000',
+  },
+
   // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 40,
-    maxHeight: '80%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: Dimensions.get('window').height * 0.5,
+    marginBottom: 0,
+    marginTop: 'auto',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
@@ -1786,10 +2141,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     paddingVertical: 16,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F0F0F0',
   },
   modalItemSelected: {
     backgroundColor: '#F0FDFA',
@@ -1801,6 +2156,60 @@ const styles = StyleSheet.create({
   modalItemTextSelected: {
     color: '#0D542BFF',
     fontWeight: '600',
+  },
+
+  // Slider Styles
+  sliderContainer: {
+    marginTop: 12,
+    marginBottom: 0,
+  },
+  sliderWrapper: {
+    marginBottom: 0,
+  },
+  sliderTrack: {
+    height: 8,
+    borderRadius: 4,
+    position: 'relative',
+    paddingVertical: 12,
+    marginHorizontal: 0,
+  },
+  sliderTrackBackground: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    position: 'absolute',
+    top: 12,
+    left: 0,
+    right: 0,
+  },
+  sliderProgress: {
+    height: 8,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 4,
+    position: 'absolute',
+    top: 12,
+    left: 0,
+    zIndex: 1,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 10,
+    top: 8,
+    shadowColor: '#0D542BFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
+    zIndex: 2,
+  },
+  sliderThumbActive: {
+    transform: [{ scale: 1.15 }],
+    backgroundColor: '#007A6B',
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
   },
 })
 

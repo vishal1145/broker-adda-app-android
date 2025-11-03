@@ -665,12 +665,12 @@ const PropertiesScreen = ({ navigation }) => {
         {/* Add Property Button */}
         <View style={styles.addPropertyButtonContainer}>
           <TouchableOpacity 
-            style={styles.addPropertyButton}
+            style={styles.addPropertyButtonPlaceholder}
             onPress={() => navigation.navigate('CreateProperty')}
             activeOpacity={0.8}
           >
-            <MaterialIcons name="add" size={24} color="#FFFFFF" />
-            <Text style={styles.addPropertyButtonText}>Add Property</Text>
+            <MaterialIcons name="add" size={24} color="#9CA3AF" />
+            <Text style={styles.addPropertyButtonPlaceholderText}>Add Property</Text>
           </TouchableOpacity>
         </View>
 
@@ -1116,6 +1116,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  addPropertyButtonPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#D1D5DB',
+    width: '100%',
+    minHeight: 100,
+  },
+  addPropertyButtonPlaceholderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#9CA3AF',
+    marginTop: 8,
   },
 
   // Properties Section

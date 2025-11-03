@@ -9,7 +9,8 @@ import {
   Dimensions,
   Image,
   Share,
-  Alert
+  Alert,
+  FlatList
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -20,44 +21,62 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const { property } = route.params
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [activeTab, setActiveTab] = useState('description')
 
   // Sample related properties (in a real app, this would be fetched from an API)
   const relatedProperties = [
     {
       id: 2,
-      title: 'Suburban Family Home',
-      address: '456 Oak Avenue',
-      price: '$650,000',
-      bedrooms: 4,
-      bathrooms: 3,
-      sqft: 2500,
-      type: 'House',
+      title: 'Luxury Apartment',
+      address: 'Sector 62, Noida, Uttar Pradesh',
+      price: '₹1,25,00,000',
+      bedrooms: 3,
+      bathrooms: 2,
+      sqft: 1800,
+      type: 'Apartment',
       status: 'active',
+      views: 45,
       images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'],
     },
     {
       id: 3,
-      title: 'Beachfront Villa',
-      address: '789 Ocean Drive',
-      price: '$1,200,000',
-      bedrooms: 5,
-      bathrooms: 4,
-      sqft: 3500,
+      title: 'Modern Villa',
+      address: 'Sector 120, Noida, Uttar Pradesh',
+      price: '₹3,50,00,000',
+      bedrooms: 4,
+      bathrooms: 3,
+      sqft: 3200,
       type: 'Villa',
-      status: 'active',
+      status: 'pending',
+      views: 28,
       images: ['https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'],
     },
     {
       id: 4,
-      title: 'Modern Townhouse',
-      address: '321 Pine Street',
-      price: '$450,000',
-      bedrooms: 3,
-      bathrooms: 2,
-      sqft: 1800,
-      type: 'Townhouse',
-      status: 'active',
+      title: 'Penthouse Suite',
+      address: 'Sector 74, Noida, Uttar Pradesh',
+      price: '₹5,00,00,000',
+      bedrooms: 5,
+      bathrooms: 4,
+      sqft: 4500,
+      type: 'Penthouse',
+      status: 'sold',
+      views: 120,
       images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop'],
+    },
+    {
+      id: 5,
+      title: 'Family Home',
+      address: 'Sector 50, Noida, Uttar Pradesh',
+      price: '₹85,00,000',
+      bedrooms: 2,
+      bathrooms: 2,
+      sqft: 1400,
+      type: 'House',
+      status: 'active',
+      views: 15,
+      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'],
     },
   ]
 
@@ -91,6 +110,14 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
+  const handleFavorite = () => {
+    setIsFavorite(!isFavorite)
+  }
+
+  const handleThumbnailPress = (index) => {
+    setCurrentImageIndex(index)
+  }
+
   const handleEdit = () => {
     navigation.navigate('CreateProperty', { property })
   }
@@ -104,6 +131,131 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         { text: 'Call', onPress: () => console.log('Call agent') },
         { text: 'Email', onPress: () => console.log('Email agent') },
       ]
+    )
+  }
+
+  // Recent Property Card Component - Matching HomeScreen design
+  const RecentPropertyCard = ({ property }) => {
+    const getStatusBackgroundColor = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'pending':
+          return '#FEF3C7'
+        case 'active':
+          return '#D1FAE5'
+        case 'sold':
+          return '#DBEAFE'
+        case 'expired':
+          return '#FEE2E2'
+        default:
+          return '#F3F4F6'
+      }
+    }
+
+    const getStatusTextColor = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'pending':
+          return '#92400E'
+        case 'active':
+          return '#065F46'
+        case 'sold':
+          return '#1E40AF'
+        case 'expired':
+          return '#991B1B'
+        default:
+          return '#6B7280'
+      }
+    }
+
+    const getStatusDisplayText = (status) => {
+      return status || 'Pending'
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.recentPropertyCard}
+        onPress={() => navigation.navigate('PropertyDetails', { property })}
+        activeOpacity={0.8}
+      >
+        <View style={styles.recentCardTopSection}>
+          {/* Property Image - Left Side */}
+          <View style={styles.recentPropertyImageContainer}>
+            {property.images?.[0] ? (
+              <Image 
+                source={{ uri: property.images[0] }} 
+                style={styles.recentPropertyImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.recentPropertyImagePlaceholder}>
+                <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                <Text style={styles.recentPlaceholderText}>No Image</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Property Content - Right Side */}
+          <View style={styles.recentPropertyContent}>
+            {/* Title with Icon */}
+            <View style={styles.recentTitleRow}>
+              <MaterialIcons name="home" size={16} color="#1F2937" />
+              <Text style={styles.recentPropertyTitle} numberOfLines={1}>
+                {property.title}
+              </Text>
+            </View>
+            
+            {/* Address with Icon */}
+            <View style={styles.recentAddressRow}>
+              <MaterialIcons name="location-on" size={14} color="#6B7280" />
+              <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
+                {property.address}
+              </Text>
+            </View>
+            
+            {/* Price */}
+            <Text style={styles.recentPropertyPrice}>
+              {property.price}
+            </Text>
+            
+            {/* Status Row */}
+            <View style={styles.recentStatusRow}>
+              <Text style={styles.recentStatusLabel}>Status</Text>
+              <View style={[styles.recentStatusBadge, { backgroundColor: getStatusBackgroundColor(property.status) }]}>
+                <Text style={[styles.recentStatusBadgeText, { color: getStatusTextColor(property.status) }]}>
+                  {getStatusDisplayText(property.status)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        
+        {/* Divider - Full Width */}
+        <View style={styles.recentDivider} />
+        
+        {/* Features Below - Starting from Image Position */}
+        <View style={styles.recentPropertyFeatures}>
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="bed" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.bedrooms || property.beds} Bed</Text>
+          </View>
+          
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.bathrooms || property.baths} Bath</Text>
+          </View>
+          
+          <View style={styles.recentFeatureItem}>
+            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.sqft} Sqft</Text>
+          </View>
+          
+          {property.views && (
+            <View style={styles.recentFeatureItem}>
+              <MaterialIcons name="visibility" size={16} color="#6B7280" />
+              <Text style={styles.recentFeatureText}>{property.views} Views</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
     )
   }
 
@@ -147,202 +299,416 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       >
         {/* Property Images */}
         <View style={styles.imageSection}>
-          <ScrollView 
-            horizontal 
-            pagingEnabled 
-            showsHorizontalScrollIndicator={false}
-            onScroll={(event) => {
-              const contentOffsetX = event.nativeEvent.contentOffset.x
-              const currentIndex = Math.round(contentOffsetX / width)
-              setCurrentImageIndex(currentIndex)
-            }}
-            scrollEventThrottle={16}
-          >
-            {property.images?.map((image, index) => (
-              <Image 
-                key={index}
-                source={{ uri: image }} 
-                style={styles.propertyImage}
-                resizeMode="cover"
-              />
-            ))}
-          </ScrollView>
-          
-          {/* Image Indicators */}
-          {property.images?.length > 1 && (
-            <View style={styles.imageIndicators}>
-              {property.images.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    index === currentImageIndex && styles.indicatorActive
-                  ]}
+          {/* Fixed Main Image */}
+          <View style={styles.mainImageContainer}>
+            <Image 
+              source={{ uri: property.images?.[currentImageIndex] || property.images?.[0] }} 
+              style={styles.mainImage}
+              resizeMode="cover"
+            />
+            
+            {/* Featured Badge */}
+            <View style={styles.featuredBadge}>
+              <Text style={styles.featuredBadgeText}>Featured</Text>
+            </View>
+
+            {/* Top Right Icons */}
+            <View style={styles.mainImageActions}>
+              <TouchableOpacity 
+                style={styles.mainImageActionButton}
+                onPress={handleFavorite}
+              >
+                <MaterialIcons 
+                  name={isFavorite ? "favorite" : "favorite-border"} 
+                  size={20} 
+                  color={isFavorite ? "#EF4444" : "#FFFFFF"} 
                 />
-              ))}
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Scrollable Thumbnail Row */}
+          {property.images?.length > 1 && (
+            <View style={styles.thumbnailContainer}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.thumbnailScroll}
+              >
+                {property.images.map((image, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.thumbnailWrapper,
+                      index === currentImageIndex && styles.thumbnailWrapperActive
+                    ]}
+                    onPress={() => handleThumbnailPress(index)}
+                    activeOpacity={0.7}
+                  >
+                    <Image 
+                      source={{ uri: image }} 
+                      style={styles.thumbnailImage}
+                      resizeMode="cover"
+                    />
+                    {index === currentImageIndex && (
+                      <View style={styles.thumbnailOverlay} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
-
-          {/* Status Badge */}
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(property.status) + '20' }]}>
-            <MaterialIcons name="circle" size={8} color={getStatusColor(property.status)} />
-            <Text style={[styles.statusText, { color: getStatusColor(property.status) }]}>
-              {property.status.toUpperCase()}
-            </Text>
-          </View>
         </View>
 
-        {/* Property Info */}
+        {/* Property Details Section */}
         <View style={styles.contentSection}>
-          <View style={styles.propertyHeader}>
-            <View style={styles.propertyHeaderLeft}>
-              <Text style={styles.propertyTitle}>{property.title}</Text>
-              <View style={styles.propertyAddress}>
-                <MaterialIcons name="location-on" size={18} color="#0D542BFF" />
-                <Text style={styles.addressText}>{property.address}</Text>
+          <Text style={styles.sectionTitle}>Property Details</Text>
+          <View style={styles.propertyDetailsCard}>
+            {/* Property Name and Address */}
+            <View style={styles.propertyDetailsHeader}>
+              <Text style={styles.propertyDetailsTitle}>{property.title}</Text>
+              <View style={styles.propertyDetailsAddressRow}>
+                <MaterialIcons name="location-on" size={16} color="#6B7280" />
+                <Text style={styles.propertyDetailsAddress}>{property.address}</Text>
               </View>
             </View>
-            <Text style={styles.propertyPrice}>{property.price}</Text>
+
+            {/* Property Details Grid */}
+            <View style={styles.propertyDetailsRow}>
+              {/* Left Column */}
+              <View style={styles.propertyDetailColumn}>
+                <View style={styles.propertyDetailItem}>
+                  <MaterialIcons name="bed" size={20} color="#0D542BFF" />
+                  <View style={styles.propertyDetailContent}>
+                    <Text style={styles.propertyDetailLabel}>Bedrooms</Text>
+                    <Text style={styles.propertyDetailValue}>{property.bedrooms} BHK</Text>
+                  </View>
+                </View>
+                <View style={styles.propertyDetailItem}>
+                  <MaterialIcons name="schedule" size={20} color="#0D542BFF" />
+                  <View style={styles.propertyDetailContent}>
+                    <Text style={styles.propertyDetailLabel}>Listed</Text>
+                    <Text style={styles.propertyDetailValue}>{property.listedDate || '3 days ago'}</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Right Column */}
+              <View style={styles.propertyDetailColumn}>
+                <View style={styles.propertyDetailItem}>
+                  <MaterialIcons name="square-foot" size={20} color="#0D542BFF" />
+                  <View style={styles.propertyDetailContent}>
+                    <Text style={styles.propertyDetailLabel}>Property Size</Text>
+                    <Text style={styles.propertyDetailValue}>
+                      {property.sqft 
+                        ? `${typeof property.sqft === 'number' ? property.sqft.toLocaleString() : property.sqft} sq.ft` 
+                        : 'N/A'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.propertyDetailItem}>
+                  <MaterialIcons name="attach-money" size={20} color="#0D542BFF" />
+                  <View style={styles.propertyDetailContent}>
+                    <Text style={styles.propertyDetailLabel}>Price</Text>
+                    <Text style={styles.propertyDetailValue}>{property.price}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
           </View>
 
-          {/* Property Details */}
-          <View style={styles.propertyDetails}>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <MaterialIcons name="bed" size={24} color="#0D542BFF" />
-              </View>
-              <Text style={styles.detailLabel}>Bedrooms</Text>
-              <Text style={styles.detailValue}>{property.bedrooms}</Text>
-            </View>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <MaterialIcons name="bathtub" size={24} color="#0D542BFF" />
-              </View>
-              <Text style={styles.detailLabel}>Bathrooms</Text>
-              <Text style={styles.detailValue}>{property.bathrooms}</Text>
-            </View>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <MaterialIcons name="square-foot" size={24} color="#0D542BFF" />
-              </View>
-              <Text style={styles.detailLabel}>Square Feet</Text>
-              <Text style={styles.detailValue}>{property.sqft}</Text>
-            </View>
-            <View style={styles.detailCard}>
-              <View style={styles.detailIcon}>
-                <MaterialIcons name={getTypeIcon(property.type)} size={24} color="#0D542BFF" />
-              </View>
-              <Text style={styles.detailLabel}>Type</Text>
-              <Text style={styles.detailValue}>{property.type}</Text>
-            </View>
-          </View>
-
-          {/* Description */}
+          {/* Nearby Amenities */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.sectionContent}>{property.description}</Text>
+            <Text style={styles.sectionTitle}>Nearby Amenities</Text>
+            <View style={styles.amenitiesCard}>
+              {property.amenities?.map((amenity, index) => (
+                <View key={index} style={styles.amenityItem}>
+                  <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                  <Text style={styles.amenityText}>{amenity}</Text>
+                </View>
+              )) || (
+                <View style={styles.amenityItem}>
+                  <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                  <Text style={styles.amenityText}>Schools nearby</Text>
+                </View>
+              )}
+            </View>
           </View>
 
-          {/* Features */}
+          {/* Description and Review Tabs */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Features</Text>
-            <View style={styles.featuresGrid}>
-              {property.features?.map((feature, index) => (
-                <View key={index} style={styles.featureTag}>
-                  <MaterialIcons name="check-circle" size={16} color="#10B981" />
-                  <Text style={styles.featureText}>{feature}</Text>
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'description' && styles.tabActive]}
+                onPress={() => setActiveTab('description')}
+              >
+                <Text style={[styles.tabText, activeTab === 'description' && styles.tabTextActive]}>
+                  Description
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'review' && styles.tabActive]}
+                onPress={() => setActiveTab('review')}
+              >
+                <Text style={[styles.tabText, activeTab === 'review' && styles.tabTextActive]}>
+                  Review
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {activeTab === 'description' ? (
+              <View style={styles.tabContentCard}>
+                <Text style={styles.tabContentText}>
+                  {property.description || 'No description available'}
+                </Text>
+              </View>
+            ) : (
+              <>
+                {/* Reviews & Ratings */}
+                <View style={styles.reviewsRatingsCard}>
+                  <View style={styles.reviewsRatingsHeader}>
+                    <View style={styles.reviewsRatingsTitleLine} />
+                    <Text style={styles.reviewsRatingsTitle}>Reviews & Ratings</Text>
+                  </View>
+                  
+                  <View style={styles.overallRatingSection}>
+                    <View style={styles.overallRatingLeft}>
+                      <Text style={styles.overallRatingNumber}>4.7</Text>
+                      <View style={styles.overallRatingStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <MaterialIcons key={star} name="star" size={20} color="#FBBF24" />
+                        ))}
+                      </View>
+                      <Text style={styles.overallRatingText}>Excellent</Text>
+                      <Text style={styles.reviewsCount}>Based on 245 reviews</Text>
+                    </View>
+                    
+                    <View style={styles.starDistribution}>
+                      {[5, 4, 3, 2, 1].map((starLevel) => {
+                        const percentages = { 5: 90, 4: 60, 3: 25, 2: 10, 1: 5 }
+                        return (
+                          <View key={starLevel} style={styles.starDistributionRow}>
+                            <Text style={styles.starLevelText}>{starLevel} Star</Text>
+                            <View style={styles.starDistributionBar}>
+                              <View 
+                                style={[
+                                  styles.starDistributionBarFill, 
+                                  { width: `${percentages[starLevel]}%` }
+                                ]} 
+                              />
+                            </View>
+                            <Text style={styles.starPercentageText}>{percentages[starLevel]}%</Text>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  </View>
+                </View>
+
+                {/* Recent Reviews */}
+                <View style={styles.recentReviewsSection}>
+                  <Text style={styles.recentReviewsTitle}>Recent Reviews</Text>
+                  
+                  {[
+                    {
+                      id: 1,
+                      name: 'Rajesh Kumar',
+                      initials: 'RK',
+                      verified: true,
+                      rating: 5,
+                      timeAgo: '2 days ago',
+                      review: 'Excellent property with great amenities. The location is perfect with metro connectivity. Highly recommended!'
+                    },
+                    {
+                      id: 2,
+                      name: 'Priya Sharma',
+                      initials: 'PS',
+                      verified: true,
+                      rating: 5,
+                      timeAgo: '1 week ago',
+                      review: 'Good property overall. The maintenance is well taken care of. Only minor issue is the parking space.'
+                    },
+                    {
+                      id: 3,
+                      name: 'Amit Singh',
+                      initials: 'AS',
+                      verified: false,
+                      rating: 5,
+                      timeAgo: '2 weeks ago',
+                      review: 'Amazing property! The view from the balcony is breathtaking. The builder has maintained high quality standards.'
+                    }
+                  ].map((review) => (
+                    <View key={review.id} style={styles.reviewCard}>
+                      <View style={styles.reviewCardHeader}>
+                        <View style={styles.reviewAvatar}>
+                          <View style={styles.reviewAvatarContainer}>
+                            <Text style={styles.reviewAvatarText}>{review.initials}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.reviewCardInfo}>
+                          <View style={styles.reviewNameRow}>
+                            <Text style={styles.reviewName}>{review.name}</Text>
+                            {review.verified && (
+                              <View style={[styles.verifiedBadge, { backgroundColor: '#10B981' + '20' }]}>
+                                <MaterialIcons name="circle" size={8} color="#10B981" />
+                                <Text style={[styles.verifiedBadgeText, { color: '#10B981' }]}>Verified</Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={styles.reviewMetaRow}>
+                            <View style={styles.reviewStars}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <MaterialIcons 
+                                  key={star} 
+                                  name="star" 
+                                  size={14} 
+                                  color="#FBBF24" 
+                                />
+                              ))}
+                            </View>
+                            <Text style={styles.reviewTimeAgo}>{review.timeAgo}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      <Text style={styles.reviewText}>{review.review}</Text>
+                    </View>
+                  ))}
+                  
+                  <TouchableOpacity style={styles.loadMoreButton}>
+                    <Text style={styles.loadMoreButtonText}>Load More Reviews</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Key Features */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Key Features</Text>
+            <View style={styles.featureCard}>
+              <View style={styles.featureCardContent}>
+                {property.features?.map((feature, index) => (
+                  <View key={index} style={styles.featureCardItem}>
+                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                    <Text style={styles.featureCardText}>{feature}</Text>
+                  </View>
+                )) || (
+                  <View style={styles.featureCardItem}>
+                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                    <Text style={styles.featureCardText}>Modern design</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Location Benefits */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location Benefits</Text>
+            <View style={styles.featureCard}>
+              <View style={styles.featureCardContent}>
+                {property.locationBenefits?.map((benefit, index) => (
+                  <View key={index} style={styles.featureCardItem}>
+                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                    <Text style={styles.featureCardText}>{benefit}</Text>
+                  </View>
+                )) || (
+                  <View style={styles.featureCardItem}>
+                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
+                    <Text style={styles.featureCardText}>Prime location</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Agent Details */}
+          <View style={styles.agentSection}>
+            <Text style={styles.sectionTitle}>Agent Details</Text>
+            <View style={styles.agentCard}>
+              <View style={styles.agentCardContent}>
+                <View style={styles.agentAvatar}>
+                  <View style={styles.agentAvatarContainer}>
+                    <Text style={styles.agentAvatarText}>
+                      {property.agent ? property.agent.charAt(0).toUpperCase() : 'U'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.agentInfo}>
+                  <Text style={styles.agentName}>{property.agent || 'Rajesh Kumar'}</Text>
+                  <Text style={styles.agentCompany}>{property.agentCompany || 'Rajesh Realty Solutions'}</Text>
+                  <Text style={styles.agentRole}>
+                    {property.agentRole || 'Expert Broker'} • {property.agentLocation || 'Noida'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.agentActionButtons}>
+                <TouchableOpacity style={styles.contactBrokerButton} onPress={handleContact}>
+                  <Text style={styles.contactBrokerButtonText}>Contact Broker</Text>
+                  <MaterialIcons name="phone" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.scheduleVisitButton} onPress={() => console.log('Schedule visit')}>
+                  <Text style={styles.scheduleVisitButtonText}>Schedule Visit</Text>
+                  <MaterialIcons name="calendar-today" size={18} color="#0D542BFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* Inspection Times */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Inspection Times</Text>
+            <View style={styles.inspectionCard}>
+              {[
+                { day: 'Saturday', time: '10:00 AM to 11:00 AM', status: 'Available' },
+                { day: 'Sunday', time: '02:00 PM to 03:00 PM', status: 'Available' },
+                { day: 'Monday', time: '09:00 AM to 10:00 AM', status: 'Past' },
+              ].map((slot, index, array) => (
+                <View 
+                  key={index} 
+                  style={[
+                    styles.inspectionSlot,
+                    index === array.length - 1 && styles.inspectionSlotLast
+                  ]}
+                >
+                  <View style={styles.inspectionSlotInfo}>
+                    <Text style={styles.inspectionDay}>{slot.day}</Text>
+                    <Text style={styles.inspectionTime}>{slot.time}</Text>
+                  </View>
+                  <View style={[
+                    styles.inspectionStatus,
+                    slot.status === 'Past' && styles.inspectionStatusPast
+                  ]}>
+                    {slot.status === 'Past' && (
+                      <MaterialIcons name="circle" size={8} color={getStatusColor('sold')} />
+                    )}
+                    <Text style={[
+                      styles.inspectionStatusText,
+                      slot.status === 'Past' && { color: getStatusColor('sold') }
+                    ]}>
+                      {slot.status}
+                    </Text>
+                  </View>
                 </View>
               ))}
-            </View>
-          </View>
-
-          {/* Property Statistics */}
-          <View style={styles.statsSection}>
-            <View style={styles.statCard}>
-              <MaterialIcons name="visibility" size={20} color="#6B7280" />
-              <Text style={styles.statValue}>{property.views || 0}</Text>
-              <Text style={styles.statLabel}>Views</Text>
-            </View>
-            <View style={styles.statCard}>
-              <MaterialIcons name="favorite" size={20} color="#EF4444" />
-              <Text style={styles.statValue}>{property.favorites || 0}</Text>
-              <Text style={styles.statLabel}>Favorites</Text>
-            </View>
-            <View style={styles.statCard}>
-              <MaterialIcons name="schedule" size={20} color="#6B7280" />
-              <Text style={styles.statValue}>{property.listedDate}</Text>
-              <Text style={styles.statLabel}>Listed</Text>
-            </View>
-          </View>
-
-          {/* Agent Info */}
-          <View style={styles.agentSection}>
-            <Text style={styles.sectionTitle}>Listing Agent</Text>
-            <View style={styles.agentCard}>
-              <View style={styles.agentAvatar}>
-                <MaterialIcons name="account-circle" size={50} color="#0D542BFF" />
-              </View>
-              <View style={styles.agentInfo}>
-                <Text style={styles.agentName}>{property.agent}</Text>
-                <Text style={styles.agentLabel}>Real Estate Agent</Text>
-              </View>
-              <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
-                <MaterialIcons name="phone" size={20} color="#FFFFFF" />
+              <TouchableOpacity style={styles.bookInspectionButton}>
+                <Text style={styles.bookInspectionButtonText}>Book Inspection</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Related Properties */}
           <View style={styles.relatedSection}>
-            <Text style={styles.sectionTitle}>Similar Properties</Text>
-            <ScrollView 
-              horizontal 
+            <Text style={styles.sectionTitle}>Related Properties</Text>
+            <FlatList
+              data={relatedProperties}
+              horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.relatedScroll}
-            >
-              {relatedProperties.map((relatedProperty) => (
-                <TouchableOpacity 
-                  key={relatedProperty.id}
-                  style={styles.relatedCard}
-                  onPress={() => navigation.navigate('PropertyDetails', { property: relatedProperty })}
-                  activeOpacity={0.8}
-                >
-                  <Image 
-                    source={{ uri: relatedProperty.images[0] }} 
-                    style={styles.relatedImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.relatedBadge}>
-                    <MaterialIcons name="circle" size={6} color={getStatusColor(relatedProperty.status)} />
-                    <Text style={[styles.relatedBadgeText, { color: getStatusColor(relatedProperty.status) }]}>
-                      {relatedProperty.status.toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.relatedContent}>
-                    <Text style={styles.relatedTitle} numberOfLines={1}>{relatedProperty.title}</Text>
-                    <View style={styles.relatedAddress}>
-                      <MaterialIcons name="location-on" size={12} color="#6B7280" />
-                      <Text style={styles.relatedAddressText} numberOfLines={1}>{relatedProperty.address}</Text>
-                    </View>
-                    <Text style={styles.relatedPrice}>{relatedProperty.price}</Text>
-                    <View style={styles.relatedDetails}>
-                      <View style={styles.relatedDetail}>
-                        <MaterialIcons name="bed" size={12} color="#0D542BFF" />
-                        <Text style={styles.relatedDetailText}>{relatedProperty.bedrooms}</Text>
-                      </View>
-                      <View style={styles.relatedDetail}>
-                        <MaterialIcons name="bathtub" size={12} color="#0D542BFF" />
-                        <Text style={styles.relatedDetailText}>{relatedProperty.bathrooms}</Text>
-                      </View>
-                      <View style={styles.relatedDetail}>
-                        <MaterialIcons name="square-foot" size={12} color="#0D542BFF" />
-                        <Text style={styles.relatedDetailText}>{relatedProperty.sqft}</Text>
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <RecentPropertyCard property={item} />}
+              contentContainerStyle={styles.recentPropertiesList}
+              ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+            />
           </View>
 
           {/* Action Buttons */}
@@ -465,35 +831,52 @@ const styles = StyleSheet.create({
   
   // Image Section
   imageSection: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  mainImageContainer: {
     position: 'relative',
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  mainImage: {
+    width: '100%',
     height: 300,
   },
-  propertyImage: {
-    width: width,
-    height: 300,
-  },
-  imageIndicators: {
+  featuredBadge: {
     position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
+    top: 16,
+    left: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  featuredBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  mainImageActions: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
     flexDirection: 'row',
-    justifyContent: 'center',
     gap: 8,
   },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  indicatorActive: {
-    backgroundColor: '#FFFFFF',
-    width: 24,
+  mainImageActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusBadge: {
     position: 'absolute',
-    top: 16,
+    bottom: 16,
     left: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -505,6 +888,37 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  thumbnailContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+  },
+  thumbnailScroll: {
+    gap: 12,
+    paddingRight: 0,
+  },
+  thumbnailWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  thumbnailWrapperActive: {
+    borderColor: '#0D542BFF',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(13, 84, 43, 0.2)',
   },
   
   // Content Section
@@ -594,6 +1008,68 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   
+  // Property Details Card
+  propertyDetailsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  propertyDetailsRow: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  propertyDetailColumn: {
+    flex: 1,
+    gap: 20,
+  },
+  propertyDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  propertyDetailContent: {
+    flex: 1,
+  },
+  propertyDetailLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  propertyDetailValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  propertyDetailsHeader: {
+    marginBottom: 20,
+  },
+  propertyDetailsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  propertyDetailsAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  propertyDetailsAddress: {
+    fontSize: 14,
+    color: '#6B7280',
+    flex: 1,
+  },
+  
   // Features
   featuresGrid: {
     flexDirection: 'row',
@@ -615,6 +1091,329 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#059669',
+  },
+  
+  // Nearby Amenities
+  amenitiesCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 12,
+  },
+  amenityItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  amenityBullet: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+    marginRight: 12,
+  },
+  amenityText: {
+    fontSize: 14,
+    color: '#6B7280',
+    flex: 1,
+  },
+  
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 12,
+    gap: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabActive: {
+    backgroundColor: '#0D542BFF',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
+  },
+  tabContentCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    minHeight: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  tabContentText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#6B7280',
+  },
+  
+  // Reviews & Ratings
+  reviewsRatingsCard: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+  },
+  reviewsRatingsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  reviewsRatingsTitleLine: {
+    width: 4,
+    height: 20,
+    backgroundColor: '#F59E0B',
+    borderRadius: 2,
+    marginRight: 8,
+  },
+  reviewsRatingsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  overallRatingSection: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  overallRatingLeft: {
+    alignItems: 'flex-start',
+    minWidth: 100,
+  },
+  overallRatingNumber: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  overallRatingStars: {
+    flexDirection: 'row',
+    gap: 2,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  overallRatingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  reviewsCount: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  starDistribution: {
+    flex: 1,
+    gap: 8,
+  },
+  starDistributionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  starLevelText: {
+    fontSize: 12,
+    color: '#6B7280',
+    width: 50,
+  },
+  starDistributionBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  starDistributionBarFill: {
+    height: '100%',
+    backgroundColor: '#F59E0B',
+    borderRadius: 4,
+  },
+  starPercentageText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F2937',
+    width: 35,
+    textAlign: 'right',
+  },
+  
+  // Recent Reviews
+  recentReviewsSection: {
+    marginBottom: 24,
+  },
+  recentReviewsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  reviewCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  reviewCardHeader: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  reviewAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    position: 'relative',
+  },
+  reviewAvatarContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#0D542BFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  reviewAvatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  reviewCardInfo: {
+    flex: 1,
+  },
+  reviewNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  reviewName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  verifiedBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  reviewMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  reviewStars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewTimeAgo: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  reviewText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6B7280',
+  },
+  loadMoreButton: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  loadMoreButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  
+  // Key Features and Location Benefits
+  featuresRow: {
+    flexDirection: 'column',
+    gap: 12,
+    marginBottom: 24,
+  },
+  featureCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  featureCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  featureCardContent: {
+    gap: 12,
+  },
+  featureCardItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  featureCardText: {
+    fontSize: 14,
+    color: '#6B7280',
+    flex: 1,
   },
   
   // Stats
@@ -646,8 +1445,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   agentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
@@ -658,36 +1455,161 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    gap: 12,
+  },
+  agentCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   agentAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F0FDFA',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
+    position: 'relative',
+  },
+  agentAvatarContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#0D542BFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  agentAvatarText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   agentInfo: {
     flex: 1,
   },
   agentName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 4,
   },
-  agentLabel: {
+  agentCompany: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  agentRole: {
+    fontSize: 13,
+    color: '#9CA3AF',
+  },
+  agentActionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  contactBrokerButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  contactBrokerButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  scheduleVisitButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#0D542BFF',
+    gap: 8,
+  },
+  scheduleVisitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0D542BFF',
+  },
+  
+  // Inspection Times
+  inspectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  inspectionSlot: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  inspectionSlotLast: {
+    borderBottomWidth: 0,
+  },
+  inspectionSlotInfo: {
+    flex: 1,
+  },
+  inspectionDay: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  inspectionTime: {
     fontSize: 14,
     color: '#6B7280',
   },
-  contactButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  inspectionStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+    backgroundColor: 'transparent',
+  },
+  inspectionStatusPast: {
+    backgroundColor: '#6B7280' + '20',
+  },
+  inspectionStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  bookInspectionButton: {
     backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 12,
+    width: '100%',
+  },
+  bookInspectionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   
   // Action Buttons
@@ -728,19 +1650,19 @@ const styles = StyleSheet.create({
     color: '#EF4444',
   },
   
-  // Related Properties
+  // Related Properties - Matching HomeScreen style
   relatedSection: {
     marginBottom: 24,
   },
-  relatedScroll: {
-    gap: 16,
+  recentPropertiesList: {
+    paddingVertical: 8,
   },
-  relatedCard: {
-    width: width * 0.75,
+  recentPropertyCard: {
+    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginRight: 12,
+    borderRadius: 12,
+    width: width - 80,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -748,63 +1670,111 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    overflow: 'hidden',
   },
-  relatedImage: {
+  recentCardTopSection: {
+    flexDirection: 'row',
+    marginBottom: 0,
+  },
+  recentPropertyImageContainer: {
+    width: 130,
+    height: 130,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  recentPropertyImage: {
     width: '100%',
-    height: 180,
+    height: '100%',
   },
-  relatedBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
+  recentPropertyImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentPlaceholderText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  recentPropertyContent: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  recentTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 4,
+    gap: 6,
+    marginBottom: 6,
   },
-  relatedBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  relatedContent: {
-    padding: 16,
-  },
-  relatedTitle: {
+  recentPropertyTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 6,
+    flex: 1,
   },
-  relatedAddress: {
+  recentAddressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginBottom: 8,
   },
-  relatedAddressText: {
-    fontSize: 12,
+  recentPropertyAddressText: {
+    fontSize: 13,
     color: '#6B7280',
+    flex: 1,
   },
-  relatedPrice: {
+  recentPropertyPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0D542BFF',
-    marginBottom: 12,
+    color: '#1F2937',
+    marginBottom: 8,
   },
-  relatedDetails: {
+  recentStatusRow: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  relatedDetail: {
+  recentStatusLabel: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  recentStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  recentStatusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  recentDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 10,
+    marginTop: 10,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  recentPropertyFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingTop: 4,
+    paddingLeft: 0,
+    alignItems: 'center',
+  },
+  recentFeatureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  relatedDetailText: {
-    fontSize: 12,
+  recentFeatureText: {
+    fontSize: 13,
     color: '#6B7280',
   },
 })

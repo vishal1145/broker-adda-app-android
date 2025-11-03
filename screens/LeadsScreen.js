@@ -1747,22 +1747,26 @@ const LeadsScreen = ({ navigation }) => {
             )}
           </View>
 
-          {/* Advanced Filter and Add Lead Button - Same Row */}
+          {/* Advanced Filter Button - Full Width */}
           <View style={styles.filterButtonRow}>
             <TouchableOpacity
-              style={styles.advancedFilterButton}
+              style={styles.advancedFilterButtonFullWidth}
               onPress={() => setShowAdvancedFilter(true)}
             >
               <MaterialIcons name="tune" size={18} color="#6B7280" />
               <Text style={styles.advancedFilterText} numberOfLines={1} ellipsizeMode="tail">Advanced</Text>
             </TouchableOpacity>
+          </View>
+          
+          {/* Add Lead Button - Full Width */}
+          <View style={styles.filterButtonRow}>
             <TouchableOpacity 
-              style={styles.addLeadButton}
+              style={styles.addLeadButtonPlaceholder}
               onPress={() => setShowAddLeadModal(true)}
               activeOpacity={0.8}
             >
-              <MaterialIcons name="add" size={18} color="#FFFFFF" />
-              <Text style={styles.addLeadButtonText} numberOfLines={1} ellipsizeMode="tail">Add New Lead</Text>
+              <MaterialIcons name="add" size={24} color="#9CA3AF" />
+              <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -3113,11 +3117,30 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     flexShrink: 1,
   },
+  advancedFilterButtonFullWidth: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 6,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
   filterButtonRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     width: '100%',
+    marginBottom: 12,
   },
   // Add New Lead Button
   addLeadButton: {
@@ -3142,6 +3165,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     flexShrink: 1,
+  },
+  addLeadButtonPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#D1D5DB',
+    width: '100%',
+    minHeight: 100,
+  },
+  addLeadButtonPlaceholderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#9CA3AF',
+    marginTop: 8,
   },
 
   // Leads Section
