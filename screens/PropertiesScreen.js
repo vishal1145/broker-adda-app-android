@@ -424,17 +424,6 @@ const PropertiesScreen = ({ navigation }) => {
               <Text style={styles.headerTitle}>Properties</Text>
               <Text style={styles.headerSubtitle}>Your properties</Text>
             </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={() => navigation.navigate('CreateProperty')}
-              >
-                <MaterialIcons name="add" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton}>
-                <MaterialIcons name="search" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
 
@@ -445,7 +434,7 @@ const PropertiesScreen = ({ navigation }) => {
             <View style={[styles.statCard, styles.statCardGreen]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="home" size={22} color="#10B981" />
+                  <MaterialIcons name="home" size={22} color="#0D542BFF" />
                   <Text style={styles.statCount}>{propertiesData.length}</Text>
                 </View>
                 <Text style={styles.statTitle}>Total Properties</Text>
@@ -456,7 +445,7 @@ const PropertiesScreen = ({ navigation }) => {
             <View style={[styles.statCard, styles.statCardWhite]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="check-circle" size={22} color="#10B981" />
+                  <MaterialIcons name="check-circle" size={22} color="#0D542BFF" />
                   <Text style={styles.statCount}>{propertiesData.filter(prop => {
                     const status = prop.status?.toLowerCase() || ''
                     return status.includes('approved') || status.includes('active')
@@ -522,6 +511,18 @@ const PropertiesScreen = ({ navigation }) => {
           >
             <Text style={styles.filterDropdownText}>{selectedDate}</Text>
             <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Add Property Button */}
+        <View style={styles.addPropertyButtonContainer}>
+          <TouchableOpacity 
+            style={styles.addPropertyButton}
+            onPress={() => navigation.navigate('CreateProperty')}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="add" size={24} color="#FFFFFF" />
+            <Text style={styles.addPropertyButtonText}>Add Property</Text>
           </TouchableOpacity>
         </View>
 
@@ -773,20 +774,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
   },
-  headerRight: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  headerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
 
   // Stats Section
   statsSection: {
@@ -851,7 +838,7 @@ const styles = StyleSheet.create({
   // New Filter Section
   newFilterSection: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 12,
     marginBottom: 0,
     gap: 12,
   },
@@ -914,6 +901,32 @@ const styles = StyleSheet.create({
   dropdownOptionTextSelected: {
     fontWeight: '600',
     color: '#0D542BFF',
+  },
+
+  // Add Property Button
+  addPropertyButtonContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  addPropertyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D542BFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  addPropertyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 
   // Properties Section

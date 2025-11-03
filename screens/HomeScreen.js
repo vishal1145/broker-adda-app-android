@@ -209,6 +209,34 @@ const HomeScreen = ({ navigation }) => {
     { period: 'May', deals: 9 }
   ])
 
+  // Performance Summary data
+  const [performanceSummary] = useState([
+    {
+      id: 1,
+      title: 'Lead Conversion Rate',
+      target: '80%',
+      value: '75%',
+      percentage: 75,
+      color: '#2E7D32'
+    },
+    {
+      id: 2,
+      title: 'Average Response Time',
+      target: '4 hours',
+      value: '90 mins',
+      percentage: 75, // Visual representation showing better performance
+      color: '#1F2937'
+    },
+    {
+      id: 3,
+      title: 'Property Approval Ratio',
+      target: '90%',
+      value: '85%',
+      percentage: 85,
+      color: '#1F2937'
+    }
+  ])
+
   // Recent Leads data
   const [recentLeads] = useState([
     {
@@ -286,6 +314,22 @@ const HomeScreen = ({ navigation }) => {
       parking: 'Parking',
       views: 8,
       image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
+    }
+  ])
+
+  // Recent Activity data
+  const [recentActivities] = useState([
+    {
+      id: 1,
+      description: 'Submitted new property listing: Premium 3BHK Apartment in Sector 62',
+      timeAgo: '2 days ago',
+      icon: 'description'
+    },
+    {
+      id: 2,
+      description: 'New lead created: Residential property inquiry received',
+      timeAgo: '4 days ago',
+      icon: 'description'
     }
   ])
 
@@ -763,6 +807,78 @@ const HomeScreen = ({ navigation }) => {
     )
   }
 
+  // Recent Activity Card Component
+  const RecentActivityCard = ({ activity, isLast }) => {
+    return (
+      <View>
+        <View style={styles.recentActivityItem}>
+          <View style={styles.recentActivityIconContainer}>
+            <MaterialIcons name={activity.icon || 'description'} size={18} color="#9CA3AF" />
+          </View>
+          <View style={styles.recentActivityContent}>
+            <Text style={styles.recentActivityDescription}>{activity.description}</Text>
+            <Text style={styles.recentActivityTimeText}>{activity.timeAgo}</Text>
+          </View>
+        </View>
+        {!isLast && <View style={styles.recentActivityDivider} />}
+      </View>
+    )
+  }
+
+  // Circular Progress Component
+  const CircularProgress = ({ percentage, value, size = 120, color = '#1F2937' }) => {
+    const radius = size / 2 - 12
+    const circumference = 2 * Math.PI * radius
+    const strokeDashoffset = circumference - (percentage / 100) * circumference
+
+    return (
+      <View style={styles.circularProgressContainer}>
+        <Svg width={size} height={size}>
+          <G transform={`translate(${size / 2}, ${size / 2})`}>
+            {/* Background circle */}
+            <Circle
+              r={radius}
+              stroke="#F3F4F6"
+              strokeWidth={12}
+              fill="transparent"
+            />
+            {/* Progress circle */}
+            <Circle
+              r={radius}
+              stroke={color}
+              strokeWidth={12}
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+              transform="rotate(-90)"
+            />
+          </G>
+        </Svg>
+        <View style={styles.circularProgressTextContainer}>
+          <Text style={styles.circularProgressValue}>{value}</Text>
+        </View>
+      </View>
+    )
+  }
+
+  // Performance Summary Card Component
+  const PerformanceSummaryCard = ({ item }) => {
+    return (
+      <View style={styles.performanceCard}>
+        <Text style={styles.performanceCardTitle}>{item.title}</Text>
+        <Text style={styles.performanceCardTarget}>Target: {item.target}</Text>
+        <View style={styles.performanceCardProgress}>
+          <CircularProgress 
+            percentage={item.percentage}
+            value={item.value}
+            color={item.color}
+          />
+        </View>
+      </View>
+    )
+  }
+
   // Line Chart Component - Closed Deal
   const LineChart = ({ data, width: chartWidth = width - 80, height = 200 }) => {
     const maxValue = Math.max(...data.map(d => d.deals))
@@ -922,11 +1038,12 @@ const HomeScreen = ({ navigation }) => {
                       resizeMode="cover"
                     />
                   ) : (
-                    <Text style={styles.profileInitials}>
-                      {isLoading ? '?' : (userName[0] || 'U').toUpperCase()}
-                    </Text>
+                    <View style={styles.profileInitialsContainer}>
+                      <Text style={styles.profileInitials}>
+                        {isLoading ? '?' : (userName[0] || 'U').toUpperCase()}
+                      </Text>
+                    </View>
                   )}
-                  <View style={styles.profileOnlineIndicator} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -1000,6 +1117,17 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.manageButtonText}>Manage</Text>
             </TouchableOpacity>
           </View>
+          
+          {/* Add Lead Card */}
+          <TouchableOpacity 
+            style={styles.addLeadCard}
+            onPress={() => navigation.navigate('Leads')}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="add" size={32} color="#9CA3AF" />
+            <Text style={styles.addLeadText}>Add Lead</Text>
+          </TouchableOpacity>
+          
           <FlatList
             data={recentLeads}
             horizontal
@@ -1022,6 +1150,17 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.manageButtonText}>Manage</Text>
             </TouchableOpacity>
           </View>
+          
+          {/* Add Property Card */}
+          <TouchableOpacity 
+            style={styles.addPropertyCard}
+            onPress={() => navigation.navigate('CreateProperty')}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="add" size={32} color="#9CA3AF" />
+            <Text style={styles.addPropertyText}>Add Property</Text>
+          </TouchableOpacity>
+          
           <FlatList
             data={recentProperties}
             horizontal
@@ -1031,6 +1170,36 @@ const HomeScreen = ({ navigation }) => {
             contentContainerStyle={styles.recentPropertiesList}
             ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
           />
+        </View>
+
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+          </View>
+          
+          <View style={styles.recentActivityCard}>
+            {recentActivities.map((activity, index) => (
+              <RecentActivityCard 
+                key={activity.id} 
+                activity={activity} 
+                isLast={index === recentActivities.length - 1}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Performance Summary */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Performance Summary</Text>
+          </View>
+          
+          <View style={styles.performanceSummaryContainer}>
+            {performanceSummary.map((item) => (
+              <PerformanceSummaryCard key={item.id} item={item} />
+            ))}
+          </View>
         </View>
       </ScrollView>
       </View>
@@ -1136,25 +1305,34 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   profileImageContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  profileInitialsContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    position: 'relative',
+    borderColor: '#FFFFFF',
   },
   profileInitials: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   profileImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   profileOnlineIndicator: {
     position: 'absolute',
@@ -1546,7 +1724,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    width: width - 60,
+    width: width - 80,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -1677,7 +1855,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    width: width - 60,
+    width: width - 80,
     padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1793,6 +1971,159 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     fontWeight: '500',
+  },
+
+  // Add Property Card Styles
+  addPropertyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#D1D5DB',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    minHeight: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  addPropertyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 8,
+  },
+
+  // Add Lead Card Styles
+  addLeadCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#D1D5DB',
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    minHeight: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  addLeadText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 8,
+  },
+
+  // Recent Activity Styles
+  recentActivityCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  recentActivityItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+  },
+  recentActivityIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  recentActivityContent: {
+    flex: 1,
+  },
+  recentActivityDescription: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  recentActivityTimeText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  recentActivityDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+
+  // Performance Summary Styles
+  performanceSummaryContainer: {
+    gap: 12,
+  },
+  performanceCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    minHeight: 180,
+  },
+  performanceCardTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  performanceCardTarget: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  performanceCardProgress: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularProgressContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularProgressTextContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circularProgressValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
   },
 })
 

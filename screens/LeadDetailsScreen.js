@@ -1492,7 +1492,7 @@ const styles = StyleSheet.create({
   leadInfoStatusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 10,
   },
   leadInfoStatusText: {
     fontSize: 12,

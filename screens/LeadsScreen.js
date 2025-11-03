@@ -941,8 +941,6 @@ const LeadsScreen = ({ navigation }) => {
           fetchLeads(false, text.trim(), apiStatus)
         } else {
           fetchLeads(false, '', apiStatus)
-          // Hide search bar when search is empty
-          setIsSearchVisible(false)
         }
       }
     }, 500) // 500ms delay
@@ -979,7 +977,6 @@ const LeadsScreen = ({ navigation }) => {
       // Apply only status filter
       fetchLeads(false, '', apiStatus)
     }
-    setIsSearchVisible(false) // Hide search bar when clearing
   }
 
   // Share Modal functions
@@ -1559,49 +1556,9 @@ const LeadsScreen = ({ navigation }) => {
               <Text style={styles.headerSubtitle}>Your leads</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={() => setShowAddLeadModal(true)}
-              >
-                <MaterialIcons name="add" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.headerButton, isSearchVisible && styles.headerButtonActive]}
-                onPress={handleSearchToggle}
-              >
-                <MaterialIcons name="search" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
             </View>
           </View>
         </View>
-
-        {/* Search Bar */}
-        {isSearchVisible && (
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search leads..."
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
-                autoFocus={true}
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                  <MaterialIcons name="clear" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-              )}
-            </View>
-            {isSearching && (
-              <View style={styles.searchLoadingContainer}>
-                <ActivityIndicator size="small" color="#0D542BFF" />
-                <Text style={styles.searchLoadingText}>Searching...</Text>
-              </View>
-            )}
-          </View>
-        )}
 
         {/* Stats Overview */}
         <View style={styles.statsSection}>
@@ -1644,56 +1601,91 @@ const LeadsScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputContainer}>
+            <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search leads..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={handleSearchChange}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                <MaterialIcons name="clear" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
+          </View>
+          {isSearching && (
+            <View style={styles.searchLoadingContainer}>
+              <ActivityIndicator size="small" color="#0D542BFF" />
+              <Text style={styles.searchLoadingText}>Searching...</Text>
+            </View>
+          )}
+        </View>
+
         {/* Status Filter Dropdown */}
         <View style={styles.filterSection}>
-          <View style={styles.filterRow}>
-            <View style={styles.dropdownContainer}>
-              <TouchableOpacity
-                style={styles.dropdownButton}
-                onPress={() => setShowStatusDropdown(!showStatusDropdown)}
-              >
-                <Text style={styles.dropdownButtonText}>
-                  {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
-                </Text>
-                <MaterialIcons 
-                  name={showStatusDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                  size={24} 
-                  color="#6B7280" 
-                />
-              </TouchableOpacity>
-              
-              {showStatusDropdown && (
-                <View style={styles.dropdownMenu}>
-                  {statusOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.key}
-                      style={[
-                        styles.dropdownItem,
-                        selectedStatus === option.key && styles.dropdownItemActive
-                      ]}
-                      onPress={() => handleStatusChange(option.key)}
-                    >
-                      <Text style={[
-                        styles.dropdownItemText,
-                        selectedStatus === option.key && styles.dropdownItemTextActive
-                      ]}>
-                        {option.label}
-                      </Text>
-                      {selectedStatus === option.key && (
-                        <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
+          {/* All Leads Dropdown - Full Width */}
+          <View style={styles.dropdownContainerFullWidth}>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => setShowStatusDropdown(!showStatusDropdown)}
+            >
+              <Text style={styles.dropdownButtonText}>
+                {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
+              </Text>
+              <MaterialIcons 
+                name={showStatusDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                size={24} 
+                color="#6B7280" 
+              />
+            </TouchableOpacity>
+            
+            {showStatusDropdown && (
+              <View style={styles.dropdownMenu}>
+                {statusOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[
+                      styles.dropdownItem,
+                      selectedStatus === option.key && styles.dropdownItemActive
+                    ]}
+                    onPress={() => handleStatusChange(option.key)}
+                  >
+                    <Text style={[
+                      styles.dropdownItemText,
+                      selectedStatus === option.key && styles.dropdownItemTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                    {selectedStatus === option.key && (
+                      <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
 
+          {/* Advanced Filter and Add Lead Button - Same Row */}
+          <View style={styles.filterButtonRow}>
             <TouchableOpacity
               style={styles.advancedFilterButton}
               onPress={() => setShowAdvancedFilter(true)}
             >
-              <MaterialIcons name="tune" size={20} color="#0D542BFF" />
-              <Text style={styles.advancedFilterText}>Advanced</Text>
+              <MaterialIcons name="tune" size={18} color="#6B7280" />
+              <Text style={styles.advancedFilterText} numberOfLines={1} ellipsizeMode="tail">Advanced</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.addLeadButton}
+              onPress={() => setShowAddLeadModal(true)}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="add" size={18} color="#FFFFFF" />
+              <Text style={styles.addLeadButtonText} numberOfLines={1} ellipsizeMode="tail">Add New Lead</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2152,14 +2144,14 @@ const LeadsScreen = ({ navigation }) => {
                     <TouchableOpacity
                       key={req}
                       style={[
-                        styles.addLeadButton,
-                        addLeadData.requirement === req && styles.addLeadButtonActive
+                        styles.addLeadFormButton,
+                        addLeadData.requirement === req && styles.addLeadFormButtonActive
                       ]}
                       onPress={() => handleAddLeadRequirementSelect(req)}
                     >
                       <Text style={[
-                        styles.addLeadButtonText,
-                        addLeadData.requirement === req && styles.addLeadButtonTextActive
+                        styles.addLeadFormButtonText,
+                        addLeadData.requirement === req && styles.addLeadFormButtonTextActive
                       ]}>
                         {req}
                       </Text>
@@ -2179,14 +2171,14 @@ const LeadsScreen = ({ navigation }) => {
                     <TouchableOpacity
                       key={type}
                       style={[
-                        styles.addLeadButton,
-                        addLeadData.propertyType === type && styles.addLeadButtonActive
+                        styles.addLeadFormButton,
+                        addLeadData.propertyType === type && styles.addLeadFormButtonActive
                       ]}
                       onPress={() => handleAddLeadPropertyTypeSelect(type)}
                     >
                       <Text style={[
-                        styles.addLeadButtonText,
-                        addLeadData.propertyType === type && styles.addLeadButtonTextActive
+                        styles.addLeadFormButtonText,
+                        addLeadData.propertyType === type && styles.addLeadFormButtonTextActive
                       ]}>
                         {type}
                       </Text>
@@ -2814,10 +2806,9 @@ const styles = StyleSheet.create({
   // Search Styles
   searchContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingTop: 0,
+    paddingBottom: 16,
+    marginBottom: 0,
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -2919,6 +2910,11 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
+  dropdownContainerFullWidth: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 12,
+  },
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2931,13 +2927,13 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
   },
   dropdownButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#1F2937',
   },
   dropdownMenu: {
@@ -2981,18 +2977,57 @@ const styles = StyleSheet.create({
   advancedFilterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDFA',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
-    gap: 8,
+    borderColor: '#E5E7EB',
+    gap: 6,
+    flex: 1,
+    minWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
   },
   advancedFilterText: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
+    flexShrink: 1,
+  },
+  filterButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  // Add New Lead Button
+  addLeadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D542BFF',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 6,
+    flex: 1,
+    minWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  addLeadButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#0D542BFF',
+    color: '#FFFFFF',
+    flexShrink: 1,
   },
 
   // Leads Section
@@ -3015,17 +3050,14 @@ const styles = StyleSheet.create({
   toggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDFA',
-    borderRadius: 20,
+    backgroundColor: 'transparent',
     paddingHorizontal: 4,
     paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
   },
   toggleButton: {
-    width: 50,
-    height: 28,
-    borderRadius: 14,
+    width: 44,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     paddingHorizontal: 2,
@@ -3035,9 +3067,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D542BFF',
   },
   toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -3110,7 +3142,7 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 10,
   },
   statusText: {
     fontSize: 12,
@@ -3704,7 +3736,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  addLeadButton: {
+  addLeadFormButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
@@ -3712,16 +3744,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
-  addLeadButtonActive: {
+  addLeadFormButtonActive: {
     backgroundColor: '#0D542BFF',
     borderColor: '#0D542BFF',
   },
-  addLeadButtonText: {
+  addLeadFormButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
   },
-  addLeadButtonTextActive: {
+  addLeadFormButtonTextActive: {
     color: '#FFFFFF',
   },
   addLeadBudgetContainer: {

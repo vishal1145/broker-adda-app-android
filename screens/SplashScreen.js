@@ -101,14 +101,14 @@ const SplashScreen = ({ navigation }) => {
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.appName}>Broker Adda</Text>
+            <Text style={styles.appName}>Broker Gully</Text>
             <Text style={styles.tagline}>Your Real Estate Success Partner</Text>
           </Animated.View>
 
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2024 Broker Adda. All rights reserved.</Text>
+          <Text style={styles.footerText}>© 2024 Broker Gully. All rights reserved.</Text>
         </View>
       </View>
     </SafeAreaView>
