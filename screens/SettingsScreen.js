@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -8,15 +8,86 @@ import {
   TouchableOpacity,
   Switch,
   Dimensions,
-  Linking
+  Linking,
+  Image
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import appJson from '../app.json'
 import { storage } from '../services/storage'
+import { authAPI } from '../services/api'
 
 const { width } = Dimensions.get('window')
+
+// Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
+const getSecureImageUrl = (url) => {
+  if (!url) return null
+  console.log('Original URL:', url)
+  // Convert HTTP to HTTPS for better compatibility with APK builds
+  if (url.startsWith('http://')) {
+    const secureUrl = url.replace('http://', 'https://')
+    console.log('Converted to HTTPS:', secureUrl)
+    return secureUrl
+  }
+  console.log('Using original URL:', url)
+  return url
+}
+
+// Enhanced image component with fallback
+const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
+  const [imageError, setImageError] = useState(false)
+  const [currentSource, setCurrentSource] = useState(source)
+
+  const handleError = (error) => {
+    console.log(`Image error for ${imageType}:`, error)
+    console.log('Failed URL:', currentSource?.uri)
+    
+    // If we're using HTTPS and it fails, try HTTP as fallback
+    if (currentSource?.uri?.startsWith('https://')) {
+      const httpUrl = currentSource.uri.replace('https://', 'http://')
+      console.log('Trying HTTP fallback:', httpUrl)
+      setCurrentSource({ uri: httpUrl })
+      setImageError(false)
+    } else {
+      setImageError(true)
+    }
+  }
+
+  const retry = () => {
+    setImageError(false)
+    setCurrentSource(source)
+  }
+
+  if (imageError) {
+    return (
+      <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+        {fallbackText ? (
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+            {fallbackText}
+          </Text>
+        ) : (
+          <MaterialIcons name="person" size={20} color="#065F46" />
+        )}
+        <TouchableOpacity 
+          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+          onPress={retry}
+        >
+          <MaterialIcons name="refresh" size={10} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  return (
+    <Image
+      source={currentSource}
+      style={style}
+      onError={handleError}
+      {...props}
+    />
+  )
+}
 
 const SettingsScreen = ({ navigation }) => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
@@ -24,6 +95,67 @@ const SettingsScreen = ({ navigation }) => {
   const [emailEnabled, setEmailEnabled] = useState(false)
   const [smsEnabled, setSmsEnabled] = useState(true)
   const appVersion = (appJson?.expo?.version) || appJson?.version || '1.0.0'
+
+  // Profile state
+  const [userName, setUserName] = useState('User')
+  const [userProfile, setUserProfile] = useState(null)
+  const [profileImage, setProfileImage] = useState(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingProfile(true)
+      
+      // Get token and broker ID from storage
+      const token = await storage.getToken()
+      const brokerId = await storage.getBrokerId()
+      
+      if (token && brokerId) {
+        const response = await authAPI.getProfile(brokerId, token)
+        
+        if (response && response.data && response.data.broker) {
+          const broker = response.data.broker
+          setUserProfile(broker)
+          
+          // Set user name from profile data
+          const name = broker.name || broker.userId?.name || broker.userId?.firstName || 'User'
+          if (name && name !== 'User') {
+            setUserName(name)
+          }
+          
+          // Set profile image if available with secure URL
+          if (broker.brokerImage) {
+            const secureImageUrl = getSecureImageUrl(broker.brokerImage)
+            setProfileImage(secureImageUrl)
+          }
+        } else {
+          // No broker data found, keep default 'User'
+          setUserName('User')
+        }
+      } else {
+        // No token or broker ID, keep default 'User'
+        setUserName('User')
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Keep default name if API fails
+      setUserName('User')
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
+
+  // Handle profile press
+  const handleProfilePress = () => {
+    // Navigate to profile screen
+    navigation.navigate('Profile')
+  }
+
+  // Load profile on component mount
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
 
   const settingsSections = [
     {
@@ -122,12 +254,29 @@ const SettingsScreen = ({ navigation }) => {
           
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Text style={styles.headerTitle}>Settings</Text>
-              <Text style={styles.headerSubtitle}>App settings</Text>
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeGreeting}>Manage Your Settings</Text>
+                <Text style={styles.welcomeName}>{userName}</Text>
+              </View>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerButton}>
-                <MaterialIcons name="search" size={24} color="#FFFFFF" />
+              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+                <View style={styles.profileImageContainer}>
+                  {profileImage ? (
+                    <SafeImage 
+                      source={{ uri: profileImage }} 
+                      style={styles.profileImage}
+                      imageType="profileImage"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.profileInitialsContainer}>
+                      <Text style={styles.profileInitials}>
+                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -265,30 +414,57 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  welcomeContainer: {
+    marginBottom: 0,
   },
-  headerSubtitle: {
+  welcomeGreeting: {
     fontSize: 16,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  welcomeName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   headerRight: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  headerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  profileButton: {
+    padding: 4,
+  },
+  profileImageContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  profileInitialsContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#FFFFFF',
+  },
+  profileInitials: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
 
   // Settings Container

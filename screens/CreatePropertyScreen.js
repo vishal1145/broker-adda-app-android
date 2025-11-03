@@ -1261,7 +1261,7 @@ const CreatePropertyScreen = ({ navigation }) => {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={goToPreviousStep}>
-            <MaterialIcons name="arrow-back" size={24} color="#0D542BFF" />
+            <MaterialIcons name="arrow-back" size={24} color="#000000" />
           </TouchableOpacity>
         </View>
 
@@ -1514,14 +1514,10 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F8F9FA',
+    alignSelf: 'flex-start',
+    marginBottom: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
   },
   content: {
     flex: 1,

@@ -257,6 +257,12 @@ const LeadsScreen = ({ navigation }) => {
   })
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true)
 
+  // Profile state
+  const [userName, setUserName] = useState('User')
+  const [userProfile, setUserProfile] = useState(null)
+  const [profileImage, setProfileImage] = useState(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+
   // Calculate dropdown position based on available space
   const calculateDropdownPosition = (dropdownKey, event) => {
     const { pageY } = event.nativeEvent
@@ -293,6 +299,56 @@ const LeadsScreen = ({ navigation }) => {
     } finally {
       setIsLoadingRegions(false)
     }
+  }
+
+  // Fetch user profile data
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoadingProfile(true)
+      
+      // Get token and broker ID from storage
+      const token = await storage.getToken()
+      const brokerId = await storage.getBrokerId()
+      
+      if (token && brokerId) {
+        const response = await authAPI.getProfile(brokerId, token)
+        
+        if (response && response.data && response.data.broker) {
+          const broker = response.data.broker
+          setUserProfile(broker)
+          
+          // Set user name from profile data
+          const name = broker.name || broker.userId?.name || broker.userId?.firstName || 'User'
+          if (name && name !== 'User') {
+            setUserName(name)
+          }
+          
+          // Set profile image if available with secure URL
+          if (broker.brokerImage) {
+            const secureImageUrl = getSecureImageUrl(broker.brokerImage)
+            setProfileImage(secureImageUrl)
+          }
+        } else {
+          // No broker data found, keep default 'User'
+          setUserName('User')
+        }
+      } else {
+        // No token or broker ID, keep default 'User'
+        setUserName('User')
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Keep default name if API fails
+      setUserName('User')
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
+
+  // Handle profile press
+  const handleProfilePress = () => {
+    // Navigate to profile screen
+    navigation.navigate('Profile')
   }
 
   // Filter functions
@@ -1200,7 +1256,8 @@ const LeadsScreen = ({ navigation }) => {
     const loadData = async () => {
       await Promise.all([
         fetchMetrics(),
-        fetchLeads(false, '', 'all')
+        fetchLeads(false, '', 'all'),
+        fetchUserProfile()
       ])
     }
     loadData()
@@ -1552,10 +1609,30 @@ const LeadsScreen = ({ navigation }) => {
           
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Text style={styles.headerTitle}>Leads</Text>
-              <Text style={styles.headerSubtitle}>Your leads</Text>
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeGreeting}>Manage Your Leads</Text>
+                <Text style={styles.welcomeName}>{userName}</Text>
+              </View>
             </View>
             <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+                <View style={styles.profileImageContainer}>
+                  {profileImage ? (
+                    <SafeImage 
+                      source={{ uri: profileImage }} 
+                      style={styles.profileImage}
+                      imageType="profileImage"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.profileInitialsContainer}>
+                      <Text style={styles.profileInitials}>
+                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -2773,20 +2850,57 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  welcomeContainer: {
+    marginBottom: 0,
   },
-  headerSubtitle: {
+  welcomeGreeting: {
     fontSize: 16,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  welcomeName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   headerRight: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  profileImageContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  profileInitialsContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  profileInitials: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   headerButton: {
     width: 48,
@@ -3557,17 +3671,18 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   sliderValueContainer: {
-    backgroundColor: '#E0F2FE',
-    borderWidth: 1,
-    borderColor: '#B3E5FC',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    minWidth: 60,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minWidth: 60,
   },
   sliderValueText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#0D542BFF',
   },
@@ -3734,27 +3849,30 @@ const styles = StyleSheet.create({
   addLeadButtonGroup: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
   addLeadFormButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 8,
   },
   addLeadFormButtonActive: {
-    backgroundColor: '#0D542BFF',
-    borderColor: '#0D542BFF',
+    backgroundColor: '#E8F5E8',
+    borderColor: '#E5E5EA',
   },
   addLeadFormButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
+    color: '#000000',
   },
   addLeadFormButtonTextActive: {
-    color: '#FFFFFF',
+    color: '#0D542BFF',
+    fontWeight: '600',
   },
   addLeadBudgetContainer: {
     marginTop: 8,
@@ -3904,8 +4022,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   shareTypeOptionActive: {
-    backgroundColor: '#F0FDFA',
-    borderColor: '#A7F3D0',
+    backgroundColor: '#E8F5E8',
+    borderWidth: 0,
   },
   radioButton: {
     width: 20,

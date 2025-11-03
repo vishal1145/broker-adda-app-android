@@ -19,7 +19,7 @@ import { storage } from '../services/storage'
 const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ navigation }) => {
-  const [userName, setUserName] = useState('')
+  const [userName, setUserName] = useState('User')
   const [userProfile, setUserProfile] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [profileImage, setProfileImage] = useState(null)
@@ -123,8 +123,10 @@ const HomeScreen = ({ navigation }) => {
           setUserProfile(broker)
           
           // Set user name from profile data
-          const name = broker.name || broker.userId?.name || 'User'
-          setUserName(name)
+          const name = broker.name || broker.userId?.name || broker.userId?.firstName || 'User'
+          if (name && name !== 'User') {
+            setUserName(name)
+          }
           
           // Save broker _id as userId
           if (broker._id) {
@@ -137,11 +139,17 @@ const HomeScreen = ({ navigation }) => {
             const secureImageUrl = getSecureImageUrl(broker.brokerImage)
             setProfileImage(secureImageUrl)
           }
+        } else {
+          // No broker data found, keep default 'User'
+          setUserName('User')
         }
+      } else {
+        // No token or broker ID, keep default 'User'
+        setUserName('User')
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
-      // Set default name if API fails
+      // Keep default name if API fails
       setUserName('User')
     } finally {
       setIsLoading(false)
@@ -1017,14 +1025,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
-                {isLoading ? (
-                  <View style={styles.nameLoadingContainer}>
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={styles.welcomeName}>Loading...</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.welcomeName}>{userName}</Text>
-                )}
+                <Text style={styles.welcomeName}>{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -1040,7 +1041,7 @@ const HomeScreen = ({ navigation }) => {
                   ) : (
                     <View style={styles.profileInitialsContainer}>
                       <Text style={styles.profileInitials}>
-                        {isLoading ? '?' : (userName[0] || 'U').toUpperCase()}
+                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
                       </Text>
                     </View>
                   )}
@@ -1291,11 +1292,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  nameLoadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1319,7 +1315,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#FFFFFF',
   },
   profileInitials: {
@@ -1331,7 +1327,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#FFFFFF',
   },
   profileOnlineIndicator: {
