@@ -321,6 +321,11 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
+  // Handle message press
+  const handleMessagePress = () => {
+    navigation.navigate('ChatListScreen')
+  }
+
   // Handle profile press
   const handleProfilePress = () => {
     // Navigate to profile screen
@@ -1435,6 +1440,11 @@ const LeadsScreen = ({ navigation }) => {
                 <Text style={styles.welcomeGreeting}>Manage Your Leads</Text>
                 <Text style={styles.welcomeName}>{userName}</Text>
               </View>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
+                <MaterialIcons name="message" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
