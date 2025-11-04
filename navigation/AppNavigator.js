@@ -22,6 +22,8 @@ import CreateLeadScreen from '../screens/CreateLeadScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ChatListScreen from '../screens/ChatListScreen';
+import MessageScreen from '../screens/MessageScreen';
 
 // Import Footer component
 import Footer from '../components/Footer';
@@ -121,6 +123,20 @@ const AppNavigator = () => {
           component={CreateLeadScreen}
           options={{
             presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="ChatListScreen" 
+          component={ChatListScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="MessageScreen" 
+          component={MessageScreen}
+          options={{
             headerShown: false,
           }}
         />

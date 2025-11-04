@@ -1,0 +1,254 @@
+import React, { useState, useEffect } from 'react'
+import {
+    View,
+    Text,
+    StatusBar,
+    TouchableOpacity,
+    FlatList,
+    Image
+} from 'react-native'
+import { MaterialIcons } from '@expo/vector-icons'
+import { styles } from '../styles/ChatListScreenStyles'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { chatAPI } from '../services/api'
+import { storage } from '../services/storage'
+
+
+// Helper function to handle image URLs
+const getSecureImageUrl = (url) => {
+    if (!url) return null
+    if (url.startsWith('http://')) {
+        return url.replace('http://', 'https://')
+    }
+    return url
+}
+
+// Enhanced image component with fallback
+const SafeImage = ({ source, style, fallbackText, ...props }) => {
+    const [imageError, setImageError] = useState(false)
+    const [currentSource, setCurrentSource] = useState(source)
+
+    const handleError = () => {
+        if (currentSource?.uri?.startsWith('https://')) {
+            const httpUrl = currentSource.uri.replace('https://', 'http://')
+            setCurrentSource({ uri: httpUrl })
+            setImageError(false)
+        } else {
+            setImageError(true)
+        }
+    }
+
+    const retry = () => {
+        setImageError(false)
+        setCurrentSource(source)
+    }
+
+    if (imageError) {
+        return (
+            <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+                {fallbackText ? (
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+                        {fallbackText}
+                    </Text>
+                ) : (
+                    <MaterialIcons name="person" size={24} color="#065F46" />
+                )}
+                <TouchableOpacity
+                    style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+                    onPress={retry}
+                >
+                    <MaterialIcons name="refresh" size={10} color="#FFFFFF" />
+                </TouchableOpacity>
+            </View>
+        )
+    }
+
+    return (
+        <Image
+            source={currentSource}
+            style={style}
+            onError={handleError}
+            {...props}
+        />
+    )
+}
+
+// Format time helper
+const formatTime = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+
+    // Format date
+    const month = date.toLocaleDateString('en-US', { month: 'short' })
+    const day = date.getDate()
+    return `${month} ${day}`
+}
+
+const ChatListScreen = ({ navigation }) => {
+    const [isLoading, setIsLoading] = useState(true)
+    const [chats, setChats] = useState([])
+
+    const fetchChats = async () => {
+        setIsLoading(true)
+        try {
+            const token = await storage.getToken()
+
+            const response = await chatAPI.getChats(token)
+            if (response.success && response.data) {
+                setChats(response.data)
+            }
+        } catch (error) {
+            console.error('Error fetching chats:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchChats()
+    }, [])
+
+    const renderChatItem = ({ item }) => {
+        const participant = item.participants[0]
+        const brokerImage = participant?.brokerImage
+        const imageUrl = brokerImage ? getSecureImageUrl(brokerImage) : null
+        const initials = participant?.name ? participant.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'
+        const isActive = participant?.status === 'active'
+        const hasUnread = item.unreadCount > 0
+        const lastMessageText = item.lastMessage?.text || 'No messages yet'
+        const lastMessageTime = formatTime(item.lastMessage?.createdAt || item.updatedAt)
+
+        return (
+            <TouchableOpacity
+                style={[styles.chatItem, hasUnread && styles.chatItemActive]}
+                onPress={() => {
+                        navigation.navigate('MessageScreen', { chatId: item.chatId, participant: participant })
+                }}
+                activeOpacity={0.7}
+            >
+
+                {/* Avatar */}
+                <View style={styles.avatarContainer}>
+                    {imageUrl ? (
+                        <SafeImage
+                            source={{ uri: imageUrl }}
+                            style={styles.avatar}
+                            resizeMode="cover"
+                            fallbackText={initials}
+                        />
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <Text style={styles.avatarInitials}>{initials}</Text>
+                        </View>
+                    )}
+                    {/* Status Indicator */}
+                    <View style={[
+                        styles.statusIndicator,
+                        isActive ? styles.statusActive : styles.statusInactive
+                    ]} />
+                </View>
+
+                {/* Chat Info */}
+                <View style={styles.chatInfo}>
+                    {/* Header with name and time */}
+                    <View style={styles.chatHeader}>
+                        <Text style={styles.chatName} numberOfLines={1}>
+                            {participant?.name || 'Unknown'}
+                        </Text>
+
+                    </View>
+
+                    {/* Firm Name */}
+                    <Text style={styles.firmName} numberOfLines={1}>
+                        {participant?.firmName || ''}
+                    </Text>
+
+                    {/* Last Message */}
+                    <Text
+                        style={hasUnread ? styles.lastMessageUnread : styles.lastMessage}
+                        numberOfLines={1}
+                    >
+                        {lastMessageText}
+                    </Text>
+
+                </View>
+
+                <View style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Text style={styles.chatTime}>{lastMessageTime}</Text>
+                    {hasUnread && (
+                        <View style={styles.chatRight}>
+                            <View style={styles.unreadBadge}>
+                                <Text style={styles.unreadBadgeText}>
+                                    {item.unreadCount > 99 ? '99+' : item.unreadCount} 
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+                </View>
+            </TouchableOpacity>
+        )
+    }
+
+    const renderEmpty = () => (
+        <View style={styles.emptyContainer}>
+            <MaterialIcons name="chat-bubble-outline" size={64} color="#D1D5DB" />
+            <Text style={styles.emptyText}>No Chats Yet</Text>
+            <Text style={styles.emptySubtext}>
+                Start a conversation with your contacts
+            </Text>
+        </View>
+    )
+
+    return (
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <View style={styles.content}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <View style={styles.headerPattern}>
+                        <View style={styles.patternCircle1} />
+                        <View style={styles.patternCircle2} />
+                        <View style={styles.patternCircle3} />
+                    </View>
+                    <View style={styles.headerContent}>
+                        <TouchableOpacity
+                            style={styles.backButton}
+                            onPress={() => navigation.goBack()}
+                        >
+                            <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+                        </TouchableOpacity>
+                        <View style={styles.headerText}>
+                            <Text style={styles.headerTitle}>Chats</Text>
+                        </View>
+                    </View>
+                </View>
+
+
+                {/* Chat List */}
+                <View style={styles.content}>
+                    <FlatList
+                        data={chats}
+                        keyExtractor={(item) => item.chatId}
+                        renderItem={renderChatItem}
+                        ListEmptyComponent={renderEmpty}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={chats.length === 0 ? { flex: 1 } : {}}
+                    />
+                </View>
+            </View>
+
+        </SafeAreaView>
+    )
+}
+
+export default ChatListScreen

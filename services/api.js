@@ -5,7 +5,7 @@ const getBaseURL = () => {
   // Debug environment variable loading
   console.log('API_BASE_URL from config:', config.API_BASE_URL);
   console.log('Type of API_BASE_URL:', typeof config.API_BASE_URL);
-  
+
   return config.API_BASE_URL;
 };
 
@@ -279,17 +279,17 @@ export const leadsAPI = {
     try {
       console.log('Fetching transferred leads:', { userId, search, status, filters });
       let url = `/api/leads/transferred?toBroker=${userId}`;
-      
+
       // Add search parameter
       if (search && search.trim()) {
         url += `&search=${encodeURIComponent(search.trim())}`;
       }
-      
+
       // Add status parameter
       if (status && status !== 'all') {
         url += `&status=${encodeURIComponent(status)}`;
       }
-      
+
       // Add advanced filter parameters
       if (filters.regionId) {
         url += `&regionId=${filters.regionId}`;
@@ -303,7 +303,7 @@ export const leadsAPI = {
       if (filters.budgetMax) {
         url += `&budgetMax=${filters.budgetMax}`;
       }
-      
+
       const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -323,7 +323,7 @@ export const leadsAPI = {
     try {
       console.log('Fetching leads with filters:', { userId, filters });
       let url = `/api/leads?createdBy=${userId}`;
-      
+
       // Add filter parameters
       if (filters.regionId) {
         url += `&regionId=${filters.regionId}`;
@@ -343,7 +343,7 @@ export const leadsAPI = {
       if (filters.status && filters.status !== 'all') {
         url += `&status=${encodeURIComponent(filters.status)}`;
       }
-      
+
       const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -416,9 +416,9 @@ export const leadsAPI = {
   deleteTransfer: async (leadId, transferId, fromBrokerId, toBrokerId, token) => {
     try {
       console.log('Deleting transfer:', leadId, transferId, fromBrokerId, toBrokerId);
-      
+
       const url = `/api/leads/${leadId}/transfers/${toBrokerId}`;
-      
+
       const response = await api.delete(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -495,12 +495,12 @@ export const propertiesAPI = {
     try {
       console.log('Fetching properties for user:', userId);
       let url = `/api/properties?brokerId=${userId}&page=${page}&limit=${limit}`;
-      
+
       // Add status filter if not 'all'
       if (status && status !== 'all') {
         url += `&status=${encodeURIComponent(status)}`;
       }
-      
+
       const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -592,7 +592,7 @@ export const propertiesAPI = {
 export const placesAPI = {
   // Google Places API key from environment
   API_KEY: config.GOOGLE_PLACES_API_KEY,
-  
+
   // Get address suggestions from Google Places Autocomplete
   getAddressSuggestions: async (query) => {
     try {
@@ -601,7 +601,7 @@ export const placesAPI = {
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${placesAPI.API_KEY}&components=country:in&types=address`
       );
       const data = await response.json();
-      
+
       if (data.status === 'OK' && data.predictions) {
         console.log('Address suggestions fetched successfully:', data.predictions.length, 'results');
         return {
@@ -634,7 +634,7 @@ export const placesAPI = {
         `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${placesAPI.API_KEY}&fields=formatted_address,address_components,geometry`
       );
       const data = await response.json();
-      
+
       if (data.status === 'OK' && data.result) {
         console.log('Place details fetched successfully:', data.result);
         return {
@@ -660,4 +660,37 @@ export const placesAPI = {
   }
 };
 
+// Chat API functions
+export const chatAPI = {
+  getChats: async (token) => {
+    try {
+      console.log('Fetching chats');
+      const response = await api.get('/api/chats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get chats error:', error);
+      throw error;
+    }
+  },
+  getMessages: async (chatId, token) => {
+    try {
+      console.log('Fetching messages for chat:', chatId);
+      const response = await api.get(`/api/chats/${chatId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get messages error:', error);
+      throw error;
+    }
+  },
+}
 export default api;

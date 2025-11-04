@@ -167,6 +167,10 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate('Login')
   }
 
+  const handleMessagePress = () => {
+    navigation.navigate('ChatListScreen')
+  }
+
   const handleProfilePress = () => {
     // Navigate to profile screen
     navigation.navigate('Profile')
@@ -1027,6 +1031,11 @@ const HomeScreen = ({ navigation }) => {
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
                 <Text style={styles.welcomeName}>{userName}</Text>
               </View>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
+                <MaterialIcons name="message" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>

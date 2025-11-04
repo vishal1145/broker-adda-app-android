@@ -37,7 +37,8 @@
     "react-native-super-grid": "^6.0.2",
     "react-native-svg": "15.12.1",
     "react-native-toast-message": "^2.1.6",
-    "react-refresh": "^0.17.0"
+    "react-refresh": "^0.17.0",
+    "socket.io-client": "^4.8.1"
   },
   "private": true,
   "devDependencies": {
