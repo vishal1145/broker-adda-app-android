@@ -125,7 +125,7 @@ const ChatListScreen = ({ navigation }) => {
         const initials = participant?.name ? participant.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'
         const isActive = participant?.status === 'active'
         const hasUnread = item.unreadCount > 0
-        const lastMessageText = item.lastMessage?.text || 'No messages yet'
+        const lastMessageText = item.lastMessage?.text || item?.lastMessage?.leadCards?.length > 0 ? 'Lead Shared' : 'No messages yet'
         const lastMessageTime = formatTime(item.lastMessage?.createdAt || item.updatedAt)
 
         return (

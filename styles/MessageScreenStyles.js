@@ -225,6 +225,27 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
+    position: 'relative',
+  },
+  selectedLeadsBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    zIndex: 10,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  selectedLeadsText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   
   inputWrapper: {
@@ -292,6 +313,220 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 12,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    height: '85%',
+    maxHeight: '90%',
+    paddingBottom: 20,
+    flexDirection: 'column',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSelectedInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#F3F4F6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalSelectedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0D542BFF',
+  },
+  modalClearText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444',
+  },
+  modalBody: {
+    flex: 1,
+    minHeight: 200,
+  },
+  modalListContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  modalLoadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  modalLoadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 12,
+  },
+  modalEmptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  modalEmptyText: {
+    fontSize: 16,
+    color: '#6B7280',
+    marginTop: 12,
+    fontWeight: '600',
+  },
+  modalEmptySubtext: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#F3F4F6',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#0D542BFF',
+  },
+  modalButtonDisabled: {
+    backgroundColor: '#E5E7EB',
+  },
+  modalButtonCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  modalButtonConfirmText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  modalButtonTextDisabled: {
+    color: '#9CA3AF',
+  },
+
+  // Lead Item Styles
+  leadItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+  },
+  leadItemSelected: {
+    borderColor: '#0D542BFF',
+    backgroundColor: '#F0FDF4',
+  },
+  leadItemContent: {
+    flex: 1,
+  },
+  leadItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  leadItemName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    flex: 1,
+    marginRight: 12,
+  },
+  leadItemCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leadItemCheckboxSelected: {
+    backgroundColor: '#0D542BFF',
+    borderColor: '#0D542BFF',
+  },
+  leadItemPhone: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  leadItemDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  leadItemDetail: {
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
+  },
+  leadItemBudget: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0D542BFF',
+  },
+  leadItemStatus: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#E5E7EB',
+  },
+  leadItemStatusAssigned: {
+    backgroundColor: '#E6F4EA',
+  },
+  leadItemStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
   },
 })
 

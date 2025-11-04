@@ -10,12 +10,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Keyboard
+  Keyboard,
+  Modal
 } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { io } from 'socket.io-client'
 import { styles } from '../styles/MessageScreenStyles'
-import { chatAPI } from '../services/api'
+import { chatAPI, leadsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -83,7 +84,7 @@ const formatMessageTime = (dateString) => {
   return `${month} ${day}, ${time}`
 }
 
-const LeadCard = ({ lead }) => (
+const LeadCard = ({ lead, navigation }) => (
   <View style={styles.leadCard}>
     <View style={styles.leadCardHeader}>
       <View style={styles.leadCardIcon}>
@@ -114,11 +115,19 @@ const LeadCard = ({ lead }) => (
           </View>
         </View>
       )}
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('LeadDetails', { leadId: lead._id, isTransferredLead: false })} 
+          style={[styles.leadCardRow, { justifyContent: 'space-between', alignItems: 'center' }]}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.leadCardLabel}>View Details</Text>
+          <MaterialIcons name="arrow-forward" size={18} color="#009689" />
+        </TouchableOpacity>
     </View>
   </View>
 )
 
-const MessageItem = ({ message, isMyMessage }) => {
+const MessageItem = ({ message, isMyMessage, navigation }) => {
   const hasLeadCard = message.leadCards && message.leadCards.length > 0
   const hasText = message.text && message.text.trim().length > 0
 
@@ -130,7 +139,9 @@ const MessageItem = ({ message, isMyMessage }) => {
             {message.text}
           </Text>
         )}
-        {hasLeadCard && message.leadCards.map((lead, idx) => <LeadCard key={idx} lead={lead} />)}
+        {hasLeadCard && message.leadCards.map((lead, idx) => (
+          <LeadCard key={idx} lead={lead} navigation={navigation} />
+        ))}
         <View style={styles.messageTime}>
           <Text style={[
             styles.messageTime,
@@ -155,11 +166,17 @@ const MessageScreen = ({ navigation, route }) => {
   const socketRef = useRef(null)
   const [typing, setTyping] = useState(false)
 
+  // Lead selection modal state
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [leads, setLeads] = useState([])
+  const [selectedLeads, setSelectedLeads] = useState([])
+  const [isLoadingLeads, setIsLoadingLeads] = useState(false)
+
   // typing timers & debounce refs
   const typingTimeoutLocalRef = useRef(null)
   const typingHideTimeoutRef = useRef(null)
   const lastTypingEmitRef = useRef(0)
-  const fallbackTriedRef = useRef(false)
+  // const fallbackTriedRef = useRef(false)
   const TYPING_INACTIVITY_MS = 2000
 
   // Fetch messages via API
@@ -188,6 +205,7 @@ const MessageScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchMessages()
+    fetchLeads()
   }, [chatId])
 
   useEffect(() => {
@@ -212,22 +230,19 @@ const MessageScreen = ({ navigation, route }) => {
   
         // Debug - on successful connect, tell server to join the chat room
         socketRef.current.on('connect', () => {
-          console.log('[SOCKET] connected id=', socketRef.current.id);
           socketRef.current.emit('open_chat', { chatId }); // server expects 'open_chat'
         });
   
-        socketRef.current.on('connect_error', err => {
-          console.error('[SOCKET] connect_error', err && err.message ? err.message : err);
-          if (err && err.data) console.error('[SOCKET] connect_error data:', err.data);
-        });
+        // socketRef.current.on('connect_error', err => {
+        //   if (err && err.data) console.error('[SOCKET] connect_error data:', err.data);
+        // });
   
-        socketRef.current.on('disconnect', reason => {
-          console.log('[SOCKET] disconnected', reason);
-        });
+        // socketRef.current.on('disconnect', reason => {
+        //   console.log('[SOCKET] disconnected', reason);
+        // });
   
         // Typing listener (server emits to room: socket.to(`chat_${chatId}`).emit('typing', { userId, isTyping }))
         socketRef.current.on('typing', ({ userId: typingUserId, isTyping }) => {
-          console.log('[SOCKET] typing event', typingUserId, isTyping);
           if (!mounted) return;
   
           // show who is typing (or boolean)
@@ -249,7 +264,6 @@ const MessageScreen = ({ navigation, route }) => {
   
         // Message listener
         const onMessage = (message) => {
-          console.log('[SOCKET] message', message);
           if (!mounted) return;
           setMessages(prev => [...prev, message].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
         };
@@ -313,42 +327,93 @@ const MessageScreen = ({ navigation, route }) => {
     }, TYPING_INACTIVITY_MS);
   };
 
+  // Fetch leads for modal
+  const fetchLeads = async () => {
+    try {
+      setIsLoadingLeads(true)
+      const token = await storage.getToken()
+      const userId = await storage.getUserId() || await storage.getBrokerId()
+      
+      if (!token || !userId) {
+        console.error('Token or User ID not found for fetching leads')
+        return
+      }
+
+      console.log('Fetching leads for userId:', userId)
+      const response = await leadsAPI.getAllLeads(userId, token)
+      console.log('Full API response:', JSON.stringify(response, null, 2))
+      
+      if (response && response.success) {
+        if (response.data && response.data.leads && Array.isArray(response.data.leads)) {
+          console.log('Setting leads:', response.data.leads.length, 'leads found')
+          setLeads(response.data.leads)
+        } else {
+          console.log('No leads array found in response.data:', response.data)
+          setLeads([])
+        }
+      } else {
+        console.log('Response not successful or missing data:', response)
+        setLeads([])
+      }
+    } catch (error) {
+      console.error('Error fetching leads:', error)
+      setLeads([])
+    } finally {
+      setIsLoadingLeads(false)
+    }
+  }
+
+  // Open lead selection modal
+  const handleOpenLeadModal = () => {
+    setSelectedLeads([]) // Clear previous selections when opening modal
+    setShowLeadModal(true)
+  }
+
+  // Toggle lead selection
+  const toggleLeadSelection = (leadId) => {
+    setSelectedLeads(prev => {
+      if (prev.includes(leadId)) {
+        return prev.filter(id => id !== leadId)
+      } else {
+        return [...prev, leadId]
+      }
+    })
+  }
+
+  // Send leads directly from modal
+  const handleSendLeads = async () => {
+    handleSendMessage()
+    setSelectedLeads([])
+    setShowLeadModal(false)
+  }
+
+  // Clear selected leads
+  const handleClearSelectedLeads = () => {
+    setSelectedLeads([])
+  }
+
   // Send message (optimistic)
   const handleSendMessage = async () => {
-    if (!messageText.trim()) return
-
     const message = messageText.trim()
     setMessageText('')
+
+    // Get selected lead objects
+    const selectedLeadObjects = leads.filter(lead => selectedLeads.includes(lead._id))
 
     const messageData = {
       chatId,
       to: participant._id,
       text: message,
       attachments: [],
-      leadCards: []
+      leadCard: selectedLeadObjects
     }
 
     try {
       if (socketRef.current && socketRef.current.connected) {
         socketRef.current.emit('send_message', messageData)
-        // optimistic update
-        const optimisticMessage = {
-          _id: `temp_${Date.now()}`,
-          chatId,
-          from: currentUserId,
-          to: participant._id,
-          text: message,
-          attachments: [],
-          leadCards: [],
-          status: 'sending',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-        setMessages(prev => [...prev, optimisticMessage].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)))
         setTimeout(() => { if (flatListRef.current) flatListRef.current.scrollToEnd({ animated: true }) }, 100)
       } else {
         console.warn('Socket not connected - message will not be sent over socket')
-        // fallback: post message via REST API (optional) or restore text
         setMessageText(message)
       }
     } catch (err) {
@@ -376,7 +441,7 @@ const MessageScreen = ({ navigation, route }) => {
 
   const renderMessage = ({ item }) => {
     const isMyMessage = item.from === currentUserId
-    return <MessageItem message={item} isMyMessage={isMyMessage} />
+    return <MessageItem message={item} isMyMessage={isMyMessage} navigation={navigation} />
   }
 
   const renderEmpty = () => (
@@ -449,7 +514,7 @@ const MessageScreen = ({ navigation, route }) => {
         </View>
 
         <View style={[styles.inputContainer, Platform.OS === 'android' && keyboardHeight > 0 && { paddingBottom: keyboardHeight + 12 }]}>
-          <TouchableOpacity style={styles.attachmentButton} onPress={() => console.log('Attachment pressed')} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.attachmentButton} onPress={handleOpenLeadModal} activeOpacity={0.7}>
             <MaterialIcons name="attach-file" size={28} color="#6B7280" />
           </TouchableOpacity>
 
@@ -466,11 +531,167 @@ const MessageScreen = ({ navigation, route }) => {
             />
           </View>
 
-          <TouchableOpacity style={[styles.sendButton, (!messageText.trim()) && styles.sendButtonDisabled]} onPress={handleSendMessage} disabled={!messageText.trim()} activeOpacity={0.7}>
+          <TouchableOpacity style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]} onPress={handleSendMessage} disabled={!messageText.trim()} activeOpacity={0.7}>
             <MaterialIcons name="send" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Lead Selection Modal */}
+      <Modal
+        visible={showLeadModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setSelectedLeads([]) // Clear selections on close
+          setShowLeadModal(false)
+        }}
+      >
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => {
+              setSelectedLeads([]) // Clear selections on backdrop press
+              setShowLeadModal(false)
+            }}
+          />
+          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+              {/* Modal Header */}
+              <View style={styles.modalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitle}>Select Leads</Text>
+                  {!isLoadingLeads && (
+                    <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                      {leads.length} lead{leads.length !== 1 ? 's' : ''} available
+                    </Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setSelectedLeads([]) // Clear selections on close
+                    setShowLeadModal(false)
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MaterialIcons name="close" size={24} color="#6B7280" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Selected Count */}
+              {selectedLeads.length > 0 && (
+                <View style={styles.modalSelectedInfo}>
+                  <Text style={styles.modalSelectedText}>
+                    {selectedLeads.length} lead{selectedLeads.length > 1 ? 's' : ''} selected
+                  </Text>
+                  <TouchableOpacity onPress={handleClearSelectedLeads} activeOpacity={0.7}>
+                    <Text style={styles.modalClearText}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Leads List */}
+              <View style={styles.modalBody}>
+                {isLoadingLeads ? (
+                  <View style={styles.modalLoadingContainer}>
+                    <ActivityIndicator size="large" color="#0D542BFF" />
+                    <Text style={styles.modalLoadingText}>Loading leads...</Text>
+                  </View>
+                ) : leads.length === 0 ? (
+                  <View style={styles.modalEmptyContainer}>
+                    <MaterialIcons name="person-outline" size={64} color="#D1D5DB" />
+                    <Text style={styles.modalEmptyText}>No leads available</Text>
+                    <Text style={styles.modalEmptySubtext}>
+                      {isLoadingLeads ? 'Loading...' : 'You don\'t have any leads yet'}
+                    </Text>
+                  </View>
+                ) : (
+                  <FlatList
+                    data={leads}
+                    keyExtractor={(item) => item._id || `lead-${item.customerName}-${item.customerPhone}`}
+                    renderItem={({ item }) => {
+                      const isSelected = selectedLeads.includes(item._id)
+                      return (
+                        <TouchableOpacity
+                          style={[styles.leadItem, isSelected && styles.leadItemSelected]}
+                          onPress={() => toggleLeadSelection(item._id)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.leadItemContent}>
+                            <View style={styles.leadItemHeader}>
+                              <Text style={styles.leadItemName} numberOfLines={1}>
+                                {item.customerName || 'Unknown'}
+                              </Text>
+                              <View style={[styles.leadItemCheckbox, isSelected && styles.leadItemCheckboxSelected]}>
+                                {isSelected && (
+                                  <MaterialIcons name="check" size={18} color="#FFFFFF" />
+                                )}
+                              </View>
+                            </View>
+                            <Text style={styles.leadItemPhone} numberOfLines={1}>
+                              {item.customerPhone || 'N/A'}
+                            </Text>
+                            <View style={styles.leadItemDetails}>
+                              <Text style={styles.leadItemDetail}>
+                                {item.propertyType || 'N/A'} • {item.requirement || 'N/A'}
+                              </Text>
+                              {item.budget && (
+                                <Text style={styles.leadItemBudget}>
+                                  ₹{item.budget.toLocaleString('en-IN')}
+                                </Text>
+                              )}
+                            </View>
+                            {item.status && (
+                              <View style={[styles.leadItemStatus, item.status === 'Assigned' && styles.leadItemStatusAssigned]}>
+                                <Text style={styles.leadItemStatusText}>{item.status}</Text>
+                              </View>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      )
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.modalListContent}
+                    ListEmptyComponent={() => (
+                      <View style={styles.modalEmptyContainer}>
+                        <MaterialIcons name="person-outline" size={64} color="#D1D5DB" />
+                        <Text style={styles.modalEmptyText}>No leads available</Text>
+                      </View>
+                    )}
+                  />
+                )}
+              </View>
+
+              {/* Modal Footer */}
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel, { marginRight: 12 }]}
+                  onPress={() => {
+                    setSelectedLeads([]) // Clear selections on cancel
+                    setShowLeadModal(false)
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm, selectedLeads.length === 0 && styles.modalButtonDisabled]}
+                  onPress={handleSendLeads}
+                  disabled={selectedLeads.length === 0}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <MaterialIcons name="send" size={18} color={selectedLeads.length === 0 ? '#9CA3AF' : '#FFFFFF'} style={{ marginRight: 6 }} />
+                    <Text style={[styles.modalButtonConfirmText, selectedLeads.length === 0 && styles.modalButtonTextDisabled]}>
+                      Send ({selectedLeads.length})
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   )
 }

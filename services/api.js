@@ -485,6 +485,24 @@ export const leadsAPI = {
       console.error('Share lead error:', error);
       throw error;
     }
+  },
+
+  // Get all leads for a user (for chat attachments)
+  getAllLeads: async (userId, token) => {
+    try {
+      console.log('Fetching all leads for user:', userId);
+      const response = await api.get(`/api/leads/all/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('All leads fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get all leads error:', error);
+      throw error;
+    }
   }
 };
 
