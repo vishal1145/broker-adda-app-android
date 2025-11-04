@@ -572,9 +572,13 @@ const LeadDetailsScreen = ({ navigation, route }) => {
   }
 
   const handleEditPress = () => {
-    resetEditLeadForm()
-    setShowEditModal(true)
-    fetchRegions()
+    // Navigate to CreateLeadScreen with edit params
+    navigation.navigate('CreateLead', {
+      isEdit: true,
+      leadId: leadId,
+      leadData: leadData,
+      isTransferredLead: isTransferredLead
+    })
   }
 
   // Delete transfer function
