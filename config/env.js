@@ -18,7 +18,7 @@ try {
 // Fallback configuration
 const config = {
   API_BASE_URL: API_BASE_URL || 'https://broker-adda-be.algofolks.com',
-  GOOGLE_PLACES_API_KEY: GOOGLE_PLACES_API_KEY || 'AIzaSyA7cKFSHXRuCqpewP9RbZRHD0pkNZ4MAtY',
+  GOOGLE_PLACES_API_KEY: GOOGLE_PLACES_API_KEY || 'AIzaSyBv6RdaS-wDtw9mlyKVpBUTBM80lhumlhk',
 };
 
 // Debug logging

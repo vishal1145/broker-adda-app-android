@@ -11,8 +11,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  RefreshControl,
-  Modal
+  RefreshControl
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
@@ -97,22 +96,12 @@ const PropertiesScreen = ({ navigation }) => {
   const [propertiesData, setPropertiesData] = useState([])
   const [brokerId, setBrokerId] = useState(null)
   const [token, setToken] = useState(null)
-  const [selectedType, setSelectedType] = useState('All Types')
-  const [selectedStatus, setSelectedStatus] = useState('All Status')
-  const [selectedDate, setSelectedDate] = useState('Date')
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
-  const [showDateDropdown, setShowDateDropdown] = useState(false)
 
   // Profile state
   const [userName, setUserName] = useState('User')
   const [userProfile, setUserProfile] = useState(null)
   const [profileImage, setProfileImage] = useState(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
-
-  const typeOptions = ['All Types', 'House', 'Condo', 'Apartment', 'Villa', 'Townhouse']
-  const statusOptions = ['All Status', 'Approved', 'Pending', 'Rejected', 'Active', 'Sold']
-  const dateOptions = ['Date', 'Newest First', 'Oldest First', 'Price: Low to High', 'Price: High to Low']
 
   // Transform API data to match screen expectations
   const transformPropertyData = (apiProperties) => {
@@ -121,21 +110,32 @@ const PropertiesScreen = ({ navigation }) => {
       title: prop.title,
       address: prop.address ? `${prop.address}, ${prop.city}` : prop.city,
       price: prop.priceUnit === 'INR' ? `₹${prop.price?.toLocaleString()}` : `$${prop.price?.toLocaleString()}`,
+      priceRaw: prop.price || 0, // Raw numeric price for editing
+      priceUnit: prop.priceUnit || 'INR', // Price unit for editing
       bedrooms: prop.bedrooms || 0,
       bathrooms: prop.bathrooms || 0,
       sqft: prop.propertySize || 0,
+      furnishing: prop.furnishing || 'Not Specified',
       type: prop.propertyType || 'Property',
+      subType: prop.subType || '',
       status: prop.status?.toLowerCase().replace(' ', '_') || 'active',
       images: prop.images?.filter(img => img && img !== '') || [],
       features: prop.features || [],
       description: prop.description || prop.propertyDescription || '',
+      propertyDescription: prop.propertyDescription || prop.description || '',
       agent: prop.broker?.name || 'Agent',
       listedDate: prop.createdAt ? new Date(prop.createdAt).toISOString().split('T')[0] : '',
       views: prop.viewsCount || 0,
       favorites: 0,
       amenities: prop.amenities || [],
       nearbyAmenities: prop.nearbyAmenities || [],
-      locationBenefits: prop.locationBenefits || []
+      locationBenefits: prop.locationBenefits || [],
+      region: prop.region || {},
+      facingDirection: prop.facingDirection || '',
+      possessionStatus: prop.possessionStatus || '',
+      propertyAgeYears: prop.propertyAgeYears || 0,
+      videos: prop.videos || [],
+      notes: prop.notes || ''
     }))
   }
 
@@ -160,8 +160,8 @@ const PropertiesScreen = ({ navigation }) => {
       setToken(token)
       setBrokerId(userId)
 
-      // Fetch all properties with a high limit
-      const response = await propertiesAPI.getProperties(userId, token, 1, 1000, selectedFilter)
+      // Fetch all properties (no pagination)
+      const response = await propertiesAPI.getProperties(userId, token, selectedFilter)
       
       if (response.success && response.data) {
         const transformedData = transformPropertyData(response.data)
@@ -393,23 +393,10 @@ const PropertiesScreen = ({ navigation }) => {
     return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
   }
 
-  const hasParking = (property) => {
-    // Check if property has parking in features, amenities, or other fields
-    const parkingKeywords = ['parking', 'garage', 'driveway']
-    const allText = [
-      ...(property.features || []),
-      ...(property.amenities || []),
-      ...(property.description || '').toLowerCase()
-    ].join(' ').toLowerCase()
-    
-    return parkingKeywords.some(keyword => allText.includes(keyword))
-  }
-
   const PropertyCard = ({ property }) => {
     const hasImages = property.images && property.images.length > 0
     const statusBgColor = getStatusBackgroundColor(property.status)
     const statusTextColor = getStatusTextColor(property.status)
-    const parkingAvailable = hasParking(property)
     
     return (
       <TouchableOpacity 
@@ -485,19 +472,13 @@ const PropertiesScreen = ({ navigation }) => {
           </View>
           
           <View style={styles.featureItem}>
-            <MaterialIcons 
-              name={parkingAvailable ? "directions-car" : "block"} 
-              size={16} 
-              color="#6B7280" 
-            />
-            <Text style={styles.featureText}>
-              {parkingAvailable ? "Parking" : "No Parking"}
-            </Text>
+            <MaterialIcons name="home" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
           </View>
           
           <View style={styles.featureItem}>
-            <MaterialIcons name="visibility" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.views || 0} Views</Text>
+            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -635,33 +616,6 @@ const PropertiesScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Filter Section Above Property Listings */}
-        <View style={styles.newFilterSection}>
-          <TouchableOpacity 
-            style={styles.filterDropdown}
-            onPress={() => setShowTypeDropdown(true)}
-          >
-            <Text style={styles.filterDropdownText}>{selectedType}</Text>
-            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.filterDropdown}
-            onPress={() => setShowStatusDropdown(true)}
-          >
-            <Text style={styles.filterDropdownText}>{selectedStatus}</Text>
-            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.filterDropdown}
-            onPress={() => setShowDateDropdown(true)}
-          >
-            <Text style={styles.filterDropdownText}>{selectedDate}</Text>
-            <MaterialIcons name="keyboard-arrow-down" size={24} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
-
         {/* Add Property Button */}
         <View style={styles.addPropertyButtonContainer}>
           <TouchableOpacity 
@@ -673,126 +627,6 @@ const PropertiesScreen = ({ navigation }) => {
             <Text style={styles.addPropertyButtonPlaceholderText}>Add Property</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Type Dropdown Modal */}
-        <Modal
-          visible={showTypeDropdown}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowTypeDropdown(false)}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowTypeDropdown(false)}
-          >
-            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
-              {typeOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dropdownOption,
-                    selectedType === option && styles.dropdownOptionSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedType(option)
-                    setShowTypeDropdown(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.dropdownOptionText,
-                    selectedType === option && styles.dropdownOptionTextSelected
-                  ]}>
-                    {option}
-                  </Text>
-                  {selectedType === option && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Status Dropdown Modal */}
-        <Modal
-          visible={showStatusDropdown}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowStatusDropdown(false)}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowStatusDropdown(false)}
-          >
-            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
-              {statusOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dropdownOption,
-                    selectedStatus === option && styles.dropdownOptionSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedStatus(option)
-                    setShowStatusDropdown(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.dropdownOptionText,
-                    selectedStatus === option && styles.dropdownOptionTextSelected
-                  ]}>
-                    {option}
-                  </Text>
-                  {selectedStatus === option && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
-        {/* Date Dropdown Modal */}
-        <Modal
-          visible={showDateDropdown}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setShowDateDropdown(false)}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setShowDateDropdown(false)}
-          >
-            <View style={styles.dropdownModal} onStartShouldSetResponder={() => true}>
-              {dateOptions.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dropdownOption,
-                    selectedDate === option && styles.dropdownOptionSelected
-                  ]}
-                  onPress={() => {
-                    setSelectedDate(option)
-                    setShowDateDropdown(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.dropdownOptionText,
-                    selectedDate === option && styles.dropdownOptionTextSelected
-                  ]}>
-                    {option}
-                  </Text>
-                  {selectedDate === option && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableOpacity>
-        </Modal>
 
         {/* Properties List */}
         <View style={styles.propertiesSection}>
@@ -1022,74 +856,6 @@ const styles = StyleSheet.create({
   },
   statTitleRed: {
     color: '#DC2626', // Red color for rejected
-  },
-
-  // New Filter Section
-  newFilterSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    marginBottom: 0,
-    gap: 12,
-  },
-  filterDropdown: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  filterDropdownText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1F2937',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownModal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    width: width - 80,
-    maxHeight: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  dropdownOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  dropdownOptionSelected: {
-    backgroundColor: '#F0FDFA',
-  },
-  dropdownOptionText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1F2937',
-  },
-  dropdownOptionTextSelected: {
-    fontWeight: '600',
-    color: '#0D542BFF',
   },
 
   // Add Property Button

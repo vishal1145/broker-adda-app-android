@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -10,19 +10,115 @@ import {
   Image,
   Share,
   Alert,
-  FlatList
+  FlatList,
+  ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
+import { propertiesAPI } from '../services/api'
+import { storage } from '../services/storage'
 
 const { width } = Dimensions.get('window')
 
 const PropertyDetailsScreen = ({ navigation, route }) => {
-  const { property } = route.params
+  const { property: initialProperty } = route.params || {}
   
+  const [property, setProperty] = useState(initialProperty)
+  const [isLoading, setIsLoading] = useState(!initialProperty)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
+
+  // Transform API data to match screen expectations
+  const transformPropertyData = (apiProperty) => {
+    if (!apiProperty) return null
+    
+    return {
+      id: apiProperty._id,
+      title: apiProperty.title,
+      address: apiProperty.address ? `${apiProperty.address}, ${apiProperty.city}` : apiProperty.city,
+      price: apiProperty.priceUnit === 'INR' ? `₹${apiProperty.price?.toLocaleString()}` : `$${apiProperty.price?.toLocaleString()}`,
+      priceRaw: apiProperty.price || 0, // Raw numeric price for editing
+      bedrooms: apiProperty.bedrooms || 0,
+      bathrooms: apiProperty.bathrooms || 0,
+      sqft: apiProperty.propertySize || 0,
+      furnishing: apiProperty.furnishing || 'Not Specified',
+      type: apiProperty.propertyType || 'Property',
+      subType: apiProperty.subType || '',
+      status: apiProperty.status?.toLowerCase().replace(' ', '_') || 'active',
+      images: apiProperty.images?.filter(img => img && img !== '') || [],
+      features: apiProperty.features || [],
+      description: apiProperty.description || apiProperty.propertyDescription || '',
+      propertyDescription: apiProperty.propertyDescription || apiProperty.description || '',
+      agent: apiProperty.broker?.name || 'Agent',
+      agentCompany: apiProperty.broker?.firmName || '',
+      agentRole: 'Expert Broker',
+      agentLocation: apiProperty.city || '',
+      brokerImage: apiProperty.broker?.brokerImage || null,
+      listedDate: apiProperty.createdAt ? new Date(apiProperty.createdAt).toISOString().split('T')[0] : '',
+      views: apiProperty.viewsCount || 0,
+      favorites: 0,
+      amenities: apiProperty.amenities || [],
+      nearbyAmenities: apiProperty.nearbyAmenities || [],
+      locationBenefits: apiProperty.locationBenefits || [],
+      facingDirection: apiProperty.facingDirection || '',
+      possessionStatus: apiProperty.possessionStatus || '',
+      propertyAgeYears: apiProperty.propertyAgeYears || 0,
+      region: apiProperty.region || {},
+      videos: apiProperty.videos || [],
+      notes: apiProperty.notes || '',
+      priceUnit: apiProperty.priceUnit || 'INR' // Include priceUnit for editing
+    }
+  }
+
+  // Fetch property details from API
+  const fetchPropertyDetails = async () => {
+    try {
+      setIsLoading(true)
+      
+      const propertyId = initialProperty?.id || initialProperty?._id
+      if (!propertyId) {
+        Alert.alert('Error', 'Property ID not found')
+        setIsLoading(false)
+        return
+      }
+
+      const token = await storage.getToken()
+      if (!token) {
+        Alert.alert('Error', 'Please login to view property details')
+        setIsLoading(false)
+        return
+      }
+
+      const response = await propertiesAPI.getPropertyDetails(propertyId, token)
+      
+      if (response.success) {
+        // API returns { success: true, data: { property object } }
+        // getPropertyDetails returns response.data, so response.data is the API response object
+        const propertyData = response.data?.data || response.data
+        const transformedData = transformPropertyData(propertyData)
+        if (transformedData) {
+          setProperty(transformedData)
+        } else {
+          Alert.alert('Error', 'Invalid property data received')
+        }
+      } else {
+        Alert.alert('Error', response.message || 'Failed to fetch property details')
+      }
+    } catch (error) {
+      console.error('Error fetching property details:', error)
+      Alert.alert('Error', 'Failed to fetch property details. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Fetch property details on mount if we have an ID
+  useEffect(() => {
+    if (initialProperty?.id || initialProperty?._id) {
+      fetchPropertyDetails()
+    }
+  }, [])
 
   // Sample related properties (in a real app, this would be fetched from an API)
   const relatedProperties = [
@@ -100,6 +196,8 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   }
 
   const handleShare = async () => {
+    if (!property) return
+    
     try {
       const result = await Share.share({
         message: `Check out this property: ${property.title} - ${property.address}\nPrice: ${property.price}`,
@@ -122,7 +220,54 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     navigation.navigate('CreateProperty', { property })
   }
 
+  const handleDelete = async () => {
+    if (!property) return
+    
+    Alert.alert(
+      'Delete Property',
+      `Are you sure you want to delete "${property.title}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await storage.getToken()
+              if (!token) {
+                Alert.alert('Error', 'Please login to delete properties')
+                return
+              }
+
+              const propertyId = property.id || property._id
+              const response = await propertiesAPI.deleteProperty(propertyId, token)
+              
+              if (response.success) {
+                Alert.alert('Success', 'Property deleted successfully', [
+                  {
+                    text: 'OK',
+                    onPress: () => navigation.goBack()
+                  }
+                ])
+              } else {
+                Alert.alert('Error', response.message || 'Failed to delete property')
+              }
+            } catch (error) {
+              console.error('Error deleting property:', error)
+              Alert.alert('Error', 'Failed to delete property. Please try again.')
+            }
+          }
+        }
+      ]
+    )
+  }
+
   const handleContact = () => {
+    if (!property) return
+    
     Alert.alert(
       'Contact Agent',
       `Would you like to contact ${property.agent}?`,
@@ -131,6 +276,21 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         { text: 'Call', onPress: () => console.log('Call agent') },
         { text: 'Email', onPress: () => console.log('Email agent') },
       ]
+    )
+  }
+
+  // Show loading state
+  if (isLoading || !property) {
+    return (
+      <SafeAreaView style={styles.wrapper} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0D542BFF" />
+            <Text style={styles.loadingText}>Loading property details...</Text>
+          </View>
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -420,17 +580,15 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           {/* Nearby Amenities */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Nearby Amenities</Text>
-            <View style={styles.amenitiesCard}>
-              {property.amenities?.map((amenity, index) => (
-                <View key={index} style={styles.amenityItem}>
-                  <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                  <Text style={styles.amenityText}>{amenity}</Text>
-                </View>
-              )) || (
-                <View style={styles.amenityItem}>
-                  <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                  <Text style={styles.amenityText}>Schools nearby</Text>
-                </View>
+            <View style={styles.chipsContainer}>
+              {property.nearbyAmenities && property.nearbyAmenities.length > 0 ? (
+                property.nearbyAmenities.map((amenity, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{amenity}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No nearby amenities listed</Text>
               )}
             </View>
           </View>
@@ -585,40 +743,32 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           {/* Key Features */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Key Features</Text>
-            <View style={styles.featureCard}>
-              <View style={styles.featureCardContent}>
-                {property.features?.map((feature, index) => (
-                  <View key={index} style={styles.featureCardItem}>
-                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                    <Text style={styles.featureCardText}>{feature}</Text>
+            <View style={styles.chipsContainer}>
+              {property.features && property.features.length > 0 ? (
+                property.features.map((feature, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{feature}</Text>
                   </View>
-                )) || (
-                  <View style={styles.featureCardItem}>
-                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                    <Text style={styles.featureCardText}>Modern design</Text>
-                  </View>
-                )}
-              </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No key features listed</Text>
+              )}
             </View>
           </View>
 
           {/* Location Benefits */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location Benefits</Text>
-            <View style={styles.featureCard}>
-              <View style={styles.featureCardContent}>
-                {property.locationBenefits?.map((benefit, index) => (
-                  <View key={index} style={styles.featureCardItem}>
-                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                    <Text style={styles.featureCardText}>{benefit}</Text>
+            <View style={styles.chipsContainer}>
+              {property.locationBenefits && property.locationBenefits.length > 0 ? (
+                property.locationBenefits.map((benefit, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{benefit}</Text>
                   </View>
-                )) || (
-                  <View style={styles.featureCardItem}>
-                    <MaterialIcons name="check-circle" size={18} color="#0D542BFF" />
-                    <Text style={styles.featureCardText}>Prime location</Text>
-                  </View>
-                )}
-              </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No location benefits listed</Text>
+              )}
             </View>
           </View>
 
@@ -628,11 +778,19 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             <View style={styles.agentCard}>
               <View style={styles.agentCardContent}>
                 <View style={styles.agentAvatar}>
-                  <View style={styles.agentAvatarContainer}>
-                    <Text style={styles.agentAvatarText}>
-                      {property.agent ? property.agent.charAt(0).toUpperCase() : 'U'}
-                    </Text>
-                  </View>
+                  {property.brokerImage ? (
+                    <Image 
+                      source={{ uri: property.brokerImage }} 
+                      style={styles.agentAvatarImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.agentAvatarContainer}>
+                      <Text style={styles.agentAvatarText}>
+                        {property.agent ? property.agent.charAt(0).toUpperCase() : 'U'}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.agentInfo}>
                   <Text style={styles.agentName}>{property.agent || 'Rajesh Kumar'}</Text>
@@ -717,7 +875,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               <MaterialIcons name="edit" size={20} color="#FFFFFF" />
               <Text style={styles.editButtonText}>Edit Property</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteButton}>
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
               <MaterialIcons name="delete" size={20} color="#EF4444" />
               <Text style={styles.deleteButtonText}>Delete</Text>
             </TouchableOpacity>
@@ -827,6 +985,18 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingBottom: 40,
+  },
+  
+  // Loading State
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
   },
   
   // Image Section
@@ -1416,6 +1586,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   
+  // Chips Container
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  chipText: {
+    fontSize: 14,
+    color: '#0D542BFF',
+    fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  
   // Stats
   statsSection: {
     flexDirection: 'row',
@@ -1477,6 +1675,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D542BFF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  agentAvatarImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },

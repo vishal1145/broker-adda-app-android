@@ -15,16 +15,18 @@ import {
   Dimensions,
   ActionSheetIOS,
   PermissionsAndroid,
-  Alert
+  Alert,
+  Image
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker'
 import { Snackbar } from '../utils/snackbar'
-import { authAPI, propertiesAPI } from '../services/api'
+import { authAPI, propertiesAPI, placesAPI } from '../services/api'
 import storage from '../services/storage'
 
 const { width } = Dimensions.get('window')
+const maxTagWidth = width - 80 // Account for container padding (20px each side + margin)
 
 // Custom Price Slider Component
 const PriceSlider = ({ value, onValueChange, min = 0, max = 100000000, step = 100000 }) => {
@@ -74,7 +76,10 @@ const PriceSlider = ({ value, onValueChange, min = 0, max = 100000000, step = 10
   )
 }
 
-const CreatePropertyScreen = ({ navigation }) => {
+const CreatePropertyScreen = ({ navigation, route }) => {
+  const { property: editProperty } = route.params || {}
+  const isEditMode = !!editProperty
+  
   const [currentStep, setCurrentStep] = useState(1) // Step 1: Basic Info, Step 2: Amenities & Features, Step 3: Media & Publishing
   const scrollViewRef = useRef(null)
   const [showRegionModal, setShowRegionModal] = useState(false)
@@ -84,17 +89,34 @@ const CreatePropertyScreen = ({ navigation }) => {
   const [showFurnishingModal, setShowFurnishingModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [regionOptions, setRegionOptions] = useState([])
+  const [regionOptions, setRegionOptions] = useState([]) // Array of { _id, name } objects
   const [loadingRegions, setLoadingRegions] = useState(false)
   const [brokerId, setBrokerId] = useState(null)
   const [userId, setUserId] = useState(null)
   const [authToken, setAuthToken] = useState(null)
+  
+  // Address autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState([])
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false)
+  const [addressLoading, setAddressLoading] = useState(false)
+  const [addressDebounceTimer, setAddressDebounceTimer] = useState(null)
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false)
+  const [addressDetails, setAddressDetails] = useState({
+    formattedAddress: '',
+    city: '',
+    state: '',
+    country: '',
+    postalCode: '',
+    latitude: null,
+    longitude: null
+  })
   
   // Input refs for amenity fields
   const propertyAmenityInput = useRef(null)
   const nearbyAmenityInput = useRef(null)
   const featureInput = useRef(null)
   const locationBenefitInput = useRef(null)
+  const addressInputRef = useRef(null)
 
   // Temp state for amenity inputs
   const [tempAmenityInputs, setTempAmenityInputs] = useState({
@@ -113,7 +135,8 @@ const CreatePropertyScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     // Basic Information (Step 1)
     propertyTitle: '',
-    region: '',
+    region: '', // Region name for display
+    regionId: '', // Region ID for API
     address: '',
     city: '',
     facingDirection: '',
@@ -139,6 +162,11 @@ const CreatePropertyScreen = ({ navigation }) => {
     videos: [],
     status: 'Pending Approval',
     notes: '',
+    // Coordinates from address
+    coordinates: {
+      lat: '0',
+      lng: '0'
+    }
   })
 
   const currencyOptions = [
@@ -152,18 +180,17 @@ const CreatePropertyScreen = ({ navigation }) => {
   const propertyTypeOptions = [
     'Residential',
     'Commercial',
-    'Industrial',
-    'Land',
-    'Rental'
+    'Plot',
+    'Other'
   ]
 
   const subTypeOptions = [
     'Apartment',
     'Villa',
-    'Independent House',
-    'Studio',
-    'Penthouse',
-    'Farmhouse'
+    'Office',
+    'Shop',
+    'Land',
+    'Other'
   ]
 
   const furnishingOptions = [
@@ -173,10 +200,11 @@ const CreatePropertyScreen = ({ navigation }) => {
   ]
 
   const statusOptions = [
-    'Pending Approval',
     'Active',
     'Sold',
-    'Draft'
+    'Expired',
+    'Pending Approval',
+    'Rejected'
   ]
 
   const facingDirectionOptions = [
@@ -220,6 +248,269 @@ const CreatePropertyScreen = ({ navigation }) => {
     loadUserData()
   }, [])
 
+  // Helper function to extract numeric price from formatted string
+  const extractNumericPrice = (priceValue) => {
+    if (!priceValue) return ''
+    
+    // If it's already a number, return it as string
+    if (typeof priceValue === 'number') {
+      return priceValue.toString()
+    }
+    
+    // If it's a string, remove currency symbols and commas
+    const priceStr = priceValue.toString()
+    // Remove ₹, $, €, £, and commas
+    const numericPrice = priceStr.replace(/[₹$€£,]/g, '').trim()
+    
+    // Parse to number and back to string to ensure it's valid
+    const parsedPrice = parseFloat(numericPrice)
+    if (!isNaN(parsedPrice) && parsedPrice > 0) {
+      return parsedPrice.toString()
+    }
+    
+    return ''
+  }
+
+  // Helper function to normalize status value to match statusOptions
+  const normalizeStatus = (statusValue) => {
+    if (!statusValue) return 'Pending Approval'
+    
+    const statusStr = statusValue.toString().trim()
+    
+    // Map common variations to statusOptions values
+    const statusMap = {
+      'active': 'Active',
+      'pending': 'Pending Approval',
+      'pending_approval': 'Pending Approval',
+      'pending approval': 'Pending Approval',
+      'sold': 'Sold',
+      'expired': 'Expired',
+      'rejected': 'Rejected',
+      'draft': 'Pending Approval'
+    }
+    
+    // Check if it matches exactly (case-insensitive)
+    const lowerStatus = statusStr.toLowerCase()
+    if (statusMap[lowerStatus]) {
+      return statusMap[lowerStatus]
+    }
+    
+    // Check if it's already in statusOptions
+    if (statusOptions.includes(statusStr)) {
+      return statusStr
+    }
+    
+    // Default to Pending Approval
+    return 'Pending Approval'
+  }
+
+  // Populate form data when editing a property
+  useEffect(() => {
+    if (isEditMode && editProperty) {
+      console.log('Loading property data for edit:', editProperty)
+      
+      // Convert property age years back to age string if needed
+      const propertyAgeYears = editProperty.propertyAgeYears
+      let propertyAge = ''
+      if (propertyAgeYears !== undefined && propertyAgeYears !== null) {
+        if (propertyAgeYears === 0) propertyAge = 'New'
+        else if (propertyAgeYears < 5) propertyAge = '<5 Years'
+        else if (propertyAgeYears < 10) propertyAge = '<10 Years'
+        else propertyAge = '>10 Years'
+      }
+
+      // Extract numeric price - prefer raw price if available, otherwise extract from formatted string
+      let priceValue = ''
+      if (editProperty.priceRaw !== undefined && editProperty.priceRaw !== null) {
+        // Use raw numeric price if available (from PropertyDetailsScreen)
+        priceValue = editProperty.priceRaw.toString()
+      } else if (editProperty.price) {
+        // If price is a formatted string (from transformed data), extract numeric value
+        priceValue = extractNumericPrice(editProperty.price)
+      } else if (editProperty.price === 0 || editProperty.price === '0') {
+        priceValue = '0'
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        propertyTitle: editProperty.title || '',
+        region: editProperty.region?.name || '',
+        regionId: editProperty.region?._id || '',
+        address: editProperty.address || '',
+        city: editProperty.city || '',
+        facingDirection: editProperty.facingDirection || '',
+        price: priceValue,
+        propertySize: editProperty.sqft?.toString() || editProperty.propertySize?.toString() || '',
+        possessionStatus: editProperty.possessionStatus || '',
+        propertyAge: propertyAge,
+        bedrooms: editProperty.bedrooms?.toString() || '',
+        bathrooms: editProperty.bathrooms?.toString() || '',
+        propertyType: editProperty.type || editProperty.propertyType || '',
+        subType: editProperty.subType || '',
+        furnishing: editProperty.furnishing || '',
+        shortDescription: editProperty.description || '',
+        detailedDescription: editProperty.description || editProperty.propertyDescription || '',
+        currency: editProperty.priceUnit || 'INR',
+        propertyAmenities: editProperty.amenities || [],
+        nearbyAmenities: editProperty.nearbyAmenities || [],
+        features: editProperty.features || [],
+        locationBenefits: editProperty.locationBenefits || [],
+        images: editProperty.images || [],
+        videos: editProperty.videos || [],
+        status: normalizeStatus(editProperty.status),
+        notes: editProperty.notes || ''
+      }))
+    }
+  }, [isEditMode, editProperty])
+
+  // Cleanup address debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (addressDebounceTimer) {
+        clearTimeout(addressDebounceTimer)
+      }
+    }
+  }, [addressDebounceTimer])
+
+  // Fetch address suggestions from Google Places API
+  const fetchAddressSuggestions = async (query) => {
+    if (!query || query.length < 1) {
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+      return
+    }
+
+    try {
+      setAddressLoading(true)
+      console.log('Fetching address suggestions for:', query)
+      const result = await placesAPI.getAddressSuggestions(query)
+      
+      if (result.success && result.data.length > 0) {
+        console.log('Address suggestions received:', result.data.length, 'suggestions')
+        setAddressSuggestions(result.data)
+        setShowAddressSuggestions(true)
+        setShowAllSuggestions(false)
+      } else {
+        console.log('No address suggestions found')
+        setAddressSuggestions([])
+        setShowAddressSuggestions(false)
+        if (result.error) {
+          console.log('Address suggestions error:', result.error)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching address suggestions:', error)
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+
+  // Handle address selection from suggestions
+  const handleAddressSelect = async (placeId, description) => {
+    try {
+      console.log('Address selection triggered:', { placeId, description })
+      setAddressLoading(true)
+      setShowAddressSuggestions(false)
+      setShowAllSuggestions(false)
+      
+      // Fetch place details using API
+      const result = await placesAPI.getPlaceDetails(placeId)
+      
+      if (result.success && result.data) {
+        const details = result.data
+        console.log('Selected address details:', details)
+        
+        // Extract address components safely
+        const addressComponents = Array.isArray(details.address_components) ? details.address_components : []
+        let city = ''
+        let state = ''
+        let country = ''
+        let postalCode = ''
+        
+        addressComponents.forEach(component => {
+          if (component && component.types && Array.isArray(component.types)) {
+            const types = component.types
+            if (types.includes('locality')) {
+              city = component.long_name || ''
+            } else if (types.includes('administrative_area_level_1')) {
+              state = component.long_name || ''
+            } else if (types.includes('country')) {
+              country = component.long_name || ''
+            } else if (types.includes('postal_code')) {
+              postalCode = component.long_name || ''
+            }
+          }
+        })
+        
+        // Update address details
+        setAddressDetails({
+          formattedAddress: details.formatted_address || description || '',
+          city: city,
+          state: state,
+          country: country,
+          postalCode: postalCode,
+          latitude: details.geometry?.location?.lat || null,
+          longitude: details.geometry?.location?.lng || null
+        })
+        
+        // Update form data with the formatted address
+        updateFormData('address', details.formatted_address || description || '')
+        
+        // Auto-populate city if available
+        if (city) {
+          updateFormData('city', city)
+        }
+        
+        // Update coordinates
+        const lat = details.geometry?.location?.lat || null
+        const lng = details.geometry?.location?.lng || null
+        if (lat && lng) {
+          setFormData(prev => ({
+            ...prev,
+            coordinates: {
+              lat: lat.toString(),
+              lng: lng.toString()
+            }
+          }))
+        }
+        
+        Snackbar.showSuccess('Address Selected', 'Address details have been populated')
+      } else {
+        console.error('Failed to get place details:', result.error)
+        Snackbar.showError('Error', 'Failed to get address details')
+      }
+    } catch (error) {
+      console.error('Error handling address selection:', error)
+      Snackbar.showError('Error', 'Failed to process address selection')
+    } finally {
+      setAddressLoading(false)
+    }
+  }
+
+  // Handle address input change with debouncing
+  const handleAddressChange = (text) => {
+    updateFormData('address', text)
+    
+    // Clear existing timer
+    if (addressDebounceTimer) {
+      clearTimeout(addressDebounceTimer)
+    }
+    
+    if (text.length >= 1) {
+      // Set new timer for debounced API call
+      const timer = setTimeout(() => {
+        fetchAddressSuggestions(text)
+      }, 300) // 300ms debounce
+      setAddressDebounceTimer(timer)
+    } else {
+      setAddressSuggestions([])
+      setShowAddressSuggestions(false)
+      setShowAllSuggestions(false)
+    }
+  }
+
   const loadUserData = async () => {
     try {
       // Get broker ID
@@ -253,42 +544,50 @@ const CreatePropertyScreen = ({ navigation }) => {
       setLoadingRegions(true)
       const response = await authAPI.getAllRegions()
       
-      // Extract regions from the response
+      // Extract regions from the response - store full objects with _id, name, and city
       let regions = []
       if (response && response.data && response.data.regions) {
         // API returns { data: { regions: [...] } }
-        regions = response.data.regions.map(region => region.name || region)
+        regions = response.data.regions.map(region => ({
+          _id: region._id || region.id,
+          name: region.name || region,
+          city: region.city || region.state || '' // Include city if available
+        }))
       } else if (response && Array.isArray(response)) {
-        regions = response.map(region => region.name || region)
+        regions = response.map(region => ({
+          _id: region._id || region.id,
+          name: region.name || region,
+          city: region.city || region.state || '' // Include city if available
+        }))
       }
       
       if (regions.length > 0) {
         setRegionOptions(regions)
       } else {
-        // Fallback to default regions if API fails
+        // Fallback to default regions if API fails (without IDs)
         setRegionOptions([
-          'Uttar Pradesh',
-          'Maharashtra',
-          'Delhi',
-          'Karnataka',
-          'Tamil Nadu',
-          'Gujarat',
-          'Rajasthan',
-          'West Bengal'
+          { _id: '', name: 'Uttar Pradesh' },
+          { _id: '', name: 'Maharashtra' },
+          { _id: '', name: 'Delhi' },
+          { _id: '', name: 'Karnataka' },
+          { _id: '', name: 'Tamil Nadu' },
+          { _id: '', name: 'Gujarat' },
+          { _id: '', name: 'Rajasthan' },
+          { _id: '', name: 'West Bengal' }
         ])
       }
     } catch (error) {
       console.error('Error fetching regions:', error)
-      // Fallback to default regions if API fails
+      // Fallback to default regions if API fails (without IDs)
       setRegionOptions([
-        'Uttar Pradesh',
-        'Maharashtra',
-        'Delhi',
-        'Karnataka',
-        'Tamil Nadu',
-        'Gujarat',
-        'Rajasthan',
-        'West Bengal'
+        { _id: '', name: 'Uttar Pradesh' },
+        { _id: '', name: 'Maharashtra' },
+        { _id: '', name: 'Delhi' },
+        { _id: '', name: 'Karnataka' },
+        { _id: '', name: 'Tamil Nadu' },
+        { _id: '', name: 'Gujarat' },
+        { _id: '', name: 'Rajasthan' },
+        { _id: '', name: 'West Bengal' }
       ])
     } finally {
       setLoadingRegions(false)
@@ -519,11 +818,14 @@ const CreatePropertyScreen = ({ navigation }) => {
     
     return formData.propertyTitle.trim() && 
            formData.region.trim() &&
+           formData.regionId.trim() && // Ensure region ID is selected
            formData.address.trim() &&
            formData.price.trim() &&
            !isNaN(formData.price) &&
            parseFloat(formData.price) > 0 &&
            formData.propertyType.trim() &&
+           formData.subType.trim() && // Sub Type is now mandatory
+           formData.furnishing.trim() && // Furnishing is now mandatory
            sizeValid &&
            bedroomsValid &&
            bathroomsValid
@@ -558,8 +860,8 @@ const CreatePropertyScreen = ({ navigation }) => {
   }
 
   const isStep3Valid = () => {
-    // Step 3 requires minimum 3 images
-    return formData.images.length >= 3
+    // Step 3 requires minimum 3 images and status
+    return formData.images.length >= 3 && formData.status && formData.status.trim()
   }
 
   const goToNextStep = () => {
@@ -589,12 +891,32 @@ const CreatePropertyScreen = ({ navigation }) => {
     }
   }
 
+  // Helper function to convert propertyAge to propertyAgeYears
+  const convertPropertyAgeToYears = (propertyAge) => {
+    if (!propertyAge) return ''
+    
+    const ageMap = {
+      'New': '0',
+      '<5 Years': '3',
+      '<10 Years': '7',
+      '>10 Years': '12'
+    }
+    
+    return ageMap[propertyAge] || ''
+  }
+
   const handleCompleteProperty = async () => {
     try {
       setIsSubmitting(true)
 
       if (!authToken || !userId) {
         Snackbar.showError('Error', 'Please login again to create property')
+        return
+      }
+
+      if (!formData.regionId) {
+        Snackbar.showError('Error', 'Please select a valid region')
+        setIsSubmitting(false)
         return
       }
 
@@ -615,22 +937,40 @@ const CreatePropertyScreen = ({ navigation }) => {
       propertyFormData.append('price', formData.price)
       propertyFormData.append('priceUnit', formData.currency)
       propertyFormData.append('address', formData.address || '')
-      propertyFormData.append('city', formData.city)
-      propertyFormData.append('region', formData.region)
+      propertyFormData.append('city', formData.city || 'Noida')
+      propertyFormData.append('region', formData.regionId) // Use region ID instead of name
       
-      // Coordinates (optional, can be set to default or user input)
-      propertyFormData.append('coordinates[lat]', '0')
-      propertyFormData.append('coordinates[lng]', '0')
+      // Note: Coordinates are not accepted by the API, so we skip sending them
       
       // Additional Details
       propertyFormData.append('bedrooms', formData.bedrooms)
       propertyFormData.append('bathrooms', formData.bathrooms)
-      propertyFormData.append('furnishing', formData.furnishing)
+      propertyFormData.append('furnishing', formData.furnishing || '')
+      
+      // Facing Direction
+      if (formData.facingDirection) {
+        propertyFormData.append('facingDirection', formData.facingDirection)
+      }
+      
+      // Possession Status
+      if (formData.possessionStatus) {
+        propertyFormData.append('possessionStatus', formData.possessionStatus)
+      }
+      
+      // Property Age - convert to years
+      if (formData.propertyAge) {
+        const propertyAgeYears = convertPropertyAgeToYears(formData.propertyAge)
+        if (propertyAgeYears) {
+          propertyFormData.append('propertyAgeYears', propertyAgeYears)
+        }
+      }
       
       // Broker & Status
       propertyFormData.append('broker', userId)
-      propertyFormData.append('status', formData.status)
+      propertyFormData.append('status', formData.status || 'Pending Approval')
       propertyFormData.append('isFeatured', 'false')
+      propertyFormData.append('postedBy', 'Broker')
+      propertyFormData.append('verificationStatus', 'Unverified')
       
       // Amenities, Features, etc.
       formData.propertyAmenities.forEach(amenity => {
@@ -652,15 +992,19 @@ const CreatePropertyScreen = ({ navigation }) => {
       // Images - handle file uploads
       formData.images.forEach((imageUri, index) => {
         if (imageUri && imageUri.startsWith('file://')) {
-          // Local file URI
-          propertyFormData.append('images[]', {
+          // Local file URI - append as file object
+          const fileObject = {
             uri: imageUri,
             type: 'image/jpeg',
             name: `property_image_${index}.jpg`
-          })
-        } else if (imageUri && !imageUri.startsWith('http')) {
-          // URL string
-          propertyFormData.append('images', imageUri)
+          }
+          propertyFormData.append('images[]', fileObject)
+        } else if (imageUri && imageUri.startsWith('http')) {
+          // HTTP URL - skip, not a local file
+          console.log('Skipping HTTP URL image:', imageUri)
+        } else if (imageUri) {
+          // Other format - append as string
+          propertyFormData.append('images[]', imageUri)
         }
       })
       
@@ -675,13 +1019,47 @@ const CreatePropertyScreen = ({ navigation }) => {
       }
 
       console.log('Submitting property data...')
-      const response = await propertiesAPI.createProperty(propertyFormData, authToken)
+      console.log('Region ID:', formData.regionId)
+      console.log('Edit Mode:', isEditMode)
       
-      Snackbar.showSuccess('Property Created', 'Your property has been created successfully')
-      navigation.goBack()
+      // IMPORTANT: Coordinates are NOT sent to API - they are stored in state only for address autocomplete
+      // The API does not accept coordinates field, so we never append it to FormData
+      // Explicitly filter out any coordinates that might have been accidentally added
+      if (propertyFormData._parts && Array.isArray(propertyFormData._parts)) {
+        propertyFormData._parts = propertyFormData._parts.filter(part => {
+          if (!part || !part[0]) return true
+          const key = part[0].toString().toLowerCase()
+          // Remove any coordinate-related fields
+          return !key.includes('coordinate') && !key.includes('[lat]') && !key.includes('[lng]') && 
+                 key !== 'latitude' && key !== 'longitude' && key !== 'lat' && key !== 'lng'
+        })
+      }
+      
+      if (isEditMode && editProperty && editProperty.id) {
+        // Update existing property
+        console.log('Updating property with ID:', editProperty.id)
+        const response = await propertiesAPI.updateProperty(editProperty.id, propertyFormData, authToken)
+        
+        if (response.success) {
+          Snackbar.showSuccess('Property Updated', response.message || 'Your property has been updated successfully')
+          navigation.goBack()
+        } else {
+          Snackbar.showError('Error', response.message || 'Failed to update property')
+        }
+      } else {
+        // Create new property
+        const response = await propertiesAPI.createProperty(propertyFormData, authToken)
+        
+        if (response.success) {
+          Snackbar.showSuccess('Property Created', 'Your property has been created successfully')
+          navigation.goBack()
+        } else {
+          Snackbar.showError('Error', response.message || 'Failed to create property')
+        }
+      }
     } catch (error) {
-      console.error('Error creating property:', error)
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create property. Please try again.'
+      console.error(`Error ${isEditMode ? 'updating' : 'creating'} property:`, error)
+      const errorMessage = error.response?.data?.message || error.message || `Failed to ${isEditMode ? 'update' : 'create'} property. Please try again.`
       Snackbar.showError('Error', errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -708,7 +1086,7 @@ const CreatePropertyScreen = ({ navigation }) => {
       case 2:
         return 'Continue'
       case 3:
-        return 'Create Property'
+        return isEditMode ? 'Update Property' : 'Create Property'
       default:
         return 'Continue'
     }
@@ -802,29 +1180,45 @@ const CreatePropertyScreen = ({ navigation }) => {
           
           <FlatList
             data={regionOptions}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.modalItem,
-                  formData.region === item && styles.modalItemSelected
-                ]}
-                onPress={() => {
-                  updateFormData('region', item)
-                  setShowRegionModal(false)
-                }}
-              >
-                <Text style={[
-                  styles.modalItemText,
-                  formData.region === item && styles.modalItemTextSelected
-                ]}>
-                  {item}
-                </Text>
-                {formData.region === item && (
-                  <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                )}
-              </TouchableOpacity>
-            )}
+            keyExtractor={(item, index) => item._id || item.id || index.toString()}
+            renderItem={({ item }) => {
+              const regionName = typeof item === 'string' ? item : (item.name || item)
+              const regionId = typeof item === 'string' ? '' : (item._id || item.id || '')
+              const isSelected = formData.region === regionName
+              
+              return (
+                <TouchableOpacity
+                  style={[
+                    styles.modalItem,
+                    isSelected && styles.modalItemSelected
+                  ]}
+                  onPress={() => {
+                    // Find the full region object to get city
+                    const fullRegion = regionOptions.find(r => (r._id || r.id) === regionId || r.name === regionName)
+                    const regionCity = fullRegion?.city || ''
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      region: regionName,
+                      regionId: regionId,
+                      // Auto-fill city if available in region data
+                      city: regionCity || prev.city || 'Noida'
+                    }))
+                    setShowRegionModal(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.modalItemText,
+                    isSelected && styles.modalItemTextSelected
+                  ]}>
+                    {regionName}
+                  </Text>
+                  {isSelected && (
+                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
+                  )}
+                </TouchableOpacity>
+              )
+            }}
           />
         </View>
       </View>
@@ -857,17 +1251,64 @@ const CreatePropertyScreen = ({ navigation }) => {
         {/* Address */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Address *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              !formData.address.trim() && styles.inputError
-            ]}
-            value={formData.address}
-            onChangeText={(text) => updateFormData('address', text)}
-            onFocus={handleInputFocus}
-            placeholder="Search address..."
-            placeholderTextColor="#8E8E93"
-          />
+          <View style={styles.addressInputContainer}>
+            <TextInput
+              ref={addressInputRef}
+              style={[
+                styles.input,
+                !formData.address.trim() && styles.inputError
+              ]}
+              value={formData.address}
+              onChangeText={handleAddressChange}
+              onFocus={handleInputFocus}
+              placeholder="Search address..."
+              placeholderTextColor="#8E8E93"
+            />
+            {addressLoading && (
+              <View style={styles.addressLoadingIndicator}>
+                <ActivityIndicator size="small" color="#0D542BFF" />
+              </View>
+            )}
+            
+            {/* Address Suggestions Dropdown */}
+            {showAddressSuggestions && addressSuggestions.length > 0 && (
+              <View style={styles.addressSuggestionsContainer}>
+                <ScrollView 
+                  style={styles.addressSuggestionsList} 
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  bounces={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {(showAllSuggestions ? addressSuggestions : addressSuggestions.slice(0, 5)).map((suggestion, index) => (
+                    <TouchableOpacity
+                      key={suggestion.place_id || index}
+                      style={styles.addressSuggestionItem}
+                      onPress={() => handleAddressSelect(suggestion.place_id, suggestion.description)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons name="location-on" size={16} color="#8E8E93" style={styles.suggestionIcon} />
+                      <Text style={styles.suggestionText} numberOfLines={2}>
+                        {suggestion.description}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  {addressSuggestions.length > 5 && !showAllSuggestions && (
+                    <TouchableOpacity
+                      style={[styles.addressSuggestionItem, styles.showMoreItem]}
+                      onPress={() => setShowAllSuggestions(true)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons name="expand-more" size={16} color="#0D542BFF" style={styles.suggestionIcon} />
+                      <Text style={[styles.suggestionText, styles.showMoreText]}>
+                        Show {addressSuggestions.length - 5} more suggestions
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
+              </View>
+            )}
+          </View>
           {!formData.address.trim() && (
             <Text style={styles.errorText}>Address is required.</Text>
           )}
@@ -1039,9 +1480,12 @@ const CreatePropertyScreen = ({ navigation }) => {
 
         {/* Sub Type */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Sub Type</Text>
+          <Text style={styles.inputLabel}>Sub Type *</Text>
           <TouchableOpacity 
-            style={styles.input}
+            style={[
+              styles.input,
+              !formData.subType && styles.inputError
+            ]}
             onPress={() => setShowSubTypeModal(true)}
           >
             <Text style={[styles.inputText, !formData.subType && styles.placeholderText]}>
@@ -1049,13 +1493,19 @@ const CreatePropertyScreen = ({ navigation }) => {
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
           </TouchableOpacity>
+          {!formData.subType && (
+            <Text style={styles.errorText}>Sub type is required.</Text>
+          )}
         </View>
 
         {/* Furnishing */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Furnishing</Text>
+          <Text style={styles.inputLabel}>Furnishing *</Text>
           <TouchableOpacity 
-            style={styles.input}
+            style={[
+              styles.input,
+              !formData.furnishing && styles.inputError
+            ]}
             onPress={() => setShowFurnishingModal(true)}
           >
             <Text style={[styles.inputText, !formData.furnishing && styles.placeholderText]}>
@@ -1063,6 +1513,9 @@ const CreatePropertyScreen = ({ navigation }) => {
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
           </TouchableOpacity>
+          {!formData.furnishing && (
+            <Text style={styles.errorText}>Furnishing is required.</Text>
+          )}
         </View>
 
         {/* Short Description */}
@@ -1115,29 +1568,38 @@ const CreatePropertyScreen = ({ navigation }) => {
           {/* Pre-defined Amenities */}
           <View style={styles.predefinedAmenitiesContainer}>
             {predefinedAmenities.map((amenity) => {
-              const isSelected = formData.propertyAmenities.includes(amenity)
+              const isSelected = formData.propertyAmenities && formData.propertyAmenities.includes(amenity)
               return (
-          <TouchableOpacity 
+                <TouchableOpacity 
                   key={amenity}
-            style={[
+                  style={[
                     styles.predefinedAmenityTag,
                     isSelected && styles.predefinedAmenityTagSelected
                   ]}
                   onPress={() => handleTogglePredefinedAmenity(amenity)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[
-                    styles.predefinedAmenityText,
-                    isSelected && styles.predefinedAmenityTextSelected
-                  ]}>
+                  <Text 
+                    style={[
+                      styles.predefinedAmenityText,
+                      isSelected && styles.predefinedAmenityTextSelected
+                    ]}
+                    numberOfLines={1}
+                  >
                     {amenity}
-            </Text>
+                  </Text>
                   {isSelected && (
-                    <MaterialIcons name="check" size={16} color="#FFFFFF" style={styles.checkmarkIcon} />
+                    <MaterialIcons 
+                      name="check" 
+                      size={16} 
+                      color="#FFFFFF" 
+                      style={styles.checkmarkIcon} 
+                    />
                   )}
                 </TouchableOpacity>
               )
             })}
-      </View>
+          </View>
 
           {/* Custom Amenity Input */}
             <TextInput
@@ -1149,20 +1611,21 @@ const CreatePropertyScreen = ({ navigation }) => {
               onSubmitEditing={(e) => handleAddItem('propertyAmenities', e.nativeEvent.text)}
             />
           
-          {/* All Selected Amenities (both predefined and custom) */}
-          {formData.propertyAmenities.length > 0 && (
+          {/* Show ALL selected amenities (both predefined and custom) in the tag container */}
+          {formData.propertyAmenities && formData.propertyAmenities.length > 0 && (
           <View style={styles.tagContainer}>
             {formData.propertyAmenities.map((item, index) => {
-              const isPredefined = predefinedAmenities.includes(item)
+              if (!item || item.trim() === '') return null // Skip empty items
+              
               return (
-                <View key={index} style={[
-                  styles.tag,
-                  isPredefined && styles.tagPredefined
-                ]}>
-                  <Text style={[
-                    styles.tagText,
-                    isPredefined && styles.tagTextPredefined
-                  ]}>{item}</Text>
+                <View key={`amenity-${index}-${item}`} style={styles.tag}>
+                  <Text 
+                    style={styles.tagText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item}
+                  </Text>
                   <TouchableOpacity onPress={() => handleRemoveItem('propertyAmenities', index)}>
                     <MaterialIcons 
                       name="close" 
@@ -1190,14 +1653,23 @@ const CreatePropertyScreen = ({ navigation }) => {
             />
           {formData.nearbyAmenities.length > 0 && (
           <View style={styles.tagContainer}>
-            {formData.nearbyAmenities.map((item, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveItem('nearbyAmenities', index)}>
-                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                </TouchableOpacity>
-              </View>
-            ))}
+            {formData.nearbyAmenities.map((item, index) => {
+              if (!item || item.trim() === '') return null // Skip empty items
+              return (
+                <View key={`nearby-${index}-${item}`} style={styles.tag}>
+                  <Text 
+                    style={styles.tagText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveItem('nearbyAmenities', index)}>
+                    <MaterialIcons name="close" size={16} color="#0D542BFF" />
+                  </TouchableOpacity>
+                </View>
+              )
+            })}
           </View>
           )}
         </View>
@@ -1215,14 +1687,23 @@ const CreatePropertyScreen = ({ navigation }) => {
             />
           {formData.features.length > 0 && (
           <View style={styles.tagContainer}>
-            {formData.features.map((item, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveItem('features', index)}>
-                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                </TouchableOpacity>
-              </View>
-            ))}
+            {formData.features.map((item, index) => {
+              if (!item || item.trim() === '') return null // Skip empty items
+              return (
+                <View key={`feature-${index}-${item}`} style={styles.tag}>
+                  <Text 
+                    style={styles.tagText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveItem('features', index)}>
+                    <MaterialIcons name="close" size={16} color="#0D542BFF" />
+                  </TouchableOpacity>
+                </View>
+              )
+            })}
           </View>
           )}
         </View>
@@ -1240,14 +1721,23 @@ const CreatePropertyScreen = ({ navigation }) => {
             />
           {formData.locationBenefits.length > 0 && (
           <View style={styles.tagContainer}>
-            {formData.locationBenefits.map((item, index) => (
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{item}</Text>
-                <TouchableOpacity onPress={() => handleRemoveItem('locationBenefits', index)}>
-                  <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                </TouchableOpacity>
-              </View>
-            ))}
+            {formData.locationBenefits.map((item, index) => {
+              if (!item || item.trim() === '') return null // Skip empty items
+              return (
+                <View key={`benefit-${index}-${item}`} style={styles.tag}>
+                  <Text 
+                    style={styles.tagText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveItem('locationBenefits', index)}>
+                    <MaterialIcons name="close" size={16} color="#0D542BFF" />
+                  </TouchableOpacity>
+                </View>
+              )
+            })}
           </View>
           )}
         </View>
@@ -1285,18 +1775,31 @@ const CreatePropertyScreen = ({ navigation }) => {
               <Text style={styles.mediaUploadHint}>Click to upload or drag and drop</Text>
             </TouchableOpacity>
             {formData.images.length > 0 && (
-              <View style={styles.tagContainer}>
-                {formData.images.map((item, index) => {
-                  const fileName = item.substring(item.lastIndexOf('/') + 1)
-                  return (
-                    <View key={index} style={styles.tag}>
-                      <Text style={styles.tagText} numberOfLines={1}>{fileName}</Text>
-                      <TouchableOpacity onPress={() => handleRemoveMedia('images', index)}>
-                        <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                      </TouchableOpacity>
-                    </View>
-                  )
-                })}
+              <View style={styles.imagePreviewContainer}>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  contentContainerStyle={styles.imagePreviewScrollContent}
+                >
+                  {formData.images.map((item, index) => {
+                    const imageUri = item.startsWith('file://') ? item : (item.startsWith('http') ? item : `file://${item}`)
+                    return (
+                      <View key={index} style={styles.imagePreviewItem}>
+                        <Image 
+                          source={{ uri: imageUri }} 
+                          style={styles.imagePreview}
+                          resizeMode="cover"
+                        />
+                        <TouchableOpacity 
+                          style={styles.imageRemoveButton}
+                          onPress={() => handleRemoveMedia('images', index)}
+                        >
+                          <MaterialIcons name="close" size={18} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  })}
+                </ScrollView>
               </View>
             )}
           </View>
@@ -1316,19 +1819,51 @@ const CreatePropertyScreen = ({ navigation }) => {
               <Text style={styles.mediaUploadHint}>Click to upload video files</Text>
             </TouchableOpacity>
             {formData.videos.length > 0 && (
-              <View style={styles.tagContainer}>
-                {formData.videos.map((item, index) => {
-                  const fileName = item.substring(item.lastIndexOf('/') + 1)
-                  return (
-                    <View key={index} style={styles.tag}>
-                      <Text style={styles.tagText} numberOfLines={1}>{fileName}</Text>
-                      <TouchableOpacity onPress={() => handleRemoveMedia('videos', index)}>
-                        <MaterialIcons name="close" size={16} color="#0D542BFF" />
-                      </TouchableOpacity>
-                    </View>
-                  )
-                })}
+              <View style={styles.videoPreviewContainer}>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={true}
+                  contentContainerStyle={styles.videoPreviewScrollContent}
+                >
+                  {formData.videos.map((item, index) => {
+                    const videoUri = item.startsWith('file://') ? item : (item.startsWith('http') ? item : `file://${item}`)
+                    return (
+                      <View key={index} style={styles.videoPreviewItem}>
+                        <View style={styles.videoThumbnail}>
+                          <MaterialIcons name="videocam" size={40} color="#0D542BFF" />
+                          <Text style={styles.videoLabel}>Video</Text>
+                        </View>
+                        <TouchableOpacity 
+                          style={styles.videoRemoveButton}
+                          onPress={() => handleRemoveMedia('videos', index)}
+                        >
+                          <MaterialIcons name="close" size={18} color="#FFFFFF" />
+                        </TouchableOpacity>
+                      </View>
+                    )
+                  })}
+                </ScrollView>
               </View>
+            )}
+          </View>
+
+          {/* Status */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Status *</Text>
+            <TouchableOpacity 
+              style={[
+                styles.input,
+                !formData.status && styles.inputError
+              ]}
+              onPress={() => setShowStatusModal(true)}
+            >
+              <Text style={[styles.inputText, !formData.status && styles.placeholderText]}>
+                {formData.status || 'Select status'}
+              </Text>
+              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+            </TouchableOpacity>
+            {!formData.status && (
+              <Text style={styles.errorText}>Status is required.</Text>
             )}
           </View>
 
@@ -1413,9 +1948,9 @@ const CreatePropertyScreen = ({ navigation }) => {
                 disabled={isSubmitting || !getCurrentStepValid()}
               >
                 {isSubmitting ? (
-                  <View style={styles.loadingContainer}>
+                  <View style={styles.buttonLoadingContainer}>
                     <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={[styles.actionButtonText, styles.loadingText]}>
+                    <Text style={[styles.actionButtonText, styles.buttonLoadingText]}>
                       Creating Property...
                     </Text>
                   </View>
@@ -1866,19 +2401,21 @@ const styles = StyleSheet.create({
   predefinedAmenitiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    marginBottom: 12,
     gap: 8,
   },
   predefinedAmenityTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F5F5F5',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E5E5EA',
-    gap: 6,
+    gap: 4,
+    minHeight: 36,
   },
   predefinedAmenityTagSelected: {
     backgroundColor: '#0D542BFF',
@@ -1888,10 +2425,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000000',
     fontWeight: '500',
+    includeFontPadding: false,
   },
   predefinedAmenityTextSelected: {
     color: '#FFFFFF',
     fontWeight: '600',
+    includeFontPadding: false,
   },
   checkmarkIcon: {
     marginLeft: 2,
@@ -1900,18 +2439,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 12,
+    marginTop: 8,
+    paddingHorizontal: 0,
+    width: '100%',
   },
   tag: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E8F5E8',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E5E5EA',
     gap: 6,
+    marginBottom: 0,
+    minHeight: 28,
   },
   tagPredefined: {
     backgroundColor: '#E8F5E8',
@@ -1924,6 +2467,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0D542BFF',
     fontWeight: '500',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   tagTextPredefined: {
     color: '#0D542BFF',
@@ -1998,6 +2543,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     textAlign: 'center',
+    marginLeft: 8,
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonLoadingText: {
     marginLeft: 8,
   },
 
@@ -2097,6 +2650,87 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#000000',
     flex: 1,
+  },
+  // Image Preview Styles
+  imagePreviewContainer: {
+    marginTop: 12,
+    width: '100%',
+  },
+  imagePreviewScrollContent: {
+    paddingRight: 20,
+    gap: 12,
+  },
+  imagePreviewItem: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#F5F5F5',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  imageRemoveButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  // Video Preview Styles
+  videoPreviewContainer: {
+    marginTop: 12,
+    width: '100%',
+  },
+  videoPreviewScrollContent: {
+    paddingRight: 20,
+    gap: 12,
+  },
+  videoPreviewItem: {
+    position: 'relative',
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#F0FDFA',
+  },
+  videoThumbnail: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0FDFA',
+  },
+  videoLabel: {
+    fontSize: 12,
+    color: '#0D542BFF',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  videoRemoveButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   notesInput: {
     backgroundColor: '#F8F9FA',
@@ -2210,6 +2844,69 @@ const styles = StyleSheet.create({
     backgroundColor: '#007A6B',
     shadowOpacity: 0.6,
     shadowRadius: 8,
+  },
+
+  // Address Autocomplete Styles
+  addressInputContainer: {
+    position: 'relative',
+    zIndex: 1,
+  },
+  addressLoadingIndicator: {
+    position: 'absolute',
+    right: 16,
+    top: 12,
+    zIndex: 2,
+  },
+  addressSuggestionsContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginTop: -1,
+    zIndex: 1001,
+  },
+  addressSuggestionsList: {
+    maxHeight: Dimensions.get('window').height * 0.4,
+  },
+  addressSuggestionItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 50,
+  },
+  suggestionIcon: {
+    marginRight: 12,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000000',
+    lineHeight: 20,
+  },
+  showMoreItem: {
+    backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+  },
+  showMoreText: {
+    color: '#0D542BFF',
+    fontWeight: '600',
   },
 })
 

@@ -508,11 +508,11 @@ export const leadsAPI = {
 
 // Properties API functions
 export const propertiesAPI = {
-  // Get properties for a broker
-  getProperties: async (userId, token, page = 1, limit = 5, status = 'all') => {
+  // Get properties for a broker (no pagination)
+  getProperties: async (userId, token, status = 'all') => {
     try {
       console.log('Fetching properties for user:', userId);
-      let url = `/api/properties?brokerId=${userId}&page=${page}&limit=${limit}`;
+      let url = `/api/properties?brokerId=${userId}`;
 
       // Add status filter if not 'all'
       if (status && status !== 'all') {
@@ -540,6 +540,7 @@ export const propertiesAPI = {
       const response = await api.post('/api/properties', propertyData, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -576,7 +577,8 @@ export const propertiesAPI = {
       const response = await api.put(`/api/properties/${propertyId}`, propertyData, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data'
         }
       });
       console.log('Property updated successfully:', response.data);
