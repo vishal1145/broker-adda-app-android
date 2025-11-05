@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -28,6 +28,10 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
+  const [relatedProperties, setRelatedProperties] = useState([])
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false)
+  const [currentBrokerId, setCurrentBrokerId] = useState(null)
+  const scrollViewRef = useRef(null)
 
   // Transform API data to match screen expectations
   const transformPropertyData = (apiProperty) => {
@@ -45,7 +49,8 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       furnishing: apiProperty.furnishing || 'Not Specified',
       type: apiProperty.propertyType || 'Property',
       subType: apiProperty.subType || '',
-      status: apiProperty.status?.toLowerCase().replace(' ', '_') || 'active',
+      status: apiProperty.status || 'Pending Approval', // Original status for editing
+      statusDisplay: apiProperty.status?.toLowerCase().replace(' ', '_') || 'active', // Normalized status for display
       images: apiProperty.images?.filter(img => img && img !== '') || [],
       features: apiProperty.features || [],
       description: apiProperty.description || apiProperty.propertyDescription || '',
@@ -55,6 +60,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       agentRole: 'Expert Broker',
       agentLocation: apiProperty.city || '',
       brokerImage: apiProperty.broker?.brokerImage || null,
+      brokerId: apiProperty.broker?._id || null, // Store broker ID for ownership check
       listedDate: apiProperty.createdAt ? new Date(apiProperty.createdAt).toISOString().split('T')[0] : '',
       views: apiProperty.viewsCount || 0,
       favorites: 0,
@@ -71,12 +77,21 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
+  // Transform array of properties (for related properties)
+  const transformPropertiesArray = (apiProperties) => {
+    if (!Array.isArray(apiProperties)) return []
+    return apiProperties.map(prop => transformPropertyData(prop)).filter(prop => prop !== null)
+  }
+
   // Fetch property details from API
   const fetchPropertyDetails = async () => {
     try {
       setIsLoading(true)
       
-      const propertyId = initialProperty?.id || initialProperty?._id
+      // Get property from route params (updated when navigating)
+      const currentProperty = route.params?.property || initialProperty
+      const propertyId = currentProperty?.id || currentProperty?._id
+      
       if (!propertyId) {
         Alert.alert('Error', 'Property ID not found')
         setIsLoading(false)
@@ -113,68 +128,86 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
-  // Fetch property details on mount if we have an ID
-  useEffect(() => {
-    if (initialProperty?.id || initialProperty?._id) {
-      fetchPropertyDetails()
+  // Fetch related properties (all properties excluding current)
+  const fetchRelatedProperties = async () => {
+    try {
+      setIsLoadingRelated(true)
+      
+      const token = await storage.getToken()
+      
+      if (!token) {
+        setIsLoadingRelated(false)
+        return
+      }
+
+      // Fetch all properties from the API endpoint
+      const response = await propertiesAPI.getAllProperties(token)
+      
+      if (response.success && response.data && Array.isArray(response.data)) {
+        // Transform the data array
+        const transformedData = transformPropertiesArray(response.data)
+        
+        // Get current property ID (handle both _id and id formats)
+        const currentPropertyId = property?.id || property?._id || initialProperty?.id || initialProperty?._id
+        
+        // Filter out current property
+        const filtered = transformedData.filter(prop => {
+          const propId = prop.id || prop._id
+          const currentId = currentPropertyId?.toString()
+          return propId?.toString() !== currentId
+        })
+        
+        setRelatedProperties(filtered)
+      }
+    } catch (error) {
+      console.error('Error fetching related properties:', error)
+      // Set empty array on error to show empty state
+      setRelatedProperties([])
+    } finally {
+      setIsLoadingRelated(false)
     }
+  }
+
+  // Get current broker ID on mount
+  useEffect(() => {
+    const getBrokerId = async () => {
+      const userId = await storage.getUserId()
+      setCurrentBrokerId(userId)
+    }
+    getBrokerId()
   }, [])
 
-  // Sample related properties (in a real app, this would be fetched from an API)
-  const relatedProperties = [
-    {
-      id: 2,
-      title: 'Luxury Apartment',
-      address: 'Sector 62, Noida, Uttar Pradesh',
-      price: '₹1,25,00,000',
-      bedrooms: 3,
-      bathrooms: 2,
-      sqft: 1800,
-      type: 'Apartment',
-      status: 'active',
-      views: 45,
-      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'],
-    },
-    {
-      id: 3,
-      title: 'Modern Villa',
-      address: 'Sector 120, Noida, Uttar Pradesh',
-      price: '₹3,50,00,000',
-      bedrooms: 4,
-      bathrooms: 3,
-      sqft: 3200,
-      type: 'Villa',
-      status: 'pending',
-      views: 28,
-      images: ['https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'],
-    },
-    {
-      id: 4,
-      title: 'Penthouse Suite',
-      address: 'Sector 74, Noida, Uttar Pradesh',
-      price: '₹5,00,00,000',
-      bedrooms: 5,
-      bathrooms: 4,
-      sqft: 4500,
-      type: 'Penthouse',
-      status: 'sold',
-      views: 120,
-      images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop'],
-    },
-    {
-      id: 5,
-      title: 'Family Home',
-      address: 'Sector 50, Noida, Uttar Pradesh',
-      price: '₹85,00,000',
-      bedrooms: 2,
-      bathrooms: 2,
-      sqft: 1400,
-      type: 'House',
-      status: 'active',
-      views: 15,
-      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop'],
-    },
-  ]
+  // Fetch property details on mount and when route params change
+  useEffect(() => {
+    const propertyFromRoute = route.params?.property
+    const propertyId = propertyFromRoute?.id || propertyFromRoute?._id
+    
+    if (propertyId) {
+      // Reset state when navigating to a new property
+      setCurrentImageIndex(0)
+      setActiveTab('description')
+      setIsFavorite(false)
+      
+      // Scroll to top when navigating to a new property
+      if (scrollViewRef.current) {
+        scrollViewRef.current.scrollTo({ y: 0, animated: false })
+      }
+      
+      // Update property state
+      setProperty(propertyFromRoute)
+      
+      // Fetch fresh property details
+      fetchPropertyDetails()
+    }
+  }, [route.params?.property])
+
+  // Fetch related properties when property is loaded
+  useEffect(() => {
+    if (property && (property.id || property._id)) {
+      fetchRelatedProperties()
+    }
+  }, [property])
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -279,6 +312,14 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     )
   }
 
+  // Check if the property belongs to the current broker
+  const isPropertyOwner = () => {
+    if (!property || !currentBrokerId) return false
+    
+    const propertyBrokerId = property.brokerId || property.broker?._id
+    return propertyBrokerId?.toString() === currentBrokerId?.toString()
+  }
+
   // Show loading state
   if (isLoading || !property) {
     return (
@@ -294,93 +335,91 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     )
   }
 
-  // Recent Property Card Component - Matching HomeScreen design
-  const RecentPropertyCard = ({ property }) => {
+  // Property Card Component - Matching PropertiesScreen design
+  const PropertyCard = ({ property }) => {
     const getStatusBackgroundColor = (status) => {
-      switch (status?.toLowerCase()) {
-        case 'pending':
-          return '#FEF3C7'
-        case 'active':
-          return '#D1FAE5'
-        case 'sold':
-          return '#DBEAFE'
-        case 'expired':
-          return '#FEE2E2'
-        default:
-          return '#F3F4F6'
-      }
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved') || statusLower.includes('active')) return '#D1FAE5'
+      if (statusLower.includes('pending')) return '#FEF3C7'
+      if (statusLower.includes('rejected')) return '#FEE2E2'
+      if (statusLower.includes('sold')) return '#F3F4F6'
+      return '#D1FAE5'
     }
 
     const getStatusTextColor = (status) => {
-      switch (status?.toLowerCase()) {
-        case 'pending':
-          return '#92400E'
-        case 'active':
-          return '#065F46'
-        case 'sold':
-          return '#1E40AF'
-        case 'expired':
-          return '#991B1B'
-        default:
-          return '#6B7280'
-      }
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved') || statusLower.includes('active')) return '#059669'
+      if (statusLower.includes('pending')) return '#F59E0B'
+      if (statusLower.includes('rejected')) return '#DC2626'
+      if (statusLower.includes('sold')) return '#6B7280'
+      return '#059669'
     }
 
     const getStatusDisplayText = (status) => {
-      return status || 'Pending'
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved')) return 'Approved'
+      if (statusLower.includes('pending')) return 'Pending'
+      if (statusLower.includes('rejected')) return 'Rejected'
+      if (statusLower.includes('active')) return 'Active'
+      if (statusLower.includes('sold')) return 'Sold'
+      return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
     }
+
+    const hasImages = property.images && property.images.length > 0
+    const statusBgColor = getStatusBackgroundColor(property.status)
+    const statusTextColor = getStatusTextColor(property.status)
 
     return (
       <TouchableOpacity 
-        style={styles.recentPropertyCard}
+        style={styles.propertyCard}
         onPress={() => navigation.navigate('PropertyDetails', { property })}
         activeOpacity={0.8}
       >
-        <View style={styles.recentCardTopSection}>
+        <View style={styles.cardTopSection}>
           {/* Property Image - Left Side */}
-          <View style={styles.recentPropertyImageContainer}>
-            {property.images?.[0] ? (
+          <View style={styles.propertyImageContainer}>
+            {hasImages ? (
               <Image 
                 source={{ uri: property.images[0] }} 
-                style={styles.recentPropertyImage}
+                style={styles.propertyImage}
                 resizeMode="cover"
               />
             ) : (
-              <View style={styles.recentPropertyImagePlaceholder}>
+              <View style={styles.propertyImagePlaceholder}>
                 <MaterialIcons name="home" size={48} color="#D1D5DB" />
-                <Text style={styles.recentPlaceholderText}>No Image</Text>
+                <Text style={styles.placeholderText}>No Image</Text>
               </View>
             )}
           </View>
 
           {/* Property Content - Right Side */}
-          <View style={styles.recentPropertyContent}>
+          <View style={styles.propertyContent}>
             {/* Title with Icon */}
-            <View style={styles.recentTitleRow}>
+            <View style={styles.titleRow}>
               <MaterialIcons name="home" size={16} color="#1F2937" />
-              <Text style={styles.recentPropertyTitle} numberOfLines={1}>
+              <Text style={styles.propertyTitle} numberOfLines={1}>
                 {property.title}
               </Text>
             </View>
             
             {/* Address with Icon */}
-            <View style={styles.recentAddressRow}>
+            <View style={styles.addressRow}>
               <MaterialIcons name="location-on" size={14} color="#6B7280" />
-              <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
+              <Text style={styles.propertyAddressText} numberOfLines={1}>
                 {property.address}
               </Text>
             </View>
             
             {/* Price */}
-            <Text style={styles.recentPropertyPrice}>
+            <Text style={styles.propertyPrice}>
               {property.price}
             </Text>
             
             {/* Status Row */}
-            <View style={styles.recentStatusRow}>
-              <Text style={styles.recentStatusLabel}>Status</Text>
-              <View style={[styles.recentStatusBadge, { backgroundColor: getStatusBackgroundColor(property.status) }]}>
-                <Text style={[styles.recentStatusBadgeText, { color: getStatusTextColor(property.status) }]}>
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>Status</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
+                <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
                   {getStatusDisplayText(property.status)}
                 </Text>
               </View>
@@ -389,31 +428,29 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         </View>
         
         {/* Divider - Full Width */}
-        <View style={styles.recentDivider} />
+        <View style={styles.divider} />
         
         {/* Features Below - Starting from Image Position */}
-        <View style={styles.recentPropertyFeatures}>
-          <View style={styles.recentFeatureItem}>
+        <View style={styles.propertyFeatures}>
+          <View style={styles.featureItem}>
             <MaterialIcons name="bed" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.bedrooms || property.beds} Bed</Text>
+            <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
           </View>
           
-          <View style={styles.recentFeatureItem}>
+          <View style={styles.featureItem}>
             <MaterialIcons name="bathtub" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.bathrooms || property.baths} Bath</Text>
+            <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
           </View>
           
-          <View style={styles.recentFeatureItem}>
+          <View style={styles.featureItem}>
+            <MaterialIcons name="home" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
             <MaterialIcons name="square-foot" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.sqft} Sqft</Text>
+            <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
           </View>
-          
-          {property.views && (
-            <View style={styles.recentFeatureItem}>
-              <MaterialIcons name="visibility" size={16} color="#6B7280" />
-              <Text style={styles.recentFeatureText}>{property.views} Views</Text>
-            </View>
-          )}
         </View>
       </TouchableOpacity>
     )
@@ -453,6 +490,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       </View>
 
       <ScrollView 
+        ref={scrollViewRef}
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
@@ -858,28 +896,45 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           {/* Related Properties */}
           <View style={styles.relatedSection}>
             <Text style={styles.sectionTitle}>Related Properties</Text>
-            <FlatList
-              data={relatedProperties}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <RecentPropertyCard property={item} />}
-              contentContainerStyle={styles.recentPropertiesList}
-              ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-            />
+            {isLoadingRelated ? (
+              <View style={styles.loadingRelatedContainer}>
+                <ActivityIndicator size="small" color="#0D542BFF" />
+                <Text style={styles.loadingRelatedText}>Loading properties...</Text>
+              </View>
+            ) : relatedProperties.length === 0 ? (
+              <View style={styles.emptyRelatedContainer}>
+                <Text style={styles.emptyRelatedText}>No other properties available</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={relatedProperties}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => (item.id || item._id).toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.propertyCardWrapper}>
+                    <PropertyCard property={item} />
+                  </View>
+                )}
+                contentContainerStyle={styles.relatedPropertiesList}
+                ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+              />
+            )}
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-              <MaterialIcons name="edit" size={20} color="#FFFFFF" />
-              <Text style={styles.editButtonText}>Edit Property</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-              <MaterialIcons name="delete" size={20} color="#EF4444" />
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Action Buttons - Only show for broker's own properties */}
+          {isPropertyOwner() && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+                <Text style={styles.editButtonText}>Edit Property</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <MaterialIcons name="delete" size={20} color="#EF4444" />
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
       </View>
@@ -1855,18 +1910,41 @@ const styles = StyleSheet.create({
     color: '#EF4444',
   },
   
-  // Related Properties - Matching HomeScreen style
+  // Related Properties - Matching PropertiesScreen style
   relatedSection: {
     marginBottom: 24,
   },
-  recentPropertiesList: {
+  relatedPropertiesList: {
     paddingVertical: 8,
   },
-  recentPropertyCard: {
+  propertyCardWrapper: {
+    width: width - 80,
+  },
+  loadingRelatedContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingRelatedText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  emptyRelatedContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyRelatedText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  // Property Card Styles - Matching PropertiesScreen
+  propertyCard: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    width: width - 80,
     padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1877,87 +1955,87 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     overflow: 'hidden',
   },
-  recentCardTopSection: {
+  cardTopSection: {
     flexDirection: 'row',
     marginBottom: 0,
   },
-  recentPropertyImageContainer: {
+  propertyImageContainer: {
     width: 130,
     height: 130,
     borderRadius: 8,
     overflow: 'hidden',
     marginRight: 12,
   },
-  recentPropertyImage: {
+  propertyImage: {
     width: '100%',
     height: '100%',
   },
-  recentPropertyImagePlaceholder: {
+  propertyImagePlaceholder: {
     width: '100%',
     height: '100%',
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recentPlaceholderText: {
+  placeholderText: {
     marginTop: 8,
     fontSize: 12,
     color: '#9CA3AF',
   },
-  recentPropertyContent: {
+  propertyContent: {
     flex: 1,
     justifyContent: 'flex-start',
   },
-  recentTitleRow: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginBottom: 6,
   },
-  recentPropertyTitle: {
+  propertyTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
     flex: 1,
   },
-  recentAddressRow: {
+  addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginBottom: 8,
   },
-  recentPropertyAddressText: {
+  propertyAddressText: {
     fontSize: 13,
     color: '#6B7280',
     flex: 1,
   },
-  recentPropertyPrice: {
+  propertyPrice: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 8,
   },
-  recentStatusRow: {
+  statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  recentStatusLabel: {
+  statusLabel: {
     fontSize: 14,
     color: '#1F2937',
   },
-  recentStatusBadge: {
+  statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
-  recentStatusBadgeText: {
+  statusBadgeText: {
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'capitalize',
   },
-  recentDivider: {
+  divider: {
     height: 1,
     backgroundColor: '#F3F4F6',
     marginBottom: 10,
@@ -1965,7 +2043,7 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     marginRight: 0,
   },
-  recentPropertyFeatures: {
+  propertyFeatures: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 16,
@@ -1973,14 +2051,15 @@ const styles = StyleSheet.create({
     paddingLeft: 0,
     alignItems: 'center',
   },
-  recentFeatureItem: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  recentFeatureText: {
-    fontSize: 13,
+  featureText: {
+    fontSize: 12,
     color: '#6B7280',
+    lineHeight: 16,
   },
 })
 

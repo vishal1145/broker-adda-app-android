@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import Svg, { Circle, G, Path, Text as SvgText, Rect, Line, Polygon } from 'react-native-svg'
-import { authAPI } from '../services/api'
+import { authAPI, chatAPI, leadsAPI, notificationsAPI, propertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 const { width } = Dimensions.get('window')
 
@@ -156,9 +156,179 @@ const HomeScreen = ({ navigation }) => {
     }
   }
 
-  // Load profile data on component mount
+  // Fetch chats/connections count
+  const fetchConnectionsCount = async () => {
+    try {
+      const token = await storage.getToken()
+      
+      if (token) {
+        const response = await chatAPI.getChats(token)
+        
+        if (response && response.success && response.data) {
+          // Count the total number of chats/connections
+          const connectionsCount = response.data.length || 0
+          
+          setDashboardCards(prev => ({
+            ...prev,
+            connections: connectionsCount
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching connections count:', error)
+      // Keep default value if API fails
+    }
+  }
+
+  // Fetch leads and properties metrics
+  const fetchMetrics = async () => {
+    try {
+      const token = await storage.getToken()
+      const userId = await storage.getUserId() || await storage.getBrokerId()
+      
+      if (token && userId) {
+        const response = await leadsAPI.getMetrics(userId, token)
+        
+        if (response && response.success && response.data) {
+          const metrics = response.data
+          
+          setDashboardCards(prev => ({
+            ...prev,
+            totalLeads: metrics.totalLeads || 0,
+            propertiesListed: metrics.totalProperties || 0
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error)
+      // Keep default values if API fails
+    }
+  }
+
+  // Helper function to format time ago
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently'
+    
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now - date) / 1000)
+    
+    if (diffInSeconds < 60) return 'Just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    return `${Math.floor(diffInSeconds / 604800)}w ago`
+  }
+
+  // Helper function to format budget as currency
+  const formatBudget = (amount) => {
+    if (!amount) return '₹0'
+    // Convert to Indian currency format
+    return `₹${amount.toLocaleString('en-IN')}`
+  }
+
+  // Fetch recent notifications
+  const fetchRecentNotifications = async () => {
+    try {
+      const token = await storage.getToken()
+      
+      if (token) {
+        const response = await notificationsAPI.getRecentNotifications(token, 7)
+        
+        if (response && response.success && response.data && response.data.notifications) {
+          const notifications = response.data.notifications.map((notification, index) => ({
+            id: notification._id || index,
+            title: notification.title || '',
+            timeAgo: formatTimeAgo(notification.createdAt),
+            icon: 'notifications'
+          }))
+          
+          // Limit to first 5 notifications for recent activity
+          setRecentActivities(notifications.slice(0, 5))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recent notifications:', error)
+      // Keep empty array if API fails
+      setRecentActivities([])
+    }
+  }
+
+  // Fetch recent leads
+  const fetchRecentLeads = async () => {
+    try {
+      const token = await storage.getToken()
+      const userId = await storage.getUserId() || await storage.getBrokerId()
+      
+      if (token && userId) {
+        const response = await leadsAPI.getLeads(token, userId)
+        
+        if (response && response.success && response.data && response.data.items) {
+          const leads = response.data.items.map((lead) => {
+            // Create title from requirement and propertyType
+            const title = `${lead.propertyType || 'Property'} for ${lead.requirement || 'Buy'}`
+            
+            // Get location names
+            const preferredLocation = lead.primaryRegion?.name || lead.region?.name || 'N/A'
+            const secondaryLocation = lead.secondaryRegion?.name || lead.primaryRegion?.name || 'N/A'
+            
+            return {
+              id: lead._id,
+              title: title,
+              requirement: lead.requirement || 'Buy',
+              propertyType: lead.propertyType || 'Residential',
+              timeAgo: formatTimeAgo(lead.createdAt),
+              preferredLocation: preferredLocation,
+              secondaryLocation: secondaryLocation,
+              budget: formatBudget(lead.budget),
+              contactName: lead.customerName || 'N/A',
+              avatar: null
+            }
+          })
+          
+          // Limit to first 5 leads for recent leads section
+          setRecentLeads(leads.slice(0, 5))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recent leads:', error)
+      // Keep empty array if API fails
+      setRecentLeads([])
+    }
+  }
+
+  // Fetch recent properties
+  const fetchRecentProperties = async () => {
+    try {
+      const token = await storage.getToken()
+      const userId = await storage.getUserId() || await storage.getBrokerId()
+      
+      if (token && userId) {
+        // Fetch all properties (no status filter for recent properties)
+        const response = await propertiesAPI.getProperties(userId, token, 'all')
+        
+        if (response && response.success && response.data) {
+          const transformedData = transformPropertyData(response.data)
+          
+          // Limit to first 5 properties for recent properties section
+          setRecentProperties(transformedData.slice(0, 5))
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recent properties:', error)
+      // Keep empty array if API fails
+      setRecentProperties([])
+    }
+  }
+
+  // Load profile data, metrics, connections count, notifications, leads, and properties on component mount
   useEffect(() => {
     fetchUserProfile()
+    fetchConnectionsCount()
+    fetchMetrics()
+    fetchRecentNotifications()
+    fetchRecentLeads()
+    fetchRecentProperties()
   }, [])
 
   const handleLogout = () => {
@@ -177,14 +347,14 @@ const HomeScreen = ({ navigation }) => {
   }
   
   // Dashboard cards data matching the image
-  const [dashboardCards] = useState({
+  const [dashboardCards, setDashboardCards] = useState({
     totalLeads: 1,
     totalLeadsChange: 12.5,
     propertiesListed: 0,
     propertiesListedChange: 8.2,
     inquiriesReceived: 743,
     inquiriesReceivedChange: 3.1,
-    connections: 45,
+    connections: 0,
     connectionsChange: 20
   })
 
@@ -250,100 +420,47 @@ const HomeScreen = ({ navigation }) => {
   ])
 
   // Recent Leads data
-  const [recentLeads] = useState([
-    {
-      id: 1,
-      title: 'Residential for Buy',
-      requirement: 'Buy',
-      propertyType: 'Residential',
-      timeAgo: '2h ago',
-      preferredLocation: 'Noida Sector 62',
-      secondaryLocation: 'Noida Sector 62',
-      budget: '₹19,00,000',
-      contactName: 'Shivani Jayshwal',
-      avatar: null
-    },
-    {
-      id: 2,
-      title: 'Commercial for Rent',
-      requirement: 'Rent',
-      propertyType: 'Commercial',
-      timeAgo: '5h ago',
-      preferredLocation: 'Gurgaon Sector 44',
-      secondaryLocation: 'Gurgaon Sector 43',
-      budget: '₹45,000',
-      contactName: 'Rajesh Kumar',
-      avatar: null
-    },
-    {
-      id: 3,
-      title: 'Residential for Buy',
-      requirement: 'Buy',
-      propertyType: 'Residential',
-      timeAgo: '1d ago',
-      preferredLocation: 'Delhi NCR',
-      secondaryLocation: 'Greater Noida',
-      budget: '₹25,00,000',
-      contactName: 'Priya Sharma',
-      avatar: null
-    }
-  ])
+  const [recentLeads, setRecentLeads] = useState([])
 
-  // Recent Properties data
-  const [recentProperties] = useState([
-    {
-      id: 1,
-      title: 'gggh',
-      location: 'Sector 62, Noida, Uttar Pradesh, India',
-      price: '₹33,900,000',
-      status: 'Pending',
-      beds: 2,
-      baths: 2,
-      parking: 'Parking',
-      views: 0,
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Modern Apartment',
-      location: 'Sector 18, Noida, Uttar Pradesh, India',
-      price: '₹25,500,000',
-      status: 'Active',
-      beds: 3,
-      baths: 2,
-      parking: 'Parking',
-      views: 12,
-      image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=300&fit=crop'
-    },
-    {
-      id: 3,
-      title: 'Luxury Villa',
-      location: 'Greater Noida, Uttar Pradesh, India',
-      price: '₹45,000,000',
-      status: 'Pending',
-      beds: 4,
-      baths: 3,
-      parking: 'Parking',
-      views: 8,
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=400&h=300&fit=crop'
-    }
-  ])
+  // Properties data
+  const [recentProperties, setRecentProperties] = useState([])
+
+  // Transform API data to match screen expectations (same as PropertiesScreen)
+  const transformPropertyData = (apiProperties) => {
+    return apiProperties.map(prop => ({
+      id: prop._id,
+      title: prop.title,
+      address: prop.address ? `${prop.address}, ${prop.city}` : prop.city,
+      price: prop.priceUnit === 'INR' ? `₹${prop.price?.toLocaleString()}` : `$${prop.price?.toLocaleString()}`,
+      priceRaw: prop.price || 0,
+      priceUnit: prop.priceUnit || 'INR',
+      bedrooms: prop.bedrooms || 0,
+      bathrooms: prop.bathrooms || 0,
+      sqft: prop.propertySize || 0,
+      furnishing: prop.furnishing || 'Not Specified',
+      type: prop.propertyType || 'Property',
+      subType: prop.subType || '',
+      status: prop.status?.toLowerCase().replace(/ /g, '_') || 'active',
+      images: prop.images?.filter(img => img && img !== '') || [],
+      features: prop.features || [],
+      description: prop.description || prop.propertyDescription || '',
+      propertyDescription: prop.propertyDescription || prop.description || '',
+      agent: prop.broker?.name || 'Agent',
+      listedDate: prop.createdAt ? new Date(prop.createdAt).toISOString().split('T')[0] : '',
+      views: prop.viewsCount || 0,
+      favorites: 0,
+      amenities: prop.amenities || [],
+      nearbyAmenities: prop.nearbyAmenities || [],
+      city: prop.city || '',
+      state: prop.state || '',
+      region: prop.region || null,
+      createdAt: prop.createdAt || '',
+      updatedAt: prop.updatedAt || ''
+    }))
+  }
 
   // Recent Activity data
-  const [recentActivities] = useState([
-    {
-      id: 1,
-      description: 'Submitted new property listing: Premium 3BHK Apartment in Sector 62',
-      timeAgo: '2 days ago',
-      icon: 'description'
-    },
-    {
-      id: 2,
-      description: 'New lead created: Residential property inquiry received',
-      timeAgo: '4 days ago',
-      icon: 'description'
-    }
-  ])
+  const [recentActivities, setRecentActivities] = useState([])
 
   const DonutChart = ({ data, size = 200 }) => {
     const colors = {
@@ -625,7 +742,11 @@ const HomeScreen = ({ navigation }) => {
     }
 
     return (
-      <View style={styles.recentLeadCard}>
+      <TouchableOpacity 
+        style={styles.recentLeadCard}
+        onPress={() => navigation.navigate('LeadDetails', { leadId: lead.id, isTransferredLead: false })}
+        activeOpacity={0.8}
+      >
         {/* Header Section */}
         <View style={styles.recentLeadHeader}>
           <View style={styles.recentLeadHeaderLeft}>
@@ -671,86 +792,80 @@ const HomeScreen = ({ navigation }) => {
             </Text>
           </View>
         </View>
-
-        {/* Divider */}
-        <View style={styles.recentLeadDivider} />
-
-        {/* Contact Section */}
-        <View style={styles.recentLeadContact}>
-          <View style={styles.recentLeadAvatar}>
-            <Text style={styles.recentLeadAvatarText}>
-              {lead.contactName.split(' ').map(n => n[0]).join('')}
-            </Text>
-          </View>
-          <View style={styles.recentLeadContactInfo}>
-            <Text style={styles.recentLeadContactName}>{lead.contactName}</Text>
-            <View style={styles.recentLeadActions}>
-              <TouchableOpacity style={styles.recentLeadAction}>
-                <MaterialIcons name="phone" size={16} color="#6B7280" />
-                <Text style={styles.recentLeadActionText}>Connect</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.recentLeadAction}>
-                <MaterialIcons name="chat" size={16} color="#6B7280" />
-                <Text style={styles.recentLeadActionText}>Chat</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </View>
+      </TouchableOpacity>
     )
+  }
+
+  // Status functions matching PropertiesScreen exactly
+  const getStatusBackgroundColor = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved') || statusLower.includes('active')) return '#D1FAE5' // Light Green
+    if (statusLower.includes('pending')) return '#FEF3C7' // Soft Light Yellow
+    if (statusLower.includes('rejected')) return '#FEE2E2' // Light Red
+    if (statusLower.includes('sold')) return '#F3F4F6' // Light Gray
+    return '#D1FAE5'
+  }
+
+  const getStatusTextColor = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved') || statusLower.includes('active')) return '#059669' // Dark Green
+    if (statusLower.includes('pending')) return '#F59E0B' // Muted Orange/Yellow
+    if (statusLower.includes('rejected')) return '#DC2626' // Dark Red
+    if (statusLower.includes('sold')) return '#6B7280' // Gray
+    return '#059669'
+  }
+
+  const getStatusDisplayText = (status) => {
+    const statusLower = status?.toLowerCase() || 'active'
+    if (statusLower.includes('approved')) return 'Approved'
+    if (statusLower.includes('pending')) return 'Pending'
+    if (statusLower.includes('rejected')) return 'Rejected'
+    if (statusLower.includes('active')) return 'Active'
+    if (statusLower.includes('sold')) return 'Sold'
+    return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
   }
 
   // Recent Property Card Component - Matching PropertiesScreen design
   const RecentPropertyCard = ({ property }) => {
-    const getStatusBackgroundColor = (status) => {
-      switch (status?.toLowerCase()) {
-        case 'pending':
-          return '#FEF3C7'
-        case 'active':
-          return '#D1FAE5'
-        case 'sold':
-          return '#DBEAFE'
-        case 'expired':
-          return '#FEE2E2'
-        default:
-          return '#F3F4F6'
-      }
-    }
 
-    const getStatusTextColor = (status) => {
-      switch (status?.toLowerCase()) {
-        case 'pending':
-          return '#92400E'
-        case 'active':
-          return '#065F46'
-        case 'sold':
-          return '#1E40AF'
-        case 'expired':
-          return '#991B1B'
-        default:
-          return '#6B7280'
-      }
-    }
-
-    const getStatusDisplayText = (status) => {
-      return status || 'Pending'
-    }
+    const hasImages = property.images && property.images.length > 0
+    const statusBgColor = getStatusBackgroundColor(property.status)
+    const statusTextColor = getStatusTextColor(property.status)
 
     return (
-      <View style={styles.recentPropertyCard}>
+      <TouchableOpacity 
+        style={styles.recentPropertyCard}
+        onPress={() => navigation.navigate('PropertyDetails', { property })}
+        activeOpacity={0.8}
+      >
         <View style={styles.recentCardTopSection}>
           {/* Property Image - Left Side */}
           <View style={styles.recentPropertyImageContainer}>
-            {property.image ? (
-              <Image 
-                source={{ uri: property.image }} 
-                style={styles.recentPropertyImage}
-                resizeMode="cover"
-              />
+            {hasImages ? (
+              <>
+                <SafeImage 
+                  source={{ uri: property.images[0] }} 
+                  style={styles.recentPropertyImage}
+                  imageType="propertyImage"
+                  resizeMode="cover"
+                />
+                {/* Property Type Badge */}
+                {property.type && (
+                  <View style={styles.recentPropertyTypeBadge}>
+                    <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
+              </>
             ) : (
               <View style={styles.recentPropertyImagePlaceholder}>
                 <MaterialIcons name="home" size={48} color="#D1D5DB" />
                 <Text style={styles.recentPlaceholderText}>No Image</Text>
+                {/* Property Type Badge on Placeholder */}
+                {property.type && (
+                  <View style={styles.recentPropertyTypeBadge}>
+                    <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -769,7 +884,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.recentAddressRow}>
               <MaterialIcons name="location-on" size={14} color="#6B7280" />
               <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
-                {property.location}
+                {property.address}
               </Text>
             </View>
             
@@ -781,8 +896,8 @@ const HomeScreen = ({ navigation }) => {
             {/* Status Row */}
             <View style={styles.recentStatusRow}>
               <Text style={styles.recentStatusLabel}>Status</Text>
-              <View style={[styles.recentStatusBadge, { backgroundColor: getStatusBackgroundColor(property.status) }]}>
-                <Text style={[styles.recentStatusBadgeText, { color: getStatusTextColor(property.status) }]}>
+              <View style={[styles.recentStatusBadge, { backgroundColor: statusBgColor }]}>
+                <Text style={[styles.recentStatusBadgeText, { color: statusTextColor }]}>
                   {getStatusDisplayText(property.status)}
                 </Text>
               </View>
@@ -797,25 +912,25 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.recentPropertyFeatures}>
           <View style={styles.recentFeatureItem}>
             <MaterialIcons name="bed" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.beds} Bed</Text>
+            <Text style={styles.recentFeatureText}>{property.bedrooms} Bed</Text>
           </View>
           
           <View style={styles.recentFeatureItem}>
             <MaterialIcons name="bathtub" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.baths} Bath</Text>
+            <Text style={styles.recentFeatureText}>{property.bathrooms} Bath</Text>
           </View>
           
           <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="directions-car" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.parking}</Text>
+            <MaterialIcons name="home" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.furnishing || 'Not Specified'}</Text>
           </View>
           
           <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="visibility" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.views} Views</Text>
+            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+            <Text style={styles.recentFeatureText}>{property.sqft || 0} sq.ft</Text>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     )
   }
 
@@ -825,10 +940,10 @@ const HomeScreen = ({ navigation }) => {
       <View>
         <View style={styles.recentActivityItem}>
           <View style={styles.recentActivityIconContainer}>
-            <MaterialIcons name={activity.icon || 'description'} size={18} color="#9CA3AF" />
+            <MaterialIcons name={activity.icon || 'notifications'} size={18} color="#9CA3AF" />
           </View>
           <View style={styles.recentActivityContent}>
-            <Text style={styles.recentActivityDescription}>{activity.description}</Text>
+            <Text style={styles.recentActivityDescription}>{activity.title || activity.description}</Text>
             <Text style={styles.recentActivityTimeText}>{activity.timeAgo}</Text>
           </View>
         </View>
@@ -1077,12 +1192,6 @@ const HomeScreen = ({ navigation }) => {
               colorClass="statCardBlue"
             />
             <DashboardCard
-              title="Inquiries Received"
-              value={dashboardCards.inquiriesReceived}
-              icon="mail"
-              colorClass="statCardYellow"
-            />
-            <DashboardCard
               title="Connections"
               value={dashboardCards.connections}
               icon="chat"
@@ -1186,16 +1295,28 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <TouchableOpacity 
+              style={styles.manageButton}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Text style={styles.manageButtonText}>View All</Text>
+            </TouchableOpacity>
           </View>
           
           <View style={styles.recentActivityCard}>
-            {recentActivities.map((activity, index) => (
-              <RecentActivityCard 
-                key={activity.id} 
-                activity={activity} 
-                isLast={index === recentActivities.length - 1}
-              />
-            ))}
+            {recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => (
+                <RecentActivityCard 
+                  key={activity.id} 
+                  activity={activity} 
+                  isLast={index === recentActivities.length - 1}
+                />
+              ))
+            ) : (
+              <View style={styles.recentActivityItem}>
+                <Text style={styles.recentActivityDescription}>No recent activity</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1852,7 +1973,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
 
-  // Recent Properties Styles
+  // Properties Styles
   recentPropertiesList: {
     paddingVertical: 8,
   },
@@ -1881,6 +2002,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginRight: 12,
+    position: 'relative',
   },
   recentPropertyImage: {
     width: '100%',
@@ -1892,11 +2014,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   recentPlaceholderText: {
     marginTop: 8,
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  recentPropertyTypeBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  recentPropertyTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   recentPropertyContent: {
     flex: 1,

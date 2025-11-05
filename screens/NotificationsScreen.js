@@ -12,7 +12,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
-import { authAPI } from '../services/api'
+import { authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 const { width } = Dimensions.get('window')
@@ -94,75 +94,24 @@ const NotificationsScreen = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
 
-  // Sample notifications data
-  const [notifications] = useState([
-    {
-      id: 1,
-      title: 'New Lead Assignment',
-      description: 'You have been assigned a new lead for "Downtown Luxury Condo"',
-      time: '2 minutes ago',
-      type: 'lead',
-      priority: 'high',
-      isRead: false,
-      icon: 'trending-up',
-      iconColor: '#10B981'
-    },
-    {
-      id: 2,
-      title: 'Property Viewing Scheduled',
-      description: 'Property viewing for "Suburban Family Home" scheduled for tomorrow at 2:00 PM',
-      time: '1 hour ago',
-      type: 'property',
-      priority: 'medium',
-      isRead: false,
-      icon: 'home',
-      iconColor: '#3B82F6'
-    },
-    {
-      id: 3,
-      title: 'Commission Payment Processed',
-      description: 'Your commission payment of $12,500 has been processed and will reflect in your account within 2-3 business days',
-      time: '3 hours ago',
-      type: 'payment',
-      priority: 'high',
-      isRead: true,
-      icon: 'attach-money',
-      iconColor: '#F59E0B'
-    },
-    {
-      id: 4,
-      title: 'New Message from Client',
-      description: 'Sarah Johnson sent you a message regarding the property inquiry',
-      time: '5 hours ago',
-      type: 'message',
-      priority: 'medium',
-      isRead: true,
-      icon: 'message',
-      iconColor: '#8B5CF6'
-    },
-    {
-      id: 5,
-      title: 'System Maintenance Notice',
-      description: 'Scheduled maintenance will occur tonight from 11 PM to 1 AM. Some features may be temporarily unavailable.',
-      time: '1 day ago',
-      type: 'system',
-      priority: 'low',
-      isRead: true,
-      icon: 'build',
-      iconColor: '#6B7280'
-    },
-    {
-      id: 6,
-      title: 'Property Status Updated',
-      description: 'The property "Beachfront Villa" status has been updated to "Under Contract"',
-      time: '2 days ago',
-      type: 'property',
-      priority: 'medium',
-      isRead: true,
-      icon: 'update',
-      iconColor: '#0D542BFF'
-    }
-  ])
+  // Notifications data
+  const [notifications, setNotifications] = useState([])
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
+
+  // Helper function to format time ago
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return 'Recently'
+    
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInSeconds = Math.floor((now - date) / 1000)
+    
+    if (diffInSeconds < 60) return 'Just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`
+    return `${Math.floor(diffInSeconds / 604800)}w ago`
+  }
 
   // Fetch user profile data
   const fetchUserProfile = async () => {
@@ -208,6 +157,53 @@ const NotificationsScreen = ({ navigation }) => {
     }
   }
 
+  // Fetch notifications from API
+  const fetchNotifications = async () => {
+    try {
+      setIsLoadingNotifications(true)
+      const token = await storage.getToken()
+      
+      if (token) {
+        const response = await notificationsAPI.getNotifications(token)
+        
+        if (response && response.success && response.data && response.data.notifications) {
+          const apiNotifications = response.data.notifications.map((notification) => {
+            // Map API notification type to display type
+            let notificationType = notification.type || 'property'
+            
+            // Determine icon based on type
+            let icon = 'notifications'
+            if (notificationType === 'property') icon = 'home'
+            else if (notificationType === 'lead' || notificationType === 'approval') icon = 'trending-up'
+            else if (notificationType.includes('payment')) icon = 'attach-money'
+            else if (notificationType.includes('message')) icon = 'chat-bubble-outline'
+            else if (notificationType.includes('system')) icon = 'build'
+            
+            return {
+              id: notification._id,
+              title: notification.title || 'Notification',
+              description: notification.message || '',
+              time: formatTimeAgo(notification.createdAt),
+              type: notificationType,
+              priority: notification.isRead ? 'low' : 'high',
+              isRead: notification.isRead || false,
+              icon: icon,
+              iconColor: '#0D542B'
+            }
+          })
+          
+          setNotifications(apiNotifications)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+      // Keep empty array if API fails
+      setNotifications([])
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }
+
   // Handle message press
   const handleMessagePress = () => {
     navigation.navigate('ChatListScreen')
@@ -219,9 +215,10 @@ const NotificationsScreen = ({ navigation }) => {
     navigation.navigate('Profile')
   }
 
-  // Load profile on component mount
+  // Load profile and notifications on component mount
   useEffect(() => {
     fetchUserProfile()
+    fetchNotifications()
   }, [])
 
   // Filters removed as per UI requirement

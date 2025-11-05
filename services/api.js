@@ -605,6 +605,24 @@ export const propertiesAPI = {
       console.error('Delete property error:', error);
       throw error;
     }
+  },
+
+  // Get all properties (for related properties, no broker filter)
+  getAllProperties: async (token) => {
+    try {
+      console.log('Fetching all properties');
+      const response = await api.get('/api/properties', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('All properties fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get all properties error:', error);
+      throw error;
+    }
   }
 };
 
@@ -713,4 +731,43 @@ export const chatAPI = {
     }
   },
 }
+
+// Notifications API functions
+export const notificationsAPI = {
+  getNotifications: async (token) => {
+    try {
+      console.log('Fetching notifications');
+      const response = await api.get('/api/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Notifications fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      throw error;
+    }
+  },
+  getRecentNotifications: async (token, days = 7) => {
+    try {
+      console.log('Fetching recent notifications:', { days });
+      const response = await api.get(`/api/notifications/recent?days=${days}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Recent notifications fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get recent notifications error:', error);
+      throw error;
+    }
+  },
+}
+
 export default api;

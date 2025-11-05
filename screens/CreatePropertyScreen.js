@@ -860,8 +860,8 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   }
 
   const isStep3Valid = () => {
-    // Step 3 requires minimum 3 images and status
-    return formData.images.length >= 3 && formData.status && formData.status.trim()
+    // Step 3 requires minimum 3 images
+    return formData.images.length >= 3
   }
 
   const goToNextStep = () => {
@@ -967,7 +967,11 @@ const CreatePropertyScreen = ({ navigation, route }) => {
       
       // Broker & Status
       propertyFormData.append('broker', userId)
-      propertyFormData.append('status', formData.status || 'Pending Approval')
+      // For updates, preserve original status from API; for new properties, use default
+      const statusToSend = isEditMode 
+        ? (editProperty?.status || formData.status || 'Pending Approval')
+        : 'Pending Approval'
+      propertyFormData.append('status', statusToSend)
       propertyFormData.append('isFeatured', 'false')
       propertyFormData.append('postedBy', 'Broker')
       propertyFormData.append('verificationStatus', 'Unverified')
@@ -1844,26 +1848,6 @@ const CreatePropertyScreen = ({ navigation, route }) => {
                   })}
                 </ScrollView>
               </View>
-            )}
-          </View>
-
-          {/* Status */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Status *</Text>
-            <TouchableOpacity 
-              style={[
-                styles.input,
-                !formData.status && styles.inputError
-              ]}
-              onPress={() => setShowStatusModal(true)}
-            >
-              <Text style={[styles.inputText, !formData.status && styles.placeholderText]}>
-                {formData.status || 'Select status'}
-              </Text>
-              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-            {!formData.status && (
-              <Text style={styles.errorText}>Status is required.</Text>
             )}
           </View>
 

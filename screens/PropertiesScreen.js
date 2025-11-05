@@ -413,15 +413,29 @@ const PropertiesScreen = ({ navigation }) => {
           {/* Property Image - Left Side */}
           <View style={styles.propertyImageContainer}>
             {hasImages ? (
-              <Image 
-                source={{ uri: property.images[0] }} 
-                style={styles.propertyImage}
-                resizeMode="cover"
-              />
+              <>
+                <Image 
+                  source={{ uri: property.images[0] }} 
+                  style={styles.propertyImage}
+                  resizeMode="cover"
+                />
+                {/* Property Type Badge */}
+                {property.type && (
+                  <View style={styles.propertyTypeBadge}>
+                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
+              </>
             ) : (
               <View style={styles.propertyImagePlaceholder}>
                 <MaterialIcons name="home" size={48} color="#D1D5DB" />
                 <Text style={styles.placeholderText}>No Image</Text>
+                {/* Property Type Badge on Placeholder */}
+                {property.type && (
+                  <View style={styles.propertyTypeBadge}>
+                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -972,6 +986,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginRight: 12,
+    position: 'relative',
   },
   propertyImage: {
     width: '100%',
@@ -983,11 +998,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
   placeholderText: {
     marginTop: 8,
     fontSize: 12,
     color: '#9CA3AF',
+  },
+  propertyTypeBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  propertyTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   propertyContent: {
     flex: 1,
