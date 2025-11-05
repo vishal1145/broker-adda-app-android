@@ -630,21 +630,23 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   // Handle toggling predefined amenities
   const handleTogglePredefinedAmenity = (amenity) => {
     setFormData(prev => {
-      const currentAmenities = prev.propertyAmenities || []
+      const currentAmenities = Array.isArray(prev.propertyAmenities) ? prev.propertyAmenities : []
       const isSelected = currentAmenities.includes(amenity)
       
+      let newAmenities
       if (isSelected) {
         // Remove if already selected
-        return {
-          ...prev,
-          propertyAmenities: currentAmenities.filter(a => a !== amenity)
-        }
+        newAmenities = currentAmenities.filter(a => a !== amenity)
       } else {
         // Add if not selected
-        return {
-          ...prev,
-          propertyAmenities: [...currentAmenities, amenity]
-        }
+        newAmenities = [...currentAmenities, amenity]
+      }
+      
+      console.log('Toggled amenity:', amenity, 'New amenities array:', newAmenities)
+      
+      return {
+        ...prev,
+        propertyAmenities: newAmenities
       }
     })
   }
@@ -812,11 +814,12 @@ const CreatePropertyScreen = ({ navigation, route }) => {
 
   // Step validation
   const isStep1Valid = () => {
+    const titleValid = formData.propertyTitle.trim().length >= 3
     const sizeValid = formData.propertySize.trim() && !isNaN(formData.propertySize) && parseFloat(formData.propertySize) > 0
     const bedroomsValid = formData.bedrooms.trim() !== ''
     const bathroomsValid = formData.bathrooms.trim() !== ''
     
-    return formData.propertyTitle.trim() && 
+    return titleValid &&
            formData.region.trim() &&
            formData.regionId.trim() && // Ensure region ID is selected
            formData.address.trim() &&
@@ -860,8 +863,8 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   }
 
   const isStep3Valid = () => {
-    // Step 3 requires minimum 3 images
-    return formData.images.length >= 3
+    // Step 3 has no required fields, images are optional
+    return true
   }
 
   const goToNextStep = () => {
@@ -968,8 +971,9 @@ const CreatePropertyScreen = ({ navigation, route }) => {
       // Broker & Status
       propertyFormData.append('broker', userId)
       // For updates, preserve original status from API; for new properties, use default
+      // Status is always sent but cannot be edited by user - use original status from property
       const statusToSend = isEditMode 
-        ? (editProperty?.status || formData.status || 'Pending Approval')
+        ? (editProperty?.statusOriginal || editProperty?.status || 'Pending Approval')
         : 'Pending Approval'
       propertyFormData.append('status', statusToSend)
       propertyFormData.append('isFeatured', 'false')
@@ -977,20 +981,43 @@ const CreatePropertyScreen = ({ navigation, route }) => {
       propertyFormData.append('verificationStatus', 'Unverified')
       
       // Amenities, Features, etc.
-      formData.propertyAmenities.forEach(amenity => {
-        propertyFormData.append('amenities[]', amenity)
+      // Ensure arrays exist and send amenities
+      const propertyAmenities = Array.isArray(formData.propertyAmenities) ? formData.propertyAmenities : []
+      const nearbyAmenities = Array.isArray(formData.nearbyAmenities) ? formData.nearbyAmenities : []
+      const features = Array.isArray(formData.features) ? formData.features : []
+      const locationBenefits = Array.isArray(formData.locationBenefits) ? formData.locationBenefits : []
+      
+      console.log('Sending amenities:', propertyAmenities)
+      console.log('Sending nearby amenities:', nearbyAmenities)
+      console.log('Sending features:', features)
+      console.log('Sending location benefits:', locationBenefits)
+      
+      // Send property amenities (both predefined and custom)
+      propertyAmenities.forEach(amenity => {
+        if (amenity && amenity.trim() !== '') {
+          propertyFormData.append('amenities[]', amenity.trim())
+        }
       })
       
-      formData.nearbyAmenities.forEach(amenity => {
-        propertyFormData.append('nearbyAmenities[]', amenity)
+      // Send nearby amenities
+      nearbyAmenities.forEach(amenity => {
+        if (amenity && amenity.trim() !== '') {
+          propertyFormData.append('nearbyAmenities[]', amenity.trim())
+        }
       })
       
-      formData.features.forEach(feature => {
-        propertyFormData.append('features[]', feature)
+      // Send features
+      features.forEach(feature => {
+        if (feature && feature.trim() !== '') {
+          propertyFormData.append('features[]', feature.trim())
+        }
       })
       
-      formData.locationBenefits.forEach(benefit => {
-        propertyFormData.append('locationBenefits[]', benefit)
+      // Send location benefits
+      locationBenefits.forEach(benefit => {
+        if (benefit && benefit.trim() !== '') {
+          propertyFormData.append('locationBenefits[]', benefit.trim())
+        }
       })
       
       // Images - handle file uploads
@@ -1044,21 +1071,40 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         console.log('Updating property with ID:', editProperty.id)
         const response = await propertiesAPI.updateProperty(editProperty.id, propertyFormData, authToken)
         
-        if (response.success) {
-          Snackbar.showSuccess('Property Updated', response.message || 'Your property has been updated successfully')
-          navigation.goBack()
-        } else {
+        console.log('Update response:', response)
+        
+        // If API call succeeds (no error thrown), consider it successful
+        // Check for explicit failure flag, otherwise treat as success
+        if (response && response.success === false) {
           Snackbar.showError('Error', response.message || 'Failed to update property')
+        } else {
+          // Success - API returned data without throwing error
+          const message = response?.message || 'Your property has been updated successfully'
+          Snackbar.showSuccess('Property Updated', message)
+          // Navigate back after a short delay to show the success message
+          setTimeout(() => {
+            navigation.goBack()
+          }, 500)
         }
       } else {
         // Create new property
+        console.log('Creating new property...')
         const response = await propertiesAPI.createProperty(propertyFormData, authToken)
         
-        if (response.success) {
-          Snackbar.showSuccess('Property Created', 'Your property has been created successfully')
-          navigation.goBack()
-        } else {
+        console.log('Create response:', response)
+        
+        // If API call succeeds (no error thrown), consider it successful
+        // Check for explicit failure flag, otherwise treat as success
+        if (response && response.success === false) {
           Snackbar.showError('Error', response.message || 'Failed to create property')
+        } else {
+          // Success - API returned data without throwing error
+          const message = response?.message || 'Your property has been created successfully'
+          Snackbar.showSuccess('Property Created', message)
+          // Navigate back after a short delay to show the success message
+          setTimeout(() => {
+            navigation.goBack()
+          }, 500)
         }
       }
     } catch (error) {
@@ -1230,27 +1276,34 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   )
 
   // Step 1: Basic Information
-  const renderStep1 = () => (
-    <View>
-      <View style={styles.sectionContainer}>
-        {/* Property Title */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Property Title *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              !formData.propertyTitle.trim() && styles.inputError
-            ]}
-            value={formData.propertyTitle}
-            onChangeText={(text) => updateFormData('propertyTitle', text)}
-            onFocus={handleInputFocus}
-            placeholder="Enter property title"
-            placeholderTextColor="#8E8E93"
-          />
-          {!formData.propertyTitle.trim() && (
-            <Text style={styles.errorText}>Title is required.</Text>
-          )}
-        </View>
+  const renderStep1 = () => {
+    const trimmedTitle = formData.propertyTitle.trim()
+    const titleError = trimmedTitle.length === 0 || trimmedTitle.length < 3
+    
+    return (
+      <View>
+        <View style={styles.sectionContainer}>
+          {/* Property Title */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Property Title *</Text>
+            <TextInput
+              style={[
+                styles.input,
+                titleError && styles.inputError
+              ]}
+              value={formData.propertyTitle}
+              onChangeText={(text) => updateFormData('propertyTitle', text)}
+              onFocus={handleInputFocus}
+              placeholder="Enter property title"
+              placeholderTextColor="#8E8E93"
+            />
+            {trimmedTitle.length === 0 && (
+              <Text style={styles.errorText}>Title is required.</Text>
+            )}
+            {trimmedTitle.length > 0 && trimmedTitle.length < 3 && (
+              <Text style={styles.errorText}>Title must be at least 3 characters.</Text>
+            )}
+          </View>
 
         {/* Address */}
         <View style={styles.inputGroup}>
@@ -1559,7 +1612,8 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         </View>
       </View>
     </View>
-  )
+    )
+  }
 
   // Step 2: Amenities & Features
   const renderStep2 = () => (
@@ -1754,7 +1808,6 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   const renderStep3 = () => {
     const imageCount = formData.images.length
     const videoCount = formData.videos.length
-    const minImages = 3
     
     return (
       <View>
@@ -1762,16 +1815,13 @@ const CreatePropertyScreen = ({ navigation, route }) => {
           {/* Add Images */}
           <View style={styles.inputGroup}>
             <View style={styles.stepHeader}>
-              <Text style={styles.stepTitle}>Add Images (min {minImages})</Text>
+              <Text style={styles.stepTitle}>Add Images (optional)</Text>
               <Text style={styles.stepCount}>
-                {imageCount}/{minImages} minimum
+                {imageCount} added
               </Text>
             </View>
             <TouchableOpacity 
-              style={[
-                styles.mediaUploadArea,
-                imageCount >= minImages && styles.mediaUploadAreaComplete
-              ]}
+              style={styles.mediaUploadArea}
               onPress={() => showMediaPickerOptions('images')}
             >
               <MaterialIcons name="add" size={48} color="#8E8E93" />

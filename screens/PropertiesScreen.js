@@ -14,6 +14,7 @@ import {
   RefreshControl
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
 import { propertiesAPI, authAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -119,6 +120,7 @@ const PropertiesScreen = ({ navigation }) => {
       type: prop.propertyType || 'Property',
       subType: prop.subType || '',
       status: prop.status?.toLowerCase().replace(' ', '_') || 'active',
+      statusOriginal: prop.status || 'Pending Approval', // Preserve original status for API updates
       images: prop.images?.filter(img => img && img !== '') || [],
       features: prop.features || [],
       description: prop.description || prop.propertyDescription || '',
@@ -140,7 +142,7 @@ const PropertiesScreen = ({ navigation }) => {
   }
 
   // Fetch properties from API
-  const fetchProperties = async (refresh = false) => {
+  const fetchProperties = React.useCallback(async (refresh = false) => {
     try {
       if (refresh) {
         setRefreshing(true)
@@ -175,7 +177,7 @@ const PropertiesScreen = ({ navigation }) => {
       setLoading(false)
       setRefreshing(false)
     }
-  }
+  }, [selectedFilter])
 
   // Fetch user profile data
   const fetchUserProfile = async () => {
@@ -232,18 +234,91 @@ const PropertiesScreen = ({ navigation }) => {
     navigation.navigate('Profile')
   }
 
+  // Handle edit property
+  const handleEdit = (property) => {
+    navigation.navigate('CreateProperty', { property })
+  }
+
+  // Handle delete property
+  const handleDelete = async (property) => {
+    if (!property) return
+    
+    Alert.alert(
+      'Delete Property',
+      `Are you sure you want to delete "${property.title}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await storage.getToken()
+              if (!token) {
+                Alert.alert('Error', 'Please login to delete properties')
+                return
+              }
+
+              const propertyId = property.id || property._id
+              const response = await propertiesAPI.deleteProperty(propertyId, token)
+              
+              if (response.success) {
+                Alert.alert('Success', 'Property deleted successfully', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Refresh properties after deletion
+                      fetchProperties(false)
+                    }
+                  }
+                ])
+              } else {
+                Alert.alert('Error', response.message || 'Failed to delete property')
+              }
+            } catch (error) {
+              console.error('Error deleting property:', error)
+              Alert.alert('Error', 'Failed to delete property. Please try again.')
+            }
+          }
+        }
+      ]
+    )
+  }
+
+  // Track if this is the initial mount to avoid double-fetching on mount
+  const isInitialMount = React.useRef(true)
+
   // Initial load
   useEffect(() => {
     setPropertiesData([])
     fetchProperties(false)
     fetchUserProfile()
+    isInitialMount.current = false
   }, [])
 
   // Refresh when filter changes
   useEffect(() => {
     setPropertiesData([])
     fetchProperties(false)
-  }, [selectedFilter])
+  }, [selectedFilter, fetchProperties])
+
+  // Refresh properties when screen comes into focus (e.g., returning from CreatePropertyScreen)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isInitialMount.current) {
+        return
+      }
+      
+      // Refresh properties list when screen is focused
+      // This ensures new properties appear immediately after creation
+      console.log('PropertiesScreen focused - refreshing properties list')
+      fetchProperties(true)
+    }, [fetchProperties])
+  )
 
   // Handle pull to refresh
   const onRefresh = async () => {
@@ -404,103 +479,120 @@ const PropertiesScreen = ({ navigation }) => {
     const statusTextColor = getStatusTextColor(property.status)
     
     return (
-      <TouchableOpacity 
-        style={styles.propertyCard}
-        onPress={() => navigation.navigate('PropertyDetails', { property })}
-        activeOpacity={0.8}
-      >
-        <View style={styles.cardTopSection}>
-          {/* Property Image - Left Side */}
-          <View style={styles.propertyImageContainer}>
-            {hasImages ? (
-              <>
-                <Image 
-                  source={{ uri: property.images[0] }} 
-                  style={styles.propertyImage}
-                  resizeMode="cover"
-                />
-                {/* Property Type Badge */}
-                {property.type && (
-                  <View style={styles.propertyTypeBadge}>
-                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.propertyImagePlaceholder}>
-                <MaterialIcons name="home" size={48} color="#D1D5DB" />
-                <Text style={styles.placeholderText}>No Image</Text>
-                {/* Property Type Badge on Placeholder */}
-                {property.type && (
-                  <View style={styles.propertyTypeBadge}>
-                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
+      <View style={styles.propertyCard}>
+        <TouchableOpacity 
+          style={styles.cardContentWrapper}
+          onPress={() => navigation.navigate('PropertyDetails', { property })}
+          activeOpacity={0.8}
+        >
+          <View style={styles.cardTopSection}>
+            {/* Property Image - Left Side */}
+            <View style={styles.propertyImageContainer}>
+              {hasImages ? (
+                <>
+                  <Image 
+                    source={{ uri: property.images[0] }} 
+                    style={styles.propertyImage}
+                    resizeMode="cover"
+                  />
+                  {/* Property Type Badge */}
+                  {property.type && (
+                    <View style={styles.propertyTypeBadge}>
+                      <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <View style={styles.propertyImagePlaceholder}>
+                  <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                  <Text style={styles.placeholderText}>No Image</Text>
+                  {/* Property Type Badge on Placeholder */}
+                  {property.type && (
+                    <View style={styles.propertyTypeBadge}>
+                      <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
 
-          {/* Property Content - Right Side */}
-          <View style={styles.propertyContent}>
-            {/* Title with Icon */}
-            <View style={styles.titleRow}>
-              <MaterialIcons name="home" size={16} color="#1F2937" />
-              <Text style={styles.propertyTitle} numberOfLines={1}>
-                {property.title}
-              </Text>
-            </View>
-            
-            {/* Address with Icon */}
-            <View style={styles.addressRow}>
-              <MaterialIcons name="location-on" size={14} color="#6B7280" />
-              <Text style={styles.propertyAddressText} numberOfLines={1}>
-                {property.address}
-              </Text>
-            </View>
-            
-            {/* Price */}
-            <Text style={styles.propertyPrice}>
-              {property.price}
-            </Text>
-            
-            {/* Status Row */}
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
-                <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
-                  {getStatusDisplayText(property.status)}
+            {/* Property Content - Right Side */}
+            <View style={styles.propertyContent}>
+              {/* Title with Icon */}
+              <View style={styles.titleRow}>
+                <MaterialIcons name="home" size={16} color="#1F2937" />
+                <Text style={styles.propertyTitle} numberOfLines={1}>
+                  {property.title}
                 </Text>
               </View>
+              
+              {/* Address with Icon */}
+              <View style={styles.addressRow}>
+                <MaterialIcons name="location-on" size={14} color="#6B7280" />
+                <Text style={styles.propertyAddressText} numberOfLines={1}>
+                  {property.address}
+                </Text>
+              </View>
+              
+              {/* Price */}
+              <Text style={styles.propertyPrice}>
+                {property.price}
+              </Text>
+              
+              {/* Status Row - Badge on left, Edit/Delete icons on right */}
+              <View style={styles.statusRow}>
+                <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
+                  <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
+                    {getStatusDisplayText(property.status)}
+                  </Text>
+                </View>
+                <View style={styles.actionIconsContainer}>
+                  <TouchableOpacity 
+                    style={styles.actionIconButton}
+                    onPress={() => handleEdit(property)}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="edit" size={18} color="#6B7280" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.actionIconButton}
+                    onPress={() => handleDelete(property)}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="delete" size={18} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-        
-        {/* Divider - Full Width */}
-        <View style={styles.divider} />
-        
-        {/* Features Below - Starting from Image Position */}
-        <View style={styles.propertyFeatures}>
-          <View style={styles.featureItem}>
-            <MaterialIcons name="bed" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
-          </View>
           
-          <View style={styles.featureItem}>
-            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
-          </View>
+          {/* Divider - Full Width */}
+          <View style={styles.divider} />
           
-          <View style={styles.featureItem}>
-            <MaterialIcons name="home" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
+          {/* Features Below - Starting from Image Position */}
+          <View style={styles.propertyFeatures}>
+            <View style={styles.featureItem}>
+              <MaterialIcons name="bed" size={16} color="#6B7280" />
+              <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+              <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <MaterialIcons name="home" size={16} color="#6B7280" />
+              <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+              <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
+            </View>
           </View>
-          
-          <View style={styles.featureItem}>
-            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     )
   }
 
@@ -966,7 +1058,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 12,
-    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -975,6 +1066,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
+  },
+  cardContentWrapper: {
+    padding: 12,
   },
   cardTopSection: {
     flexDirection: 'row',
@@ -1067,14 +1161,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  statusLabel: {
-    fontSize: 14,
-    color: '#1F2937',
-  },
   statusBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
+  },
+  actionIconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionIconButton: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusBadgeText: {
     fontSize: 11,

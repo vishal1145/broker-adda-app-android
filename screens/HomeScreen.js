@@ -184,10 +184,14 @@ const HomeScreen = ({ navigation }) => {
   const fetchMetrics = async () => {
     try {
       const token = await storage.getToken()
-      const userId = await storage.getUserId() || await storage.getBrokerId()
+      const userId = await storage.getUserId() 
+      
+      console.log('fetchMetrics called - userId:', userId, 'token:', token ? 'exists' : 'missing')
       
       if (token && userId) {
+        console.log('Calling leadsAPI.getMetrics with userId:', userId)
         const response = await leadsAPI.getMetrics(userId, token)
+        console.log('getMetrics response:', response)
         
         if (response && response.success && response.data) {
           const metrics = response.data
@@ -198,6 +202,8 @@ const HomeScreen = ({ navigation }) => {
             propertiesListed: metrics.totalProperties || 0
           }))
         }
+      } else {
+        console.warn('fetchMetrics: Missing token or userId', { token: !!token, userId: !!userId })
       }
     } catch (error) {
       console.error('Error fetching metrics:', error)
@@ -233,7 +239,8 @@ const HomeScreen = ({ navigation }) => {
       const token = await storage.getToken()
       
       if (token) {
-        const response = await notificationsAPI.getRecentNotifications(token, 7)
+        // Fetch more notifications to allow "Show More" functionality
+        const response = await notificationsAPI.getRecentNotifications(token, 20)
         
         if (response && response.success && response.data && response.data.notifications) {
           const notifications = response.data.notifications.map((notification, index) => ({
@@ -243,8 +250,8 @@ const HomeScreen = ({ navigation }) => {
             icon: 'notifications'
           }))
           
-          // Limit to first 5 notifications for recent activity
-          setRecentActivities(notifications.slice(0, 5))
+          // Store all notifications (not limited to 5)
+          setRecentActivities(notifications)
         }
       }
     } catch (error) {
@@ -258,10 +265,14 @@ const HomeScreen = ({ navigation }) => {
   const fetchRecentLeads = async () => {
     try {
       const token = await storage.getToken()
-      const userId = await storage.getUserId() || await storage.getBrokerId()
+      const userId = await storage.getUserId()
+      
+      console.log('fetchRecentLeads called - userId:', userId, 'token:', token ? 'exists' : 'missing')
       
       if (token && userId) {
+        console.log('Calling leadsAPI.getLeads with userId:', userId)
         const response = await leadsAPI.getLeads(token, userId)
+        console.log('getLeads response:', response)
         
         if (response && response.success && response.data && response.data.items) {
           const leads = response.data.items.map((lead) => {
@@ -289,6 +300,8 @@ const HomeScreen = ({ navigation }) => {
           // Limit to first 5 leads for recent leads section
           setRecentLeads(leads.slice(0, 5))
         }
+      } else {
+        console.warn('fetchRecentLeads: Missing token or userId', { token: !!token, userId: !!userId })
       }
     } catch (error) {
       console.error('Error fetching recent leads:', error)
@@ -301,11 +314,15 @@ const HomeScreen = ({ navigation }) => {
   const fetchRecentProperties = async () => {
     try {
       const token = await storage.getToken()
-      const userId = await storage.getUserId() || await storage.getBrokerId()
+      const userId = await storage.getUserId()
+      
+      console.log('fetchRecentProperties called - userId:', userId, 'token:', token ? 'exists' : 'missing')
       
       if (token && userId) {
+        console.log('Calling propertiesAPI.getProperties with userId:', userId)
         // Fetch all properties (no status filter for recent properties)
         const response = await propertiesAPI.getProperties(userId, token, 'all')
+        console.log('getProperties response:', response)
         
         if (response && response.success && response.data) {
           const transformedData = transformPropertyData(response.data)
@@ -313,6 +330,8 @@ const HomeScreen = ({ navigation }) => {
           // Limit to first 5 properties for recent properties section
           setRecentProperties(transformedData.slice(0, 5))
         }
+      } else {
+        console.warn('fetchRecentProperties: Missing token or userId', { token: !!token, userId: !!userId })
       }
     } catch (error) {
       console.error('Error fetching recent properties:', error)
@@ -323,12 +342,33 @@ const HomeScreen = ({ navigation }) => {
 
   // Load profile data, metrics, connections count, notifications, leads, and properties on component mount
   useEffect(() => {
-    fetchUserProfile()
-    fetchConnectionsCount()
-    fetchMetrics()
-    fetchRecentNotifications()
-    fetchRecentLeads()
-    fetchRecentProperties()
+    const loadData = async () => {
+      try {
+        // First, fetch user profile to ensure userId is saved
+        await fetchUserProfile()
+        
+        // Small delay to ensure userId is saved to storage
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Then fetch other data that may depend on userId
+        console.log('Loading dashboard data...')
+        fetchConnectionsCount()
+        fetchMetrics()
+        fetchRecentNotifications()
+        fetchRecentLeads()
+        fetchRecentProperties()
+      } catch (error) {
+        console.error('Error loading initial data:', error)
+        // Still try to load other data even if profile fetch fails
+        fetchConnectionsCount()
+        fetchMetrics()
+        fetchRecentNotifications()
+        fetchRecentLeads()
+        fetchRecentProperties()
+      }
+    }
+    
+    loadData()
   }, [])
 
   const handleLogout = () => {
@@ -348,7 +388,7 @@ const HomeScreen = ({ navigation }) => {
   
   // Dashboard cards data matching the image
   const [dashboardCards, setDashboardCards] = useState({
-    totalLeads: 1,
+    totalLeads: 0,
     totalLeadsChange: 12.5,
     propertiesListed: 0,
     propertiesListedChange: 8.2,
@@ -461,6 +501,7 @@ const HomeScreen = ({ navigation }) => {
 
   // Recent Activity data
   const [recentActivities, setRecentActivities] = useState([])
+  const [showAllActivities, setShowAllActivities] = useState(false)
 
   const DonutChart = ({ data, size = 200 }) => {
     const colors = {
@@ -1305,13 +1346,31 @@ const HomeScreen = ({ navigation }) => {
           
           <View style={styles.recentActivityCard}>
             {recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <RecentActivityCard 
-                  key={activity.id} 
-                  activity={activity} 
-                  isLast={index === recentActivities.length - 1}
-                />
-              ))
+              <>
+                {(showAllActivities ? recentActivities : recentActivities.slice(0, 5)).map((activity, index, array) => (
+                  <RecentActivityCard 
+                    key={activity.id} 
+                    activity={activity} 
+                    isLast={index === array.length - 1}
+                  />
+                ))}
+                {recentActivities.length > 5 && (
+                  <TouchableOpacity
+                    style={styles.showMoreButton}
+                    onPress={() => setShowAllActivities(!showAllActivities)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.showMoreButtonText}>
+                      {showAllActivities ? 'Show Less' : 'Show More'}
+                    </Text>
+                    <MaterialIcons 
+                      name={showAllActivities ? 'expand-less' : 'expand-more'} 
+                      size={18} 
+                      color="#0D542BFF" 
+                    />
+                  </TouchableOpacity>
+                )}
+              </>
             ) : (
               <View style={styles.recentActivityItem}>
                 <Text style={styles.recentActivityDescription}>No recent activity</Text>
@@ -2214,6 +2273,20 @@ const styles = StyleSheet.create({
   recentActivityDivider: {
     height: 1,
     backgroundColor: '#E5E7EB',
+  },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    gap: 6,
+  },
+  showMoreButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0D542BFF',
   },
 
   // Performance Summary Styles

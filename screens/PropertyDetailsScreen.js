@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { Snackbar } from '../utils/snackbar'
 
 const { width } = Dimensions.get('window')
 
@@ -26,7 +27,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [property, setProperty] = useState(initialProperty)
   const [isLoading, setIsLoading] = useState(!initialProperty)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isFavorite, setIsFavorite] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
   const [relatedProperties, setRelatedProperties] = useState([])
   const [isLoadingRelated, setIsLoadingRelated] = useState(false)
@@ -186,7 +186,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       // Reset state when navigating to a new property
       setCurrentImageIndex(0)
       setActiveTab('description')
-      setIsFavorite(false)
       
       // Scroll to top when navigating to a new property
       if (scrollViewRef.current) {
@@ -207,7 +206,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       fetchRelatedProperties()
     }
   }, [property])
-
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -239,10 +237,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     } catch (error) {
       Alert.alert('Error', 'Unable to share property')
     }
-  }
-
-  const handleFavorite = () => {
-    setIsFavorite(!isFavorite)
   }
 
   const handleThumbnailPress = (index) => {
@@ -510,19 +504,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               <Text style={styles.featuredBadgeText}>Featured</Text>
             </View>
 
-            {/* Top Right Icons */}
-            <View style={styles.mainImageActions}>
-              <TouchableOpacity 
-                style={styles.mainImageActionButton}
-                onPress={handleFavorite}
-              >
-                <MaterialIcons 
-                  name={isFavorite ? "favorite" : "favorite-border"} 
-                  size={20} 
-                  color={isFavorite ? "#EF4444" : "#FFFFFF"} 
-                />
-              </TouchableOpacity>
-            </View>
           </View>
 
           {/* Scrollable Thumbnail Row */}
@@ -548,9 +529,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                       style={styles.thumbnailImage}
                       resizeMode="cover"
                     />
-                    {index === currentImageIndex && (
-                      <View style={styles.thumbnailOverlay} />
-                    )}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -613,6 +591,31 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                 </View>
               </View>
             </View>
+
+            {/* Inquiry Button */}
+            <TouchableOpacity 
+              style={styles.inquiryButton}
+              onPress={() => console.log('Inquiry pressed')}
+            >
+              <Text style={styles.inquiryButtonText}>Inquiry</Text>
+              <MaterialIcons name="chat-bubble-outline" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Property Amenities */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Property Amenities</Text>
+            <View style={styles.chipsContainer}>
+              {property.amenities && property.amenities.length > 0 ? (
+                property.amenities.map((amenity, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{amenity}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No property amenities listed</Text>
+              )}
+            </View>
           </View>
 
           {/* Nearby Amenities */}
@@ -627,6 +630,38 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                 ))
               ) : (
                 <Text style={styles.emptyText}>No nearby amenities listed</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Key Features */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Key Features</Text>
+            <View style={styles.chipsContainer}>
+              {property.features && property.features.length > 0 ? (
+                property.features.map((feature, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{feature}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No key features listed</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Location Benefits */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location Benefits</Text>
+            <View style={styles.chipsContainer}>
+              {property.locationBenefits && property.locationBenefits.length > 0 ? (
+                property.locationBenefits.map((benefit, index) => (
+                  <View key={index} style={styles.chip}>
+                    <Text style={styles.chipText}>{benefit}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No location benefits listed</Text>
               )}
             </View>
           </View>
@@ -778,38 +813,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          {/* Key Features */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Key Features</Text>
-            <View style={styles.chipsContainer}>
-              {property.features && property.features.length > 0 ? (
-                property.features.map((feature, index) => (
-                  <View key={index} style={styles.chip}>
-                    <Text style={styles.chipText}>{feature}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No key features listed</Text>
-              )}
-            </View>
-          </View>
-
-          {/* Location Benefits */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location Benefits</Text>
-            <View style={styles.chipsContainer}>
-              {property.locationBenefits && property.locationBenefits.length > 0 ? (
-                property.locationBenefits.map((benefit, index) => (
-                  <View key={index} style={styles.chip}>
-                    <Text style={styles.chipText}>{benefit}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No location benefits listed</Text>
-              )}
-            </View>
-          </View>
-
           {/* Agent Details */}
           <View style={styles.agentSection}>
             <Text style={styles.sectionTitle}>Agent Details</Text>
@@ -838,16 +841,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </Text>
                 </View>
               </View>
-              <View style={styles.agentActionButtons}>
-                <TouchableOpacity style={styles.contactBrokerButton} onPress={handleContact}>
-                  <Text style={styles.contactBrokerButtonText}>Contact Broker</Text>
-                  <MaterialIcons name="phone" size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.scheduleVisitButton} onPress={() => console.log('Schedule visit')}>
-                  <Text style={styles.scheduleVisitButtonText}>Schedule Visit</Text>
-                  <MaterialIcons name="calendar-today" size={18} color="#0D542BFF" />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.chatNowButton} onPress={() => console.log('Chat Now')}>
+                <Text style={styles.chatNowButtonText}>Chat Now</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -875,9 +871,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                     styles.inspectionStatus,
                     slot.status === 'Past' && styles.inspectionStatusPast
                   ]}>
-                    {slot.status === 'Past' && (
-                      <MaterialIcons name="circle" size={8} color={getStatusColor('sold')} />
-                    )}
                     <Text style={[
                       styles.inspectionStatusText,
                       slot.status === 'Past' && { color: getStatusColor('sold') }
@@ -1074,7 +1067,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     left: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -1095,7 +1088,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1293,6 +1286,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     flex: 1,
+  },
+  inquiryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginTop: 20,
+    gap: 8,
+  },
+  inquiryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   
   // Features
@@ -1763,43 +1772,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9CA3AF',
   },
-  agentActionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  contactBrokerButton: {
-    flex: 1,
-    flexDirection: 'row',
+  chatNowButton: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0D542BFF',
+    backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    gap: 8,
+    marginTop: 16,
   },
-  contactBrokerButtonText: {
+  chatNowButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  scheduleVisitButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#0D542BFF',
-    gap: 8,
-  },
-  scheduleVisitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0D542BFF',
+    color: '#1F2937',
   },
   
   // Inspection Times
@@ -1845,7 +1831,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    gap: 6,
     backgroundColor: 'transparent',
   },
   inspectionStatusPast: {
