@@ -15,7 +15,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
-import { propertiesAPI } from '../services/api'
+import { propertiesAPI, savedPropertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
 
@@ -31,6 +31,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [relatedProperties, setRelatedProperties] = useState([])
   const [isLoadingRelated, setIsLoadingRelated] = useState(false)
   const [currentBrokerId, setCurrentBrokerId] = useState(null)
+  const [isSaved, setIsSaved] = useState(false)
+  const [isCheckingSaved, setIsCheckingSaved] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const scrollViewRef = useRef(null)
 
   // Transform API data to match screen expectations
@@ -204,6 +207,121 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   useEffect(() => {
     if (property && (property.id || property._id)) {
       fetchRelatedProperties()
+    }
+  }, [property])
+
+  // Check if property is saved
+  const checkSavedProperty = async () => {
+    if (!property) return
+    
+    try {
+      setIsCheckingSaved(true)
+      const propertyId = property.id || property._id
+      if (!propertyId) {
+        setIsCheckingSaved(false)
+        return
+      }
+
+      const token = await storage.getToken()
+      if (!token) {
+        setIsCheckingSaved(false)
+        return
+      }
+
+      const response = await savedPropertiesAPI.checkSavedProperty(propertyId, token)
+      
+      if (response.success && response.data) {
+        setIsSaved(response.data.isSaved || false)
+      }
+    } catch (error) {
+      console.error('Error checking saved property:', error)
+      setIsSaved(false)
+    } finally {
+      setIsCheckingSaved(false)
+    }
+  }
+
+  // Save or unsave property
+  const handleToggleSave = async () => {
+    if (!property || isSaving) return
+    
+    try {
+      setIsSaving(true)
+      const propertyId = property.id || property._id
+      if (!propertyId) {
+        Alert.alert('Error', 'Property ID not found')
+        setIsSaving(false)
+        return
+      }
+
+      const token = await storage.getToken()
+      if (!token) {
+        Alert.alert('Error', 'Please login to save properties')
+        setIsSaving(false)
+        return
+      }
+
+      if (isSaved) {
+        // Unsave property
+        const response = await savedPropertiesAPI.unsaveProperty(propertyId, token)
+        if (response && response.success) {
+          setIsSaved(false)
+          Snackbar.showSuccess('Success', 'Property removed from saved list')
+        } else {
+          const errorMsg = response?.message || response?.error || 'Failed to unsave property'
+          Alert.alert('Error', errorMsg)
+        }
+      } else {
+        // Save property
+        const response = await savedPropertiesAPI.saveProperty(propertyId, token)
+        if (response && response.success) {
+          setIsSaved(true)
+          Snackbar.showSuccess('Success', 'Property saved successfully')
+        } else {
+          // Handle case where property is already saved
+          const errorMsg = response?.message || response?.error || ''
+          if (errorMsg && (errorMsg.includes('already saved') || errorMsg.includes('already exists'))) {
+            setIsSaved(true)
+            Snackbar.showInfo('Info', 'Property is already saved')
+          } else {
+            Alert.alert('Error', errorMsg || 'Failed to save property')
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling save property:', error)
+      // Handle error response - check both axios error structure and direct response
+      const errorResponse = error.response?.data
+      const errorMessage = errorResponse?.message || errorResponse?.error || error.message
+      
+      // Check if error response indicates property is already saved
+      if (errorResponse && !errorResponse.success) {
+        const msg = errorResponse.message || errorResponse.error || ''
+        if (msg && (msg.includes('already saved') || msg.includes('already exists'))) {
+          setIsSaved(true)
+          Snackbar.showInfo('Info', 'Property is already saved')
+          setIsSaving(false)
+          return
+        }
+      }
+      
+      if (errorMessage && typeof errorMessage === 'string' && errorMessage.includes('already saved')) {
+        setIsSaved(true)
+        Snackbar.showInfo('Info', 'Property is already saved')
+      } else if (errorMessage) {
+        Alert.alert('Error', errorMessage)
+      } else {
+        Alert.alert('Error', 'Failed to save property. Please try again.')
+      }
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Check if property is saved when property is loaded
+  useEffect(() => {
+    if (property && (property.id || property._id)) {
+      checkSavedProperty()
     }
   }, [property])
 
@@ -493,17 +611,71 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         <View style={styles.imageSection}>
           {/* Fixed Main Image */}
           <View style={styles.mainImageContainer}>
-            <Image 
-              source={{ uri: property.images?.[currentImageIndex] || property.images?.[0] }} 
-              style={styles.mainImage}
-              resizeMode="cover"
-            />
-            
-            {/* Featured Badge */}
-            <View style={styles.featuredBadge}>
-              <Text style={styles.featuredBadgeText}>Featured</Text>
-            </View>
+            {property.images && property.images.length > 0 ? (
+              <>
+                <Image 
+                  source={{ uri: property.images[currentImageIndex] || property.images[0] }} 
+                  style={styles.mainImage}
+                  resizeMode="cover"
+                />
+                
+                {/* Featured Badge */}
+                <View style={styles.featuredBadge}>
+                  <Text style={styles.featuredBadgeText}>Featured</Text>
+                </View>
 
+                {/* Image Action Buttons */}
+                <View style={styles.mainImageActions}>
+                  <TouchableOpacity 
+                    style={styles.mainImageActionButton}
+                    onPress={handleToggleSave}
+                    disabled={isSaving || isCheckingSaved}
+                  >
+                    {isCheckingSaved ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <MaterialIcons 
+                        name={isSaved ? "favorite" : "favorite-border"} 
+                        size={24} 
+                        color={isSaved ? "#FF6B6B" : "#FFFFFF"} 
+                      />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.mainImagePlaceholder}>
+                  <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                  <Text style={styles.placeholderText}>No Image</Text>
+                  {/* Property Type Badge on Placeholder */}
+                  {property.type && (
+                    <View style={styles.propertyTypeBadge}>
+                      <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Image Action Buttons on Placeholder */}
+                <View style={styles.mainImageActions}>
+                  <TouchableOpacity 
+                    style={styles.mainImageActionButton}
+                    onPress={handleToggleSave}
+                    disabled={isSaving || isCheckingSaved}
+                  >
+                    {isCheckingSaved ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <MaterialIcons 
+                        name={isSaved ? "favorite" : "favorite-border"} 
+                        size={24} 
+                        color={isSaved ? "#FF6B6B" : "#FFFFFF"} 
+                      />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
 
           {/* Scrollable Thumbnail Row */}
@@ -1062,6 +1234,32 @@ const styles = StyleSheet.create({
   mainImage: {
     width: '100%',
     height: 300,
+  },
+  mainImagePlaceholder: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    borderRadius: 12,
+  },
+  propertyTypeBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  propertyTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   featuredBadge: {
     position: 'absolute',

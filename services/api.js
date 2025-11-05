@@ -626,6 +626,66 @@ export const propertiesAPI = {
   }
 };
 
+// Saved Properties API functions
+export const savedPropertiesAPI = {
+  // Check if property is saved
+  checkSavedProperty: async (propertyId, token) => {
+    try {
+      console.log('Checking if property is saved:', propertyId);
+      const response = await api.get(`/api/saved-properties/check/${propertyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Saved property check completed:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Check saved property error:', error);
+      throw error;
+    }
+  },
+
+  // Save property
+  saveProperty: async (propertyId, token) => {
+    try {
+      console.log('Saving property:', propertyId);
+      const response = await api.post('/api/saved-properties', {
+        propertyId: propertyId
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Property saved successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Save property error:', error);
+      throw error;
+    }
+  },
+
+  // Unsave property
+  unsaveProperty: async (propertyId, token) => {
+    try {
+      console.log('Unsaving property:', propertyId);
+      const response = await api.delete(`/api/saved-properties/${propertyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Property unsaved successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Unsave property error:', error);
+      throw error;
+    }
+  }
+};
+
 // Google Places API functions
 export const placesAPI = {
   // Google Places API key from environment
