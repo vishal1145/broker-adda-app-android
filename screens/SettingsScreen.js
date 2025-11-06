@@ -233,12 +233,7 @@ const SettingsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-        <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Modern Header */}
+        {/* Modern Header - Fixed at top */}
         <View style={styles.modernHeader}>
           {/* Background Pattern */}
           <View style={styles.headerPattern}>
@@ -281,6 +276,11 @@ const SettingsScreen = ({ navigation }) => {
             </View>
           </View>
         </View>
+        <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Settings Sections */}
         <View style={styles.settingsContainer}>
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -470,6 +470,7 @@ const styles = StyleSheet.create({
   // Settings Container
   settingsContainer: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 30,
   },
   section: {

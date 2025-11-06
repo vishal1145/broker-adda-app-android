@@ -1167,12 +1167,7 @@ const HomeScreen = ({ navigation }) => {
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-        <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Modern Header */}
+        {/* Modern Header - Fixed at top */}
         <View style={styles.modernHeader}>
           {/* Background Pattern */}
           <View style={styles.headerPattern}>
@@ -1216,7 +1211,11 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-
+        <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Dashboard Cards - Matching LeadsScreen Style */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
@@ -1419,7 +1418,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -1564,6 +1563,7 @@ const styles = StyleSheet.create({
   // Stats Section Styles - Matching LeadsScreen exactly
   statsSection: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     marginBottom: 24,
   },
   statsGrid: {

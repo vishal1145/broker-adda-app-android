@@ -706,21 +706,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-      
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => fetchLeadDetails(true)}
-            colors={['#0D542BFF']}
-            tintColor="#0D542BFF"
-          />
-        }
-      >
-        {/* Header */}
+        {/* Header - Fixed at top */}
         <View style={styles.header}>
           <View style={styles.headerPattern}>
             <View style={styles.patternCircle1} />
@@ -750,7 +736,20 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
           </View>
         </View>
-
+      
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => fetchLeadDetails(true)}
+            colors={['#0D542BFF']}
+            tintColor="#0D542BFF"
+          />
+        }
+      >
         {/* Lead Information Card - Matching LeadsScreen style */}
         <View style={styles.leadInfoCard}>
           <View style={styles.leadInfoHeader}>
@@ -1359,7 +1358,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -1445,6 +1444,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

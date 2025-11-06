@@ -392,7 +392,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-        {/* Header */}
+        {/* Header - Fixed at top */}
       <View style={styles.header}>
         <View style={styles.headerPattern}>
           <View style={styles.patternCircle1} />
@@ -876,7 +876,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -976,6 +976,7 @@ const styles = StyleSheet.create({
   
   // Image Section
   imageSection: {
+    marginTop: 20,
     marginBottom: 20,
     paddingHorizontal: 20,
   },

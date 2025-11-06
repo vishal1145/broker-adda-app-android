@@ -19,6 +19,7 @@ import PropertiesScreen from '../screens/PropertiesScreen';
 import PropertyDetailsScreen from '../screens/PropertyDetailsScreen';
 import CreatePropertyScreen from '../screens/CreatePropertyScreen';
 import CreateLeadScreen from '../screens/CreateLeadScreen';
+import ShareLeadScreen from '../screens/ShareLeadScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -121,6 +122,14 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="CreateLead" 
           component={CreateLeadScreen}
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="ShareLead" 
+          component={ShareLeadScreen}
           options={{
             presentation: 'modal',
             headerShown: false,
