@@ -24,6 +24,7 @@ const HomeScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [profileImage, setProfileImage] = useState(null)
   const [imageLoadErrors, setImageLoadErrors] = useState({})
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
   // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
   const getSecureImageUrl = (url) => {
@@ -233,14 +234,41 @@ const HomeScreen = ({ navigation }) => {
     return `₹${amount.toLocaleString('en-IN')}`
   }
 
+  // Fetch unread notification count
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const token = await storage.getToken()
+      const brokerId = await storage.getUserId()
+      const userId = await storage.getBrokerId()
+      
+      if (token) {
+        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+        
+        if (response && response.success && response.data && response.data.notifications) {
+          // Count unread notifications (where isRead is false)
+          const unreadCount = response.data.notifications.filter(
+            notification => !notification.isRead
+          ).length
+          
+          setUnreadNotificationCount(unreadCount)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching unread notification count:', error)
+      setUnreadNotificationCount(0)
+    }
+  }
+
   // Fetch recent notifications
   const fetchRecentNotifications = async () => {
     try {
       const token = await storage.getToken()
+      const brokerId = await storage.getUserId()
+      const userId = await storage.getBrokerId()
       
       if (token) {
         // Fetch more notifications to allow "Show More" functionality
-        const response = await notificationsAPI.getRecentNotifications(token, 20)
+        const response = await notificationsAPI.getRecentNotifications(token, 7, brokerId, userId)
         
         if (response && response.success && response.data && response.data.notifications) {
           const notifications = response.data.notifications.map((notification, index) => ({
@@ -354,6 +382,7 @@ const HomeScreen = ({ navigation }) => {
         console.log('Loading dashboard data...')
         fetchConnectionsCount()
         fetchMetrics()
+        fetchUnreadNotificationCount()
         fetchRecentNotifications()
         fetchRecentLeads()
         fetchRecentProperties()
@@ -362,6 +391,7 @@ const HomeScreen = ({ navigation }) => {
         // Still try to load other data even if profile fetch fails
         fetchConnectionsCount()
         fetchMetrics()
+        fetchUnreadNotificationCount()
         fetchRecentNotifications()
         fetchRecentLeads()
         fetchRecentProperties()
@@ -501,7 +531,6 @@ const HomeScreen = ({ navigation }) => {
 
   // Recent Activity data
   const [recentActivities, setRecentActivities] = useState([])
-  const [showAllActivities, setShowAllActivities] = useState(false)
 
   const DonutChart = ({ data, size = 200 }) => {
     const colors = {
@@ -602,7 +631,14 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.statCardContent}>
         <View style={styles.statTopRow}>
           <MaterialIcons name={icon} size={22} color="#FFFFFF" />
-          <Text style={styles.statCount}>{value.toLocaleString()}</Text>
+          <Text 
+            style={styles.statCount}
+            numberOfLines={1}
+            adjustsFontSizeToFit={true}
+            minimumFontScale={0.6}
+          >
+            {value.toLocaleString()}
+          </Text>
         </View>
         <Text style={styles.statTitle}>{title}</Text>
       </View>
@@ -1185,7 +1221,19 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                <View style={styles.notificationIconContainer}>
+                  <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                  {unreadNotificationCount > 0 && (
+                    <View style={[
+                      styles.notificationBadge,
+                      unreadNotificationCount > 9 && styles.notificationBadgeWide
+                    ]}>
+                      <Text style={styles.notificationBadgeText} numberOfLines={1} ellipsizeMode="clip">
+                        {unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
@@ -1345,31 +1393,13 @@ const HomeScreen = ({ navigation }) => {
           
           <View style={styles.recentActivityCard}>
             {recentActivities.length > 0 ? (
-              <>
-                {(showAllActivities ? recentActivities : recentActivities.slice(0, 5)).map((activity, index, array) => (
+              recentActivities.slice(0, 3).map((activity, index, array) => (
                   <RecentActivityCard 
                     key={activity.id} 
                     activity={activity} 
                     isLast={index === array.length - 1}
                   />
-                ))}
-                {recentActivities.length > 5 && (
-                  <TouchableOpacity
-                    style={styles.showMoreButton}
-                    onPress={() => setShowAllActivities(!showAllActivities)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.showMoreButtonText}>
-                      {showAllActivities ? 'Show Less' : 'Show More'}
-                    </Text>
-                    <MaterialIcons 
-                      name={showAllActivities ? 'expand-less' : 'expand-more'} 
-                      size={18} 
-                      color="#0D542BFF" 
-                    />
-                  </TouchableOpacity>
-                )}
-              </>
+              ))
             ) : (
               <View style={styles.recentActivityItem}>
                 <Text style={styles.recentActivityDescription}>No recent activity</Text>
@@ -1487,6 +1517,43 @@ const styles = StyleSheet.create({
   },
   profileButton: {
     padding: 4,
+  },
+  notificationIconContainer: {
+    position: 'relative',
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    zIndex: 10,
+  },
+  notificationBadgeWide: {
+    width: 'auto',
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+  },
+  notificationBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 11,
   },
   profileImageContainer: {
     width: 56,
@@ -1608,6 +1675,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
+    flexShrink: 0,
+    textAlign: 'right',
+    minWidth: 40,
   },
   statTitle: {
     fontSize: 14,
@@ -2179,11 +2249,11 @@ const styles = StyleSheet.create({
 
   // Add Property Card Styles
   addPropertyCard: {
-    backgroundColor: '#FEF9C3',
+    backgroundColor: '#FEFCE8',
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#FCD34D',
+    borderColor: '#EAB308',
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2205,11 +2275,11 @@ const styles = StyleSheet.create({
 
   // Add Lead Card Styles
   addLeadCard: {
-    backgroundColor: '#FEF9C3',
+    backgroundColor: '#FEFCE8',
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#FCD34D',
+    borderColor: '#EAB308',
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',

@@ -10,7 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons'
 import { styles } from '../styles/ChatListScreenStyles'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { chatAPI, authAPI } from '../services/api'
+import { chatAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 
@@ -103,6 +103,7 @@ const ChatListScreen = ({ navigation }) => {
     const [userProfile, setUserProfile] = useState(null)
     const [profileImage, setProfileImage] = useState(null)
     const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
     // Fetch user profile data
     const fetchUserProfile = async () => {
@@ -148,6 +149,31 @@ const ChatListScreen = ({ navigation }) => {
         }
     }
 
+    // Fetch unread notification count
+    const fetchUnreadNotificationCount = async () => {
+        try {
+            const token = await storage.getToken()
+            const brokerId = await storage.getUserId()
+            const userId = await storage.getBrokerId()
+            
+            if (token) {
+                const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+                
+                if (response && response.success && response.data && response.data.notifications) {
+                    // Count unread notifications (where isRead is false)
+                    const unreadCount = response.data.notifications.filter(
+                        notification => !notification.isRead
+                    ).length
+                    
+                    setUnreadNotificationCount(unreadCount)
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching unread notification count:', error)
+            setUnreadNotificationCount(0)
+        }
+    }
+
     // Handle message press
     const handleMessagePress = () => {
         navigation.navigate('Notifications')
@@ -178,6 +204,7 @@ const ChatListScreen = ({ navigation }) => {
     useEffect(() => {
         fetchChats()
         fetchUserProfile()
+        fetchUnreadNotificationCount()
     }, [])
 
     const renderChatItem = ({ item }) => {
@@ -293,7 +320,19 @@ const ChatListScreen = ({ navigation }) => {
                         </View>
                         <View style={styles.headerRight}>
                             <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                                <View style={styles.notificationIconContainer}>
+                                    <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                                    {unreadNotificationCount > 0 && (
+                                        <View style={[
+                                            styles.notificationBadge,
+                                            unreadNotificationCount > 9 && styles.notificationBadgeWide
+                                        ]}>
+                                            <Text style={styles.notificationBadgeText} numberOfLines={1} ellipsizeMode="clip">
+                                                {unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount)}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
                             </TouchableOpacity>
                         </View>
                         <View style={styles.headerRight}>

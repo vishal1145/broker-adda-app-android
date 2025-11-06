@@ -794,10 +794,21 @@ export const chatAPI = {
 
 // Notifications API functions
 export const notificationsAPI = {
-  getNotifications: async (token) => {
+  getNotifications: async (token, brokerId, userId) => {
     try {
-      console.log('Fetching notifications');
-      const response = await api.get('/api/notifications', {
+      console.log('Fetching notifications:', { brokerId, userId });
+      let url = '/api/notifications';
+      
+      // Add query parameters if provided
+      if (brokerId && userId) {
+        url += `?brokerId=${brokerId}&userId=${userId}`;
+      } else if (brokerId) {
+        url += `?brokerId=${brokerId}`;
+      } else if (userId) {
+        url += `?userId=${userId}`;
+      }
+      
+      const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -811,10 +822,21 @@ export const notificationsAPI = {
       throw error;
     }
   },
-  getRecentNotifications: async (token, days = 7) => {
+  getRecentNotifications: async (token, days = 7, brokerId, userId) => {
     try {
-      console.log('Fetching recent notifications:', { days });
-      const response = await api.get(`/api/notifications/recent?days=${days}`, {
+      console.log('Fetching recent notifications:', { days, brokerId, userId });
+      let url = `/api/notifications/recent?days=${days}`;
+      
+      // Add query parameters if provided
+      if (brokerId && userId) {
+        url += `&brokerId=${brokerId}&userId=${userId}`;
+      } else if (brokerId) {
+        url += `&brokerId=${brokerId}`;
+      } else if (userId) {
+        url += `&userId=${userId}`;
+      }
+      
+      const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',

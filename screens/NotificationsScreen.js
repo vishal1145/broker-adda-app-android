@@ -162,9 +162,11 @@ const NotificationsScreen = ({ navigation }) => {
     try {
       setIsLoadingNotifications(true)
       const token = await storage.getToken()
+      const brokerId = await storage.getUserId()
+      const userId = await storage.getBrokerId()
       
       if (token) {
-        const response = await notificationsAPI.getNotifications(token)
+        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
         
         if (response && response.success && response.data && response.data.notifications) {
           const apiNotifications = response.data.notifications.map((notification) => {

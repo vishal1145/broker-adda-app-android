@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
-import { propertiesAPI, authAPI } from '../services/api'
+import { propertiesAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 const { width } = Dimensions.get('window')
@@ -103,6 +103,7 @@ const PropertiesScreen = ({ navigation }) => {
   const [userProfile, setUserProfile] = useState(null)
   const [profileImage, setProfileImage] = useState(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
   // Transform API data to match screen expectations
   const transformPropertyData = (apiProperties) => {
@@ -223,6 +224,31 @@ const PropertiesScreen = ({ navigation }) => {
     }
   }
 
+  // Fetch unread notification count
+  const fetchUnreadNotificationCount = async () => {
+    try {
+      const token = await storage.getToken()
+      const brokerId = await storage.getUserId()
+      const userId = await storage.getBrokerId()
+      
+      if (token) {
+        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+        
+        if (response && response.success && response.data && response.data.notifications) {
+          // Count unread notifications (where isRead is false)
+          const unreadCount = response.data.notifications.filter(
+            notification => !notification.isRead
+          ).length
+          
+          setUnreadNotificationCount(unreadCount)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching unread notification count:', error)
+      setUnreadNotificationCount(0)
+    }
+  }
+
   // Handle message press
   const handleMessagePress = () => {
     navigation.navigate('Notifications')
@@ -296,6 +322,7 @@ const PropertiesScreen = ({ navigation }) => {
     setPropertiesData([])
     fetchProperties(false)
     fetchUserProfile()
+    fetchUnreadNotificationCount()
     isInitialMount.current = false
   }, [])
 
@@ -618,7 +645,19 @@ const PropertiesScreen = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                <View style={styles.notificationIconContainer}>
+                  <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                  {unreadNotificationCount > 0 && (
+                    <View style={[
+                      styles.notificationBadge,
+                      unreadNotificationCount > 9 && styles.notificationBadgeWide
+                    ]}>
+                      <Text style={styles.notificationBadgeText} numberOfLines={1} ellipsizeMode="clip">
+                        {unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
@@ -664,7 +703,14 @@ const PropertiesScreen = ({ navigation }) => {
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="home" size={22} color="#0D542BFF" />
-                  <Text style={styles.statCount}>{propertiesData.length}</Text>
+                  <Text 
+                    style={styles.statCount}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.6}
+                  >
+                    {propertiesData.length.toLocaleString()}
+                  </Text>
                 </View>
                 <Text style={styles.statTitle}>Total Properties</Text>
               </View>
@@ -675,10 +721,17 @@ const PropertiesScreen = ({ navigation }) => {
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="check-circle" size={22} color="#0D542BFF" />
-                  <Text style={styles.statCount}>{propertiesData.filter(prop => {
-                    const status = prop.status?.toLowerCase() || ''
-                    return status.includes('approved') || status.includes('active')
-                  }).length}</Text>
+                  <Text 
+                    style={styles.statCount}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.6}
+                  >
+                    {propertiesData.filter(prop => {
+                      const status = prop.status?.toLowerCase() || ''
+                      return status.includes('approved') || status.includes('active')
+                    }).length.toLocaleString()}
+                  </Text>
                 </View>
                 <Text style={styles.statTitle}>Approved</Text>
               </View>
@@ -689,10 +742,17 @@ const PropertiesScreen = ({ navigation }) => {
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="schedule" size={22} color="#F59E0B" />
-                  <Text style={styles.statCount}>{propertiesData.filter(prop => {
-                    const status = prop.status?.toLowerCase() || ''
-                    return status.includes('pending')
-                  }).length}</Text>
+                  <Text 
+                    style={styles.statCount}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.6}
+                  >
+                    {propertiesData.filter(prop => {
+                      const status = prop.status?.toLowerCase() || ''
+                      return status.includes('pending')
+                    }).length.toLocaleString()}
+                  </Text>
                 </View>
                 <Text style={styles.statTitle}>Pending</Text>
               </View>
@@ -703,11 +763,16 @@ const PropertiesScreen = ({ navigation }) => {
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="cancel" size={22} color="#DC2626" />
-                  <Text style={[styles.statCount, styles.statCountRed]}>
+                  <Text 
+                    style={[styles.statCount, styles.statCountRed]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.6}
+                  >
                     {propertiesData.filter(prop => {
                       const status = prop.status?.toLowerCase() || ''
                       return status.includes('rejected')
-                    }).length}
+                    }).length.toLocaleString()}
                   </Text>
                 </View>
                 <Text style={[styles.statTitle, styles.statTitleRed]}>Rejected</Text>
@@ -867,6 +932,43 @@ const styles = StyleSheet.create({
   profileButton: {
     padding: 4,
   },
+  notificationIconContainer: {
+    position: 'relative',
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    zIndex: 10,
+  },
+  notificationBadgeWide: {
+    width: 'auto',
+    minWidth: 20,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+  },
+  notificationBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 11,
+  },
   profileImageContainer: {
     width: 56,
     height: 56,
@@ -946,6 +1048,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#1F2937',
+    flexShrink: 0,
+    textAlign: 'right',
+    minWidth: 40,
   },
   statCountRed: {
     color: '#DC2626', // Red color for rejected
