@@ -90,7 +90,6 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 }
 
 const SettingsScreen = ({ navigation }) => {
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(true)
   const [emailEnabled, setEmailEnabled] = useState(false)
   const [smsEnabled, setSmsEnabled] = useState(true)
@@ -167,7 +166,6 @@ const SettingsScreen = ({ navigation }) => {
       title: 'Account',
       items: [
         { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate', route: 'Profile', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
-        { icon: 'verified-user', title: 'Two-Factor Authentication', subtitle: 'Enhanced security for your account', action: 'toggle', value: twoFactorEnabled, onToggle: setTwoFactorEnabled, iconColor: '#9CA3AF', iconBg: '#F3F4F6', iconBorder: '#E5E7EB' },
         { icon: 'logout', title: 'Logout', subtitle: '', action: 'logout', isEmphasis: true, iconColor: '#F59E0B', iconBg: '#FFF7ED', iconBorder: '#FED7AA' },
         { icon: 'delete', title: 'Delete Account', subtitle: '', action: 'navigate', destructive: true }
       ]
@@ -183,22 +181,14 @@ const SettingsScreen = ({ navigation }) => {
     {
       title: 'Privacy & Security',
       items: [
-        { icon: 'lock-outline', title: 'Privacy Policy', subtitle: '', action: 'navigate', url: 'https://broker-adda.algofolks.com/privacy', iconColor: '#3B82F6', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
-        { icon: 'description', title: 'Terms of Service', subtitle: '', action: 'navigate', url: 'https://broker-adda.algofolks.com/terms', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
-        { icon: 'storage', title: 'Data Management', subtitle: 'Export or delete your data', action: 'navigate', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
+        { icon: 'lock-outline', title: 'Privacy Policy', subtitle: '', action: 'navigate', url: 'https://brokergully.com/privacy', iconColor: '#3B82F6', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'description', title: 'Terms of Service', subtitle: '', action: 'navigate', url: 'https://brokergully.com/terms', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     },
     {
-      title: 'Appearance',
+      title: 'Support',
       items: [
-        { icon: 'palette', title: 'App Theme', subtitle: 'Choose light or dark mode', action: 'navigate', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
-      ]
-    },
-    {
-      title: 'Support & Feedback',
-      items: [
-        { icon: 'help-outline', title: 'Help Center', subtitle: '', action: 'navigate', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
-        { icon: 'chat-bubble-outline', title: 'Send Feedback', subtitle: '', action: 'navigate', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
+        { icon: 'help-outline', title: 'Help Center', subtitle: 'Get help and find answers to common questions', action: 'navigate', url: 'https://brokergully.com/contact', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     }
   ]
@@ -261,7 +251,7 @@ const SettingsScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Manage Your Settings</Text>
-                <Text style={styles.welcomeName}>{userName}</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>

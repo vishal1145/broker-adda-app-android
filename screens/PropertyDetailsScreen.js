@@ -6,11 +6,9 @@ import {
   StatusBar, 
   TouchableOpacity, 
   ScrollView,
-  Dimensions,
   Image,
   Share,
   Alert,
-  FlatList,
   ActivityIndicator
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -19,8 +17,6 @@ import { propertiesAPI, savedPropertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
 
-const { width } = Dimensions.get('window')
-
 const PropertyDetailsScreen = ({ navigation, route }) => {
   const { property: initialProperty } = route.params || {}
   
@@ -28,8 +24,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [isLoading, setIsLoading] = useState(!initialProperty)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState('description')
-  const [relatedProperties, setRelatedProperties] = useState([])
-  const [isLoadingRelated, setIsLoadingRelated] = useState(false)
   const [currentBrokerId, setCurrentBrokerId] = useState(null)
   const [isSaved, setIsSaved] = useState(false)
   const [isCheckingSaved, setIsCheckingSaved] = useState(false)
@@ -80,12 +74,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
-  // Transform array of properties (for related properties)
-  const transformPropertiesArray = (apiProperties) => {
-    if (!Array.isArray(apiProperties)) return []
-    return apiProperties.map(prop => transformPropertyData(prop)).filter(prop => prop !== null)
-  }
-
   // Fetch property details from API
   const fetchPropertyDetails = async () => {
     try {
@@ -131,46 +119,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
-  // Fetch related properties (all properties excluding current)
-  const fetchRelatedProperties = async () => {
-    try {
-      setIsLoadingRelated(true)
-      
-      const token = await storage.getToken()
-      
-      if (!token) {
-        setIsLoadingRelated(false)
-        return
-      }
-
-      // Fetch all properties from the API endpoint
-      const response = await propertiesAPI.getAllProperties(token)
-      
-      if (response.success && response.data && Array.isArray(response.data)) {
-        // Transform the data array
-        const transformedData = transformPropertiesArray(response.data)
-        
-        // Get current property ID (handle both _id and id formats)
-        const currentPropertyId = property?.id || property?._id || initialProperty?.id || initialProperty?._id
-        
-        // Filter out current property
-        const filtered = transformedData.filter(prop => {
-          const propId = prop.id || prop._id
-          const currentId = currentPropertyId?.toString()
-          return propId?.toString() !== currentId
-        })
-        
-        setRelatedProperties(filtered)
-      }
-    } catch (error) {
-      console.error('Error fetching related properties:', error)
-      // Set empty array on error to show empty state
-      setRelatedProperties([])
-    } finally {
-      setIsLoadingRelated(false)
-    }
-  }
-
   // Get current broker ID on mount
   useEffect(() => {
     const getBrokerId = async () => {
@@ -202,13 +150,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       fetchPropertyDetails()
     }
   }, [route.params?.property])
-
-  // Fetch related properties when property is loaded
-  useEffect(() => {
-    if (property && (property.id || property._id)) {
-      fetchRelatedProperties()
-    }
-  }, [property])
 
   // Check if property is saved
   const checkSavedProperty = async () => {
@@ -447,127 +388,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     )
   }
 
-  // Property Card Component - Matching PropertiesScreen design
-  const PropertyCard = ({ property }) => {
-    const getStatusBackgroundColor = (status) => {
-      const statusLower = status?.toLowerCase() || 'active'
-      if (statusLower.includes('approved') || statusLower.includes('active')) return '#D1FAE5'
-      if (statusLower.includes('pending')) return '#FEF3C7'
-      if (statusLower.includes('rejected')) return '#FEE2E2'
-      if (statusLower.includes('sold')) return '#F3F4F6'
-      return '#D1FAE5'
-    }
-
-    const getStatusTextColor = (status) => {
-      const statusLower = status?.toLowerCase() || 'active'
-      if (statusLower.includes('approved') || statusLower.includes('active')) return '#059669'
-      if (statusLower.includes('pending')) return '#F59E0B'
-      if (statusLower.includes('rejected')) return '#DC2626'
-      if (statusLower.includes('sold')) return '#6B7280'
-      return '#059669'
-    }
-
-    const getStatusDisplayText = (status) => {
-      const statusLower = status?.toLowerCase() || 'active'
-      if (statusLower.includes('approved')) return 'Approved'
-      if (statusLower.includes('pending')) return 'Pending'
-      if (statusLower.includes('rejected')) return 'Rejected'
-      if (statusLower.includes('active')) return 'Active'
-      if (statusLower.includes('sold')) return 'Sold'
-      return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
-    }
-
-    const hasImages = property.images && property.images.length > 0
-    const statusBgColor = getStatusBackgroundColor(property.status)
-    const statusTextColor = getStatusTextColor(property.status)
-
-    return (
-      <TouchableOpacity 
-        style={styles.propertyCard}
-        onPress={() => navigation.navigate('PropertyDetails', { property })}
-        activeOpacity={0.8}
-      >
-        <View style={styles.cardTopSection}>
-          {/* Property Image - Left Side */}
-          <View style={styles.propertyImageContainer}>
-            {hasImages ? (
-              <Image 
-                source={{ uri: property.images[0] }} 
-                style={styles.propertyImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.propertyImagePlaceholder}>
-                <MaterialIcons name="home" size={48} color="#D1D5DB" />
-                <Text style={styles.placeholderText}>No Image</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Property Content - Right Side */}
-          <View style={styles.propertyContent}>
-            {/* Title with Icon */}
-            <View style={styles.titleRow}>
-              <MaterialIcons name="home" size={16} color="#1F2937" />
-              <Text style={styles.propertyTitle} numberOfLines={1}>
-                {property.title}
-              </Text>
-            </View>
-            
-            {/* Address with Icon */}
-            <View style={styles.addressRow}>
-              <MaterialIcons name="location-on" size={14} color="#6B7280" />
-              <Text style={styles.propertyAddressText} numberOfLines={1}>
-                {property.address}
-              </Text>
-            </View>
-            
-            {/* Price */}
-            <Text style={styles.propertyPrice}>
-              {property.price}
-            </Text>
-            
-            {/* Status Row */}
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Status</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
-                <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
-                  {getStatusDisplayText(property.status)}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-        
-        {/* Divider - Full Width */}
-        <View style={styles.divider} />
-        
-        {/* Features Below - Starting from Image Position */}
-        <View style={styles.propertyFeatures}>
-          <View style={styles.featureItem}>
-            <MaterialIcons name="bed" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <MaterialIcons name="home" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
-          </View>
-          
-          <View style={styles.featureItem}>
-            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
-            <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    )
-  }
-
   return (
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
@@ -726,14 +546,14 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               {/* Left Column */}
               <View style={styles.propertyDetailColumn}>
                 <View style={styles.propertyDetailItem}>
-                  <MaterialIcons name="bed" size={20} color="#0D542BFF" />
+                  <MaterialIcons name="bed" size={20} color="#6B7280" />
                   <View style={styles.propertyDetailContent}>
                     <Text style={styles.propertyDetailLabel}>Bedrooms</Text>
                     <Text style={styles.propertyDetailValue}>{property.bedrooms} BHK</Text>
                   </View>
                 </View>
                 <View style={styles.propertyDetailItem}>
-                  <MaterialIcons name="schedule" size={20} color="#0D542BFF" />
+                  <MaterialIcons name="schedule" size={20} color="#6B7280" />
                   <View style={styles.propertyDetailContent}>
                     <Text style={styles.propertyDetailLabel}>Listed</Text>
                     <Text style={styles.propertyDetailValue}>{property.listedDate || '3 days ago'}</Text>
@@ -744,7 +564,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               {/* Right Column */}
               <View style={styles.propertyDetailColumn}>
                 <View style={styles.propertyDetailItem}>
-                  <MaterialIcons name="square-foot" size={20} color="#0D542BFF" />
+                  <MaterialIcons name="square-foot" size={20} color="#6B7280" />
                   <View style={styles.propertyDetailContent}>
                     <Text style={styles.propertyDetailLabel}>Property Size</Text>
                     <Text style={styles.propertyDetailValue}>
@@ -755,7 +575,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </View>
                 </View>
                 <View style={styles.propertyDetailItem}>
-                  <MaterialIcons name="attach-money" size={20} color="#0D542BFF" />
+                  <MaterialIcons name="attach-money" size={20} color="#6B7280" />
                   <View style={styles.propertyDetailContent}>
                     <Text style={styles.propertyDetailLabel}>Price</Text>
                     <Text style={styles.propertyDetailValue}>{property.price}</Text>
@@ -763,15 +583,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                 </View>
               </View>
             </View>
-
-            {/* Inquiry Button */}
-            <TouchableOpacity 
-              style={styles.inquiryButton}
-              onPress={() => console.log('Inquiry pressed')}
-            >
-              <Text style={styles.inquiryButtonText}>Inquiry</Text>
-              <MaterialIcons name="chat-bubble-outline" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
           </View>
 
           {/* Property Amenities */}
@@ -985,40 +796,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          {/* Agent Details */}
-          <View style={styles.agentSection}>
-            <Text style={styles.sectionTitle}>Agent Details</Text>
-            <View style={styles.agentCard}>
-              <View style={styles.agentCardContent}>
-                <View style={styles.agentAvatar}>
-                  {property.brokerImage ? (
-                    <Image 
-                      source={{ uri: property.brokerImage }} 
-                      style={styles.agentAvatarImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.agentAvatarContainer}>
-                      <Text style={styles.agentAvatarText}>
-                        {property.agent ? property.agent.charAt(0).toUpperCase() : 'U'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.agentInfo}>
-                  <Text style={styles.agentName}>{property.agent || 'Rajesh Kumar'}</Text>
-                  <Text style={styles.agentCompany}>{property.agentCompany || 'Rajesh Realty Solutions'}</Text>
-                  <Text style={styles.agentRole}>
-                    {property.agentRole || 'Expert Broker'} • {property.agentLocation || 'Noida'}
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity style={styles.chatNowButton} onPress={() => console.log('Chat Now')}>
-                <Text style={styles.chatNowButtonText}>Chat Now</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Inspection Times */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Inspection Times</Text>
@@ -1057,51 +834,28 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Related Properties */}
-          <View style={styles.relatedSection}>
-            <Text style={styles.sectionTitle}>Related Properties</Text>
-            {isLoadingRelated ? (
-              <View style={styles.loadingRelatedContainer}>
-                <ActivityIndicator size="small" color="#0D542BFF" />
-                <Text style={styles.loadingRelatedText}>Loading properties...</Text>
-              </View>
-            ) : relatedProperties.length === 0 ? (
-              <View style={styles.emptyRelatedContainer}>
-                <Text style={styles.emptyRelatedText}>No other properties available</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={relatedProperties}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={(item) => (item.id || item._id).toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.propertyCardWrapper}>
-                    <PropertyCard property={item} />
-                  </View>
-                )}
-                contentContainerStyle={styles.relatedPropertiesList}
-                ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-              />
-            )}
-          </View>
-
-          {/* Action Buttons - Only show for broker's own properties */}
-          {isPropertyOwner() && (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
-                <Text style={styles.editButtonText}>Edit Property</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-                <MaterialIcons name="delete" size={20} color="#EF4444" />
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       </ScrollView>
+
+      {/* Floating Action Buttons - Only show for broker's own properties */}
+      {isPropertyOwner() && (
+        <View style={styles.floatingActionButtons}>
+          <TouchableOpacity 
+            style={styles.floatingDeleteButton} 
+            onPress={handleDelete}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="delete" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.floatingEditButton} 
+            onPress={handleEdit}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      )}
       </View>
     </SafeAreaView>
   )
@@ -1115,6 +869,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    position: 'relative',
   },
   header: {
     backgroundColor: '#0D542BFF',
@@ -1485,22 +1240,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     flex: 1,
   },
-  inquiryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0D542BFF',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 20,
-    gap: 8,
-  },
-  inquiryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
   
   // Features
   featuresGrid: {
@@ -1852,23 +1591,19 @@ const styles = StyleSheet.create({
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E8F5E8',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    marginRight: 8,
-    marginBottom: 8,
+    borderWidth: 0,
   },
   chipText: {
     fontSize: 14,
-    color: '#0D542BFF',
-    fontWeight: '600',
+    fontWeight: '500',
+    color: '#374151',
   },
   emptyText: {
     fontSize: 14,
@@ -2055,194 +1790,40 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   
-  // Action Buttons
-  actionButtons: {
-    flexDirection: 'row',
+  // Floating Action Buttons
+  floatingActionButtons: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    flexDirection: 'column-reverse',
     gap: 12,
+    zIndex: 1000,
   },
-  editButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  floatingEditButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#0D542BFF',
-    borderRadius: 12,
-    paddingVertical: 14,
-    gap: 8,
-  },
-  editButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  deleteButton: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#EF4444',
-    gap: 8,
-  },
-  deleteButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#EF4444',
-  },
-  
-  // Related Properties - Matching PropertiesScreen style
-  relatedSection: {
-    marginBottom: 24,
-  },
-  relatedPropertiesList: {
-    paddingVertical: 8,
-  },
-  propertyCardWrapper: {
-    width: width - 80,
-  },
-  loadingRelatedContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingRelatedText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  emptyRelatedContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyRelatedText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    fontStyle: 'italic',
-  },
-  // Property Card Styles - Matching PropertiesScreen
-  propertyCard: {
-    flexDirection: 'column',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  cardTopSection: {
-    flexDirection: 'row',
-    marginBottom: 0,
-  },
-  propertyImageContainer: {
-    width: 130,
-    height: 130,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 12,
-  },
-  propertyImage: {
-    width: '100%',
-    height: '100%',
-  },
-  propertyImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#F3F4F6',
+  floatingDeleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EF4444',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  placeholderText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-  propertyContent: {
-    flex: 1,
-    justifyContent: 'flex-start',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  propertyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    flex: 1,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  propertyAddressText: {
-    fontSize: 13,
-    color: '#6B7280',
-    flex: 1,
-  },
-  propertyPrice: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statusLabel: {
-    fontSize: 14,
-    color: '#1F2937',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 10,
-    marginTop: 10,
-    marginLeft: 0,
-    marginRight: 0,
-  },
-  propertyFeatures: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-    paddingTop: 4,
-    paddingLeft: 0,
-    alignItems: 'center',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  featureText: {
-    fontSize: 12,
-    color: '#6B7280',
-    lineHeight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 })
 

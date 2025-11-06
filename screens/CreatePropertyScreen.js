@@ -82,11 +82,7 @@ const CreatePropertyScreen = ({ navigation, route }) => {
   
   const [currentStep, setCurrentStep] = useState(1) // Step 1: Basic Info, Step 2: Amenities & Features, Step 3: Media & Publishing
   const scrollViewRef = useRef(null)
-  const [showRegionModal, setShowRegionModal] = useState(false)
   const [showCurrencyModal, setShowCurrencyModal] = useState(false)
-  const [showPropertyTypeModal, setShowPropertyTypeModal] = useState(false)
-  const [showSubTypeModal, setShowSubTypeModal] = useState(false)
-  const [showFurnishingModal, setShowFurnishingModal] = useState(false)
   const [showStatusModal, setShowStatusModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [regionOptions, setRegionOptions] = useState([]) // Array of { _id, name } objects
@@ -1211,69 +1207,6 @@ const CreatePropertyScreen = ({ navigation, route }) => {
     </Modal>
   )
 
-  // Render Region Modal
-  const renderRegionModal = () => (
-    <Modal
-      visible={showRegionModal}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowRegionModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Region</Text>
-            <TouchableOpacity onPress={() => setShowRegionModal(false)}>
-              <MaterialIcons name="close" size={24} color="#000000" />
-            </TouchableOpacity>
-          </View>
-          
-          <FlatList
-            data={regionOptions}
-            keyExtractor={(item, index) => item._id || item.id || index.toString()}
-            renderItem={({ item }) => {
-              const regionName = typeof item === 'string' ? item : (item.name || item)
-              const regionId = typeof item === 'string' ? '' : (item._id || item.id || '')
-              const isSelected = formData.region === regionName
-              
-              return (
-                <TouchableOpacity
-                  style={[
-                    styles.modalItem,
-                    isSelected && styles.modalItemSelected
-                  ]}
-                  onPress={() => {
-                    // Find the full region object to get city
-                    const fullRegion = regionOptions.find(r => (r._id || r.id) === regionId || r.name === regionName)
-                    const regionCity = fullRegion?.city || ''
-                    
-                    setFormData(prev => ({
-                      ...prev,
-                      region: regionName,
-                      regionId: regionId,
-                      // Auto-fill city if available in region data
-                      city: regionCity || prev.city || 'Noida'
-                    }))
-                    setShowRegionModal(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.modalItemText,
-                    isSelected && styles.modalItemTextSelected
-                  ]}>
-                    {regionName}
-                  </Text>
-                  {isSelected && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              )
-            }}
-          />
-        </View>
-      </View>
-    </Modal>
-  )
 
   // Step 1: Basic Information
   const renderStep1 = () => {
@@ -1374,18 +1307,27 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         {/* Region */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Region *</Text>
-          <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.region && styles.inputError
-            ]}
-            onPress={() => setShowRegionModal(true)}
-          >
-            <Text style={[styles.inputText, !formData.region && styles.placeholderText]}>
-              {formData.region || 'Select a region...'}
-            </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          {renderRadioGroup(
+            regionOptions.map(r => typeof r === 'string' ? r : (r.name || r)),
+            formData.region,
+            (value) => {
+              // Find the full region object to get city and ID
+              const fullRegion = regionOptions.find(r => {
+                const regionName = typeof r === 'string' ? r : (r.name || r)
+                return regionName === value
+              })
+              const regionId = fullRegion && typeof fullRegion !== 'string' ? (fullRegion._id || fullRegion.id || '') : ''
+              const regionCity = fullRegion && typeof fullRegion !== 'string' ? (fullRegion.city || '') : ''
+              
+              setFormData(prev => ({
+                ...prev,
+                region: value,
+                regionId: regionId,
+                city: regionCity || prev.city || 'Noida'
+              }))
+            },
+            'region'
+          )}
           {!formData.region && (
             <Text style={styles.errorText}>Region is required.</Text>
           )}
@@ -1518,18 +1460,12 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         {/* Property Type */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Property Type *</Text>
-          <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.propertyType && styles.inputError
-            ]}
-            onPress={() => setShowPropertyTypeModal(true)}
-          >
-            <Text style={[styles.inputText, !formData.propertyType && styles.placeholderText]}>
-              {formData.propertyType || 'Select property type'}
-            </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          {renderRadioGroup(
+            propertyTypeOptions,
+            formData.propertyType,
+            (value) => updateFormData('propertyType', value),
+            'propertyType'
+          )}
           {!formData.propertyType && (
             <Text style={styles.errorText}>Property type is required.</Text>
           )}
@@ -1538,18 +1474,12 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         {/* Sub Type */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Sub Type *</Text>
-          <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.subType && styles.inputError
-            ]}
-            onPress={() => setShowSubTypeModal(true)}
-          >
-            <Text style={[styles.inputText, !formData.subType && styles.placeholderText]}>
-              {formData.subType || 'Select sub type'}
-            </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          {renderRadioGroup(
+            subTypeOptions,
+            formData.subType,
+            (value) => updateFormData('subType', value),
+            'subType'
+          )}
           {!formData.subType && (
             <Text style={styles.errorText}>Sub type is required.</Text>
           )}
@@ -1558,18 +1488,12 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         {/* Furnishing */}
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Furnishing *</Text>
-          <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.furnishing && styles.inputError
-            ]}
-            onPress={() => setShowFurnishingModal(true)}
-          >
-            <Text style={[styles.inputText, !formData.furnishing && styles.placeholderText]}>
-              {formData.furnishing || 'Select furnishing'}
-            </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          {renderRadioGroup(
+            furnishingOptions,
+            formData.furnishing,
+            (value) => updateFormData('furnishing', value),
+            'furnishing'
+          )}
           {!formData.furnishing && (
             <Text style={styles.errorText}>Furnishing is required.</Text>
           )}
@@ -2003,143 +1927,7 @@ const CreatePropertyScreen = ({ navigation, route }) => {
       </KeyboardAvoidingView>
 
       {/* Modals */}
-      {renderRegionModal()}
       {renderCurrencyModal()}
-      
-      {/* Property Type Modal */}
-      <Modal
-        visible={showPropertyTypeModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowPropertyTypeModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Property Type</Text>
-              <TouchableOpacity onPress={() => setShowPropertyTypeModal(false)}>
-                <MaterialIcons name="close" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={propertyTypeOptions}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.modalItem,
-                    formData.propertyType === item && styles.modalItemSelected
-                  ]}
-                  onPress={() => {
-                    updateFormData('propertyType', item)
-                    setShowPropertyTypeModal(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.modalItemText,
-                    formData.propertyType === item && styles.modalItemTextSelected
-                  ]}>
-                    {item}
-                  </Text>
-                  {formData.propertyType === item && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Sub Type Modal */}
-      <Modal
-        visible={showSubTypeModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSubTypeModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Sub Type</Text>
-              <TouchableOpacity onPress={() => setShowSubTypeModal(false)}>
-                <MaterialIcons name="close" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={subTypeOptions}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.modalItem,
-                    formData.subType === item && styles.modalItemSelected
-                  ]}
-                  onPress={() => {
-                    updateFormData('subType', item)
-                    setShowSubTypeModal(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.modalItemText,
-                    formData.subType === item && styles.modalItemTextSelected
-                  ]}>
-                    {item}
-                  </Text>
-                  {formData.subType === item && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Furnishing Modal */}
-      <Modal
-        visible={showFurnishingModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFurnishingModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Furnishing</Text>
-              <TouchableOpacity onPress={() => setShowFurnishingModal(false)}>
-                <MaterialIcons name="close" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={furnishingOptions}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.modalItem,
-                    formData.furnishing === item && styles.modalItemSelected
-                  ]}
-                  onPress={() => {
-                    updateFormData('furnishing', item)
-                    setShowFurnishingModal(false)
-                  }}
-                >
-                  <Text style={[
-                    styles.modalItemText,
-                    formData.furnishing === item && styles.modalItemTextSelected
-                  ]}>
-                    {item}
-                  </Text>
-                  {formData.furnishing === item && (
-                    <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
 
       {/* Status Modal */}
       <Modal

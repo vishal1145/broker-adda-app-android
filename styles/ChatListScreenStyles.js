@@ -141,11 +141,12 @@ export const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
   },
-  header: {
+  modernHeader: {
     backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
+    marginBottom: 20,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -185,27 +186,59 @@ export const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerLeft: {
+    flex: 1,
+  },
+  welcomeContainer: {
+    marginBottom: 0,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  profileImageContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  profileInitialsContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
-  headerText: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
+  profileInitials: {
+    fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 4,
+  },
+  profileImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   headerSubtitle: {
     fontSize: 16,

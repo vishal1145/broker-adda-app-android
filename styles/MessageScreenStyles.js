@@ -460,7 +460,7 @@ export const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   leadItemSelected: {
-    borderColor: '#0D542BFF',
+    borderColor: '#E5E7EB',
     backgroundColor: '#F0FDF4',
   },
   leadItemContent: {

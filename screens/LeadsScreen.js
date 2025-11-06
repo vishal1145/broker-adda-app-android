@@ -1219,33 +1219,19 @@ const LeadsScreen = ({ navigation }) => {
 
   const filteredLeads = leadsData
 
-  const LeadCard = ({ lead }) => {
-    const [pressedButton, setPressedButton] = useState(null)
+  const LeadCard = ({ lead, navigation, isTransferredLead }) => {
     const isDeleting = deletingLeadId === lead.id
 
-    const getActionButtonStyle = (buttonType) => {
-      const isPressed = pressedButton === buttonType
-      return [
-        styles.actionButton,
-        isPressed && styles.actionButtonPressed
-      ]
-    }
-
-    const getActionButtonTextStyle = (buttonType) => {
-      const isPressed = pressedButton === buttonType
-      return [
-        styles.actionButtonText,
-        isPressed && styles.actionButtonTextPressed
-      ]
-    }
-
     const getActionIconColor = (buttonType) => {
-      const isPressed = pressedButton === buttonType
-      return isPressed ? '#0D542BFF' : '#9E9E9E'
+      return '#9E9E9E'
     }
 
     return (
-      <View style={styles.leadCard}>
+      <TouchableOpacity 
+        style={styles.leadCard}
+        onPress={() => navigation.navigate('LeadDetails', { leadId: lead.id, isTransferredLead: isTransferredLead })}
+        activeOpacity={0.7}
+      >
         {/* Header Section */}
         <View style={styles.leadHeader}>
           <View style={styles.leadAvatarContainer}>
@@ -1277,7 +1263,7 @@ const LeadsScreen = ({ navigation }) => {
         <View style={styles.leadDetailsGrid}>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="trending-up" size={16} color="#0D542BFF" />
+              <MaterialIcons name="trending-up" size={16} color="#9CA3AF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REQUIREMENT</Text>
                 <Text style={styles.detailValue}>{lead.requirement || 'Not specified'}</Text>
@@ -1286,7 +1272,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="home" size={16} color="#0D542BFF" />
+              <MaterialIcons name="home" size={16} color="#9CA3AF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>PROPERTY TYPE</Text>
                 <Text style={styles.detailValue}>{lead.propertyType || 'Not specified'}</Text>
@@ -1295,7 +1281,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="attach-money" size={16} color="#0D542BFF" />
+              <MaterialIcons name="attach-money" size={16} color="#9CA3AF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>BUDGET</Text>
                 <Text style={styles.detailValue}>{lead.budget}</Text>
@@ -1304,7 +1290,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="location-on" size={16} color="#0D542BFF" />
+              <MaterialIcons name="location-on" size={16} color="#9CA3AF" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REGION(S)</Text>
                 <Text style={styles.detailValue}>{lead.region || 'Not specified'}</Text>
@@ -1345,35 +1331,23 @@ const LeadsScreen = ({ navigation }) => {
 
           <View style={styles.actionButtons}>
             <TouchableOpacity 
-              style={getActionButtonStyle('view')}
-              onPressIn={() => setPressedButton('view')}
-              onPressOut={() => setPressedButton(null)}
-              onPress={() => navigation.navigate('LeadDetails', { 
-                leadId: lead.id, 
-                isTransferredLead: showTransferredLeads 
-              })}
-              activeOpacity={0.7}
-            >
-              <MaterialIcons name="visibility" size={18} color={getActionIconColor('view')} />
-              <Text style={getActionButtonTextStyle('view')}>View</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={getActionButtonStyle('share')}
-              onPressIn={() => setPressedButton('share')}
-              onPressOut={() => setPressedButton(null)}
-              onPress={() => handleSharePress(lead)}
+              style={styles.actionButton}
+              onPress={(e) => {
+                e.stopPropagation()
+                handleSharePress(lead)
+              }}
               activeOpacity={0.7}
             >
               <MaterialIcons name="send" size={18} color={getActionIconColor('share')} />
-              <Text style={getActionButtonTextStyle('share')}>Share</Text>
             </TouchableOpacity>
             {/* Only show delete button if lead is not shared with anyone */}
             {lead.sharedWith.length === 0 && (
               <TouchableOpacity 
-                style={getActionButtonStyle('delete')}
-                onPressIn={() => setPressedButton('delete')}
-                onPressOut={() => setPressedButton(null)}
-                onPress={() => handleDeletePress(lead.id, lead.name)}
+                style={styles.actionButton}
+                onPress={(e) => {
+                  e.stopPropagation()
+                  handleDeletePress(lead.id, lead.name)
+                }}
                 activeOpacity={0.7}
                 disabled={isDeleting}
               >
@@ -1382,14 +1356,11 @@ const LeadsScreen = ({ navigation }) => {
                 ) : (
                   <MaterialIcons name="delete" size={18} color={getActionIconColor('delete')} />
                 )}
-                <Text style={getActionButtonTextStyle('delete')}>
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     )
   }
 
@@ -1438,7 +1409,7 @@ const LeadsScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Manage Your Leads</Text>
-                <Text style={styles.welcomeName}>{userName}</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -1670,7 +1641,7 @@ const LeadsScreen = ({ navigation }) => {
             <FlatList
               data={filteredLeads}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <LeadCard lead={item} />}
+              renderItem={({ item }) => <LeadCard lead={item} navigation={navigation} isTransferredLead={showTransferredLeads} />}
               showsVerticalScrollIndicator={false}
               scrollEnabled={false}
             />
@@ -2879,21 +2850,15 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 8,
-  },
-  actionButtonPressed: {
-    backgroundColor: '#F0FDFA',
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#9E9E9E',
-  },
-  actionButtonTextPressed: {
-    color: '#0D542BFF',
   },
 
   // Loading, Error, and Empty States

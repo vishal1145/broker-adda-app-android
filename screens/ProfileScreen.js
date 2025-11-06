@@ -1071,11 +1071,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#000000',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
     marginBottom: 12,
-    letterSpacing: 0.5,
   },
   statsSubtitle: {
     flexDirection: 'row',
@@ -1288,7 +1287,7 @@ const styles = StyleSheet.create({
   documentTitleAbove: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: '#6B7280',
     marginBottom: 8,
   },
   documentCard: {

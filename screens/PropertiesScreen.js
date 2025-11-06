@@ -539,28 +539,13 @@ const PropertiesScreen = ({ navigation }) => {
                 {property.price}
               </Text>
               
-              {/* Status Row - Badge on left, Edit/Delete icons on right */}
+              {/* Status Row */}
               <View style={styles.statusRow}>
+                <Text style={styles.statusLabel}>Status</Text>
                 <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
                   <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
                     {getStatusDisplayText(property.status)}
                   </Text>
-                </View>
-                <View style={styles.actionIconsContainer}>
-                  <TouchableOpacity 
-                    style={styles.actionIconButton}
-                    onPress={() => handleEdit(property)}
-                    activeOpacity={0.7}
-                  >
-                    <MaterialIcons name="edit" size={18} color="#6B7280" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.actionIconButton}
-                    onPress={() => handleDelete(property)}
-                    activeOpacity={0.7}
-                  >
-                    <MaterialIcons name="delete" size={18} color="#6B7280" />
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -641,7 +626,7 @@ const PropertiesScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Manage Your Properties</Text>
-                <Text style={styles.welcomeName}>{userName}</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -732,22 +717,22 @@ const PropertiesScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Add Property Button */}
-        <View style={styles.addPropertyButtonContainer}>
-          <TouchableOpacity 
-            style={styles.addPropertyButtonPlaceholder}
-            onPress={() => navigation.navigate('CreateProperty')}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons name="add" size={24} color="#9CA3AF" />
-            <Text style={styles.addPropertyButtonPlaceholderText}>Add Property</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Properties List */}
         <View style={styles.propertiesSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Property Listings</Text>
+          </View>
+          
+          {/* Add Property Button */}
+          <View style={styles.addPropertyButtonContainer}>
+            <TouchableOpacity 
+              style={styles.addPropertyButtonPlaceholder}
+              onPress={() => navigation.navigate('CreateProperty')}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="add" size={32} color="#9CA3AF" />
+              <Text style={styles.addPropertyButtonPlaceholderText}>Add Property</Text>
+            </TouchableOpacity>
           </View>
           
           {filteredProperties.length === 0 ? (
@@ -759,7 +744,7 @@ const PropertiesScreen = ({ navigation }) => {
                 style={styles.addButton}
                 onPress={() => navigation.navigate('CreateProperty')}
               >
-                <MaterialIcons name="add" size={24} color="#FFFFFF" />
+                <MaterialIcons name="add" size={32} color="#FFFFFF" />
                 <Text style={styles.addButtonText}>Add Your First Property</Text>
               </TouchableOpacity>
             </View>
@@ -976,8 +961,7 @@ const styles = StyleSheet.create({
 
   // Add Property Button
   addPropertyButtonContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   addPropertyButton: {
     flexDirection: 'row',
@@ -1160,6 +1144,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#1F2937',
   },
   statusBadge: {
     paddingHorizontal: 10,

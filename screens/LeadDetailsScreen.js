@@ -777,7 +777,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.leadInfoDetailsGrid}>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="trending-up" size={16} color="#0D542BFF" />
+                <MaterialIcons name="trending-up" size={16} color="#9CA3AF" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>REQUIREMENT</Text>
                   <Text style={styles.leadInfoDetailValue}>{leadData.requirement || 'Not specified'}</Text>
@@ -786,7 +786,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="home" size={16} color="#0D542BFF" />
+                <MaterialIcons name="home" size={16} color="#9CA3AF" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>PROPERTY TYPE</Text>
                   <Text style={styles.leadInfoDetailValue}>{leadData.propertyType || 'Not specified'}</Text>
@@ -795,7 +795,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="attach-money" size={16} color="#0D542BFF" />
+                <MaterialIcons name="attach-money" size={16} color="#9CA3AF" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>BUDGET</Text>
                   <Text style={styles.leadInfoDetailValue}>{formatBudget(leadData.budget)}</Text>
@@ -804,7 +804,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="location-on" size={16} color="#0D542BFF" />
+                <MaterialIcons name="location-on" size={16} color="#9CA3AF" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>REGION(S)</Text>
                   <Text style={styles.leadInfoDetailValue}>

@@ -233,51 +233,19 @@ const NotificationsScreen = ({ navigation }) => {
   }
 
   const getTypeColor = (type) => {
-    switch (type) {
-      case 'lead':
-      case 'property':
-      case 'payment':
-      case 'message':
-      case 'system':
-        return '#0D542B' // consistent dark green icons as in screenshot
-      default:
-        return '#0D542B'
-    }
+    return '#6B7280' // gray color for all icons
   }
 
   const getTypeBgColor = (type) => {
-    switch (type) {
-      case 'lead':
-      case 'property':
-      case 'payment':
-      case 'message':
-      case 'system':
-        return '#E6F4EA' // soft green tint behind icons
-      default:
-        return '#E6F4EA'
-    }
+    return '#F3F4F6' // light gray background for all icons
   }
 
   const getBadgeTextColor = (type) => {
-    switch (type) {
-      case 'lead':
-        return '#0D542B'
-      case 'payment':
-        return '#F4B000' // bright yellow text
-      default:
-        return '#111827'
-    }
+    return '#6B7280' // gray color for all types
   }
 
   const getBadgeBgColor = (type) => {
-    switch (type) {
-      case 'lead':
-        return '#E6F4EA'
-      case 'payment':
-        return '#FFF4CC' // soft yellow
-      default:
-        return 'transparent'
-    }
+    return '#F3F4F6' // light gray background for all types
   }
 
   const getTypeIconName = (type, fallback) => {
@@ -294,7 +262,10 @@ const NotificationsScreen = ({ navigation }) => {
   const filteredNotifications = notifications
 
   const NotificationCard = ({ notification }) => (
-    <TouchableOpacity style={styles.notificationCard}>
+    <TouchableOpacity style={[
+      styles.notificationCard,
+      !notification.isRead && styles.notificationCardUnread
+    ]}>
       <View style={styles.notificationHeader}>
         <View style={[styles.notificationIcon, { backgroundColor: getTypeBgColor(notification.type) }]}>
           <MaterialIcons name={getTypeIconName(notification.type, notification.icon)} size={18} color={getTypeColor(notification.type)} />
@@ -310,15 +281,11 @@ const NotificationsScreen = ({ navigation }) => {
       <View style={styles.footerDivider} />
 
       <View style={styles.notificationFooter}>
-        {['lead', 'payment'].includes(notification.type) ? (
-          <View style={[styles.typeBadge, { backgroundColor: getBadgeBgColor(notification.type) }]}>
-            <Text style={[styles.typeText, { color: getBadgeTextColor(notification.type) }]}>
-              {notification.type.toUpperCase()}
-            </Text>
-          </View>
-        ) : (
-          <Text style={styles.typeTextPlain}>{notification.type.toUpperCase()}</Text>
-        )}
+        <View style={[styles.typeBadge, { backgroundColor: getBadgeBgColor(notification.type) }]}>
+          <Text style={[styles.typeText, { color: getBadgeTextColor(notification.type) }]}>
+            {notification.type.toUpperCase()}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   )
@@ -345,7 +312,7 @@ const NotificationsScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Manage Your Notifications</Text>
-                <Text style={styles.welcomeName}>{userName}</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -707,7 +674,7 @@ const styles = StyleSheet.create({
   notificationCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -716,11 +683,13 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  unreadCard: {
-    // intentionally simplified to keep all cards consistent with design
-    borderLeftWidth: 0,
-    backgroundColor: '#FFFFFF',
+  notificationCardUnread: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   notificationHeader: {
     flexDirection: 'row',
@@ -802,7 +771,6 @@ const styles = StyleSheet.create({
   typeTextPlain: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#111827',
     letterSpacing: 0.3,
   },
   priorityBadge: {

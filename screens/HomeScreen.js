@@ -1185,7 +1185,7 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.headerLeft}>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeGreeting}>Welcome back,</Text>
-                <Text style={styles.welcomeName}>{userName}</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -1281,7 +1281,7 @@ const HomeScreen = ({ navigation }) => {
           {/* Add Lead Card */}
           <TouchableOpacity 
             style={styles.addLeadCard}
-            onPress={() => navigation.navigate('Leads')}
+            onPress={() => navigation.navigate('CreateLead')}
             activeOpacity={0.7}
           >
             <MaterialIcons name="add" size={32} color="#9CA3AF" />

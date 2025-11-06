@@ -127,7 +127,7 @@ const SignupScreen = ({ navigation }) => {
   const handleTermsPress = async () => {
     try {
       // Replace with your actual terms and conditions URL
-      const termsUrl = 'https://broker-adda.algofolks.com/terms'
+      const termsUrl = 'https://brokergully.com/terms'
       const supported = await Linking.canOpenURL(termsUrl)
       
       if (supported) {
@@ -146,7 +146,7 @@ const SignupScreen = ({ navigation }) => {
   const handlePrivacyPress = async () => {
     try {
       // Replace with your actual privacy policy URL
-      const privacyUrl = 'https://broker-adda.algofolks.com/privacy'
+      const privacyUrl = 'https://brokergully.com/privacy'
       const supported = await Linking.canOpenURL(privacyUrl)
       
       if (supported) {
