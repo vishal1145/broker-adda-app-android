@@ -147,7 +147,7 @@ const SettingsScreen = ({ navigation }) => {
 
   // Handle message press
   const handleMessagePress = () => {
-    navigation.navigate('ChatListScreen')
+    navigation.navigate('Notifications')
   }
 
   // Handle profile press
@@ -256,7 +256,7 @@ const SettingsScreen = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="message" size={24} color="#FFFFFF" />
+                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   // Settings Container
   settingsContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 30,
   },
   section: {
     marginBottom: 32,

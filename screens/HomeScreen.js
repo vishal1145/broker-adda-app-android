@@ -378,7 +378,7 @@ const HomeScreen = ({ navigation }) => {
   }
 
   const handleMessagePress = () => {
-    navigation.navigate('ChatListScreen')
+    navigation.navigate('Notifications')
   }
 
   const handleProfilePress = () => {
@@ -1190,7 +1190,7 @@ const HomeScreen = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="message" size={24} color="#FFFFFF" />
+                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>

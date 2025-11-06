@@ -1,9 +1,13 @@
 import { StyleSheet } from 'react-native'
 
 export const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
     backgroundColor: '#0D542BFF',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   content: {
     flex: 1,
@@ -146,7 +150,7 @@ export const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -197,7 +201,13 @@ export const styles = StyleSheet.create({
   welcomeContainer: {
     marginBottom: 0,
   },
-  headerTitle: {
+  welcomeGreeting: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  welcomeName: {
     fontSize: 28,
     fontWeight: '700',
     color: '#FFFFFF',
@@ -239,11 +249,6 @@ export const styles = StyleSheet.create({
     borderRadius: 26,
     borderWidth: 1,
     borderColor: '#FFFFFF',
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
   },
 })
 

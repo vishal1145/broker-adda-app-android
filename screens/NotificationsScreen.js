@@ -204,15 +204,26 @@ const NotificationsScreen = ({ navigation }) => {
     }
   }
 
-  // Handle message press
-  const handleMessagePress = () => {
-    navigation.navigate('ChatListScreen')
-  }
+  // Handle mark all as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      const token = await storage.getToken()
+      if (!token) return
 
-  // Handle profile press
-  const handleProfilePress = () => {
-    // Navigate to profile screen
-    navigation.navigate('Profile')
+      // Update local state to mark all as read
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => ({
+          ...notif,
+          isRead: true,
+          priority: 'low'
+        }))
+      )
+
+      // Optionally call API to mark all as read on server
+      // You can add an API call here if the endpoint exists
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+    }
   }
 
   // Load profile and notifications on component mount
@@ -299,45 +310,30 @@ const NotificationsScreen = ({ navigation }) => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Modern Header */}
-        <View style={styles.modernHeader}>
-          {/* Background Pattern */}
+        {/* Header */}
+        <View style={styles.header}>
           <View style={styles.headerPattern}>
             <View style={styles.patternCircle1} />
             <View style={styles.patternCircle2} />
             <View style={styles.patternCircle3} />
           </View>
-          
           <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <View style={styles.welcomeContainer}>
-                <Text style={styles.welcomeGreeting}>Manage Your Notifications</Text>
-                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
-              </View>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Notifications</Text>
+              <Text style={styles.headerSubtitle}>Manage your notifications</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="message" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
-                <View style={styles.profileImageContainer}>
-                  {profileImage ? (
-                    <SafeImage 
-                      source={{ uri: profileImage }} 
-                      style={styles.profileImage}
-                      imageType="profileImage"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.profileInitialsContainer}>
-                      <Text style={styles.profileInitials}>
-                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+              <TouchableOpacity 
+                style={styles.headerActionButton}
+                onPress={handleMarkAllAsRead}
+              >
+                <MaterialIcons name="done-all" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -413,17 +409,7 @@ const styles = StyleSheet.create({
   },
 
   // Header Styles
-  simpleHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  simpleHeaderText: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '600',
-  },
-  modernHeader: {
+  header: {
     backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
@@ -468,65 +454,44 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  welcomeContainer: {
-    marginBottom: 0,
-  },
-  welcomeGreeting: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-  },
-  welcomeName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  profileButton: {
-    padding: 4,
-  },
-  profileImageContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  profileInitialsContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    marginRight: 16,
   },
-  profileInitials: {
-    fontSize: 20,
+  headerText: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
+    marginBottom: 4,
   },
-  profileImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+  headerSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  headerActionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Stats Section

@@ -12,7 +12,7 @@ const Footer = ({ state, descriptors, navigation }) => {
     { key: 'Home', label: 'Home', icon: 'home' },
     { key: 'Leads', label: 'Leads', icon: 'trending-up' },
     { key: 'Properties', label: 'Properties', icon: 'business' },
-    { key: 'Notifications', label: 'Notifications', icon: 'notifications' },
+    { key: 'Chats', label: 'Chats', icon: 'chat' },
     { key: 'Settings', label: 'Setting', icon: 'settings' }
   ]
 

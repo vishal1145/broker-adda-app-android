@@ -10,7 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons'
 import { styles } from '../styles/ChatListScreenStyles'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { chatAPI } from '../services/api'
+import { chatAPI, authAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 
@@ -98,6 +98,67 @@ const ChatListScreen = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(true)
     const [chats, setChats] = useState([])
 
+    // Profile state
+    const [userName, setUserName] = useState('User')
+    const [userProfile, setUserProfile] = useState(null)
+    const [profileImage, setProfileImage] = useState(null)
+    const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+
+    // Fetch user profile data
+    const fetchUserProfile = async () => {
+        try {
+            setIsLoadingProfile(true)
+            
+            // Get token and broker ID from storage
+            const token = await storage.getToken()
+            const brokerId = await storage.getBrokerId()
+            
+            if (token && brokerId) {
+                const response = await authAPI.getProfile(brokerId, token)
+                
+                if (response && response.data && response.data.broker) {
+                    const broker = response.data.broker
+                    setUserProfile(broker)
+                    
+                    // Set user name from profile data
+                    const name = broker.name || broker.userId?.name || broker.userId?.firstName || 'User'
+                    if (name && name !== 'User') {
+                        setUserName(name)
+                    }
+                    
+                    // Set profile image if available with secure URL
+                    if (broker.brokerImage) {
+                        const secureImageUrl = getSecureImageUrl(broker.brokerImage)
+                        setProfileImage(secureImageUrl)
+                    }
+                } else {
+                    // No broker data found, keep default 'User'
+                    setUserName('User')
+                }
+            } else {
+                // No token or broker ID, keep default 'User'
+                setUserName('User')
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error)
+            // Keep default name if API fails
+            setUserName('User')
+        } finally {
+            setIsLoadingProfile(false)
+        }
+    }
+
+    // Handle message press
+    const handleMessagePress = () => {
+        navigation.navigate('Notifications')
+    }
+
+    // Handle profile press
+    const handleProfilePress = () => {
+        // Navigate to profile screen
+        navigation.navigate('Profile')
+    }
+
     const fetchChats = async () => {
         setIsLoading(true)
         try {
@@ -116,6 +177,7 @@ const ChatListScreen = ({ navigation }) => {
 
     useEffect(() => {
         fetchChats()
+        fetchUserProfile()
     }, [])
 
     const renderChatItem = ({ item }) => {
@@ -210,43 +272,63 @@ const ChatListScreen = ({ navigation }) => {
     )
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-            <View style={styles.content}>
-                {/* Header */}
-                <View style={styles.header}>
+        <SafeAreaView style={styles.wrapper} edges={['top']}>
+            <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+            <View style={styles.container}>
+                {/* Modern Header */}
+                <View style={styles.modernHeader}>
+                    {/* Background Pattern */}
                     <View style={styles.headerPattern}>
                         <View style={styles.patternCircle1} />
                         <View style={styles.patternCircle2} />
                         <View style={styles.patternCircle3} />
                     </View>
+                    
                     <View style={styles.headerContent}>
-                        <TouchableOpacity
-                            style={styles.backButton}
-                            onPress={() => navigation.goBack()}
-                        >
-                            <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <View style={styles.headerText}>
-                            <Text style={styles.headerTitle}>Chats</Text>
+                        <View style={styles.headerLeft}>
+                            <View style={styles.welcomeContainer}>
+                                <Text style={styles.welcomeGreeting}>Manage Your Chats</Text>
+                                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
+                            </View>
+                        </View>
+                        <View style={styles.headerRight}>
+                            <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
+                                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.headerRight}>
+                            <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+                                <View style={styles.profileImageContainer}>
+                                    {profileImage ? (
+                                        <SafeImage 
+                                            source={{ uri: profileImage }} 
+                                            style={styles.profileImage}
+                                            imageType="profileImage"
+                                            resizeMode="cover"
+                                        />
+                                    ) : (
+                                        <View style={styles.profileInitialsContainer}>
+                                            <Text style={styles.profileInitials}>
+                                                {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </View>
 
-
                 {/* Chat List */}
-                <View style={styles.content}>
-                    <FlatList
-                        data={chats}
-                        keyExtractor={(item) => item.chatId}
-                        renderItem={renderChatItem}
-                        ListEmptyComponent={renderEmpty}
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={chats.length === 0 ? { flex: 1 } : {}}
-                    />
-                </View>
+                <FlatList
+                    data={chats}
+                    keyExtractor={(item) => item.chatId}
+                    renderItem={renderChatItem}
+                    ListEmptyComponent={renderEmpty}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={chats.length === 0 ? { flex: 1 } : {}}
+                />
             </View>
-
         </SafeAreaView>
     )
 }

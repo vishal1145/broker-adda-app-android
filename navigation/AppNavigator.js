@@ -56,10 +56,10 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Properties' }}
       />
       <Tab.Screen 
-        name="Notifications" 
-        component={NotificationsScreen}
-        options={{ tabBarLabel: 'Notifications' }}
-      />
+        name="Chats" 
+        component={ChatListScreen}
+        options={{ tabBarLabel: 'Chats' }}
+      />     
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen}
@@ -137,6 +137,14 @@ const AppNavigator = () => {
           name="MessageScreen" 
           component={MessageScreen}
           options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{
+            presentation: 'modal',
             headerShown: false,
           }}
         />

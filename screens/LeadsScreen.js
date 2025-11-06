@@ -323,7 +323,7 @@ const LeadsScreen = ({ navigation }) => {
 
   // Handle message press
   const handleMessagePress = () => {
-    navigation.navigate('ChatListScreen')
+    navigation.navigate('Notifications')
   }
 
   // Handle profile press
@@ -1414,7 +1414,7 @@ const LeadsScreen = ({ navigation }) => {
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
-                <MaterialIcons name="message" size={24} color="#FFFFFF" />
+                <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
             <View style={styles.headerRight}>
@@ -2648,7 +2648,7 @@ const styles = StyleSheet.create({
   // Leads Section
   leadsSection: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    marginBottom: 30,
   },
   sectionHeader: {
     flexDirection: 'row',
