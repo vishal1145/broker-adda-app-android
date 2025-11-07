@@ -176,12 +176,6 @@ const SettingsScreen = ({ navigation }) => {
     navigation.navigate('Notifications')
   }
 
-  // Handle profile press
-  const handleProfilePress = () => {
-    // Navigate to profile screen
-    navigation.navigate('Profile')
-  }
-
   // Load profile on component mount
   useEffect(() => {
     fetchUserProfile()
@@ -260,9 +254,8 @@ const SettingsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-        {/* Modern Header - Fixed at top */}
-        <View style={styles.modernHeader}>
-          {/* Background Pattern */}
+        {/* Header - Fixed at top */}
+        <View style={styles.header}>
           <View style={styles.headerPattern}>
             <View style={styles.patternCircle1} />
             <View style={styles.patternCircle2} />
@@ -270,14 +263,21 @@ const SettingsScreen = ({ navigation }) => {
           </View>
           
           <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <View style={styles.welcomeContainer}>
-                <Text style={styles.welcomeGreeting}>Manage Your Settings</Text>
-                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
-              </View>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>Settings</Text>
+              <Text style={styles.headerSubtitle}>Manage your preferences</Text>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
+              <TouchableOpacity 
+                style={styles.headerActionButton}
+                onPress={handleMessagePress}
+              >
                 <View style={styles.notificationIconContainer}>
                   <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
                   {unreadNotificationCount > 0 && (
@@ -287,26 +287,6 @@ const SettingsScreen = ({ navigation }) => {
                     ]}>
                       <Text style={styles.notificationBadgeText} numberOfLines={1} ellipsizeMode="clip">
                         {unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
-                <View style={styles.profileImageContainer}>
-                  {profileImage ? (
-                    <SafeImage 
-                      source={{ uri: profileImage }} 
-                      style={styles.profileImage}
-                      imageType="profileImage"
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.profileInitialsContainer}>
-                      <Text style={styles.profileInitials}>
-                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
                       </Text>
                     </View>
                   )}
@@ -400,7 +380,7 @@ const styles = StyleSheet.create({
   },
 
   // Header Styles
-  modernHeader: {
+  header: {
     backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
@@ -445,40 +425,49 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
   },
-  headerLeft: {
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  headerText: {
     flex: 1,
   },
-  welcomeContainer: {
-    marginBottom: 0,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
-  welcomeGreeting: {
+  headerSubtitle: {
     fontSize: 16,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-  },
-  welcomeName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   headerRight: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
   },
-  profileButton: {
-    padding: 4,
+  headerActionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationIconContainer: {
     position: 'relative',
-    width: 32,
-    height: 32,
+    width: 24,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -513,34 +502,30 @@ const styles = StyleSheet.create({
     lineHeight: 11,
   },
   profileImageContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   profileInitialsContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
   },
   profileInitials: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   profileImage: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
 
   // Settings Container

@@ -10,7 +10,7 @@ import {
   FlatList,
   Image
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -87,6 +87,7 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 }
 
 const NotificationsScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets()
   
   // Profile state
   const [userName, setUserName] = useState('User')
@@ -338,7 +339,7 @@ const NotificationsScreen = ({ navigation }) => {
 
         <ScrollView 
         style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 20 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Stats Overview - two cards */}
@@ -407,14 +408,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 0,
+    paddingBottom: 0, // Will be overridden by inline style with safe area inset
   },
 
   // Header Styles
   header: {
     backgroundColor: '#0D542BFF',
     paddingTop: 20,
-    paddingBottom: 30,
+    paddingBottom:20,
     paddingHorizontal: 20,
     marginBottom: 0,
     position: 'relative',

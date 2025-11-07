@@ -11,7 +11,7 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI, savedPropertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -19,6 +19,7 @@ import { Snackbar } from '../utils/snackbar'
 
 const PropertyDetailsScreen = ({ navigation, route }) => {
   const { property: initialProperty } = route.params || {}
+  const insets = useSafeAreaInsets()
   
   const [property, setProperty] = useState(initialProperty)
   const [isLoading, setIsLoading] = useState(!initialProperty)
@@ -839,7 +840,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
 
       {/* Floating Action Buttons - Only show for broker's own properties */}
       {isPropertyOwner() && (
-        <View style={styles.floatingActionButtons}>
+        <View style={[styles.floatingActionButtons, { bottom: 20 + insets.bottom }]}>
           <TouchableOpacity 
             style={styles.floatingDeleteButton} 
             onPress={handleDelete}
@@ -1794,7 +1795,6 @@ const styles = StyleSheet.create({
   // Floating Action Buttons
   floatingActionButtons: {
     position: 'absolute',
-    bottom: 20,
     right: 20,
     flexDirection: 'column-reverse',
     gap: 12,

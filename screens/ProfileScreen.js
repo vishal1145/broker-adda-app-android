@@ -404,9 +404,14 @@ const ProfileScreen = ({ navigation }) => {
               >
                 <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modernEditButton, { top: statusBarHeight + 10 }]} onPress={handleEditProfile}>
-                <MaterialIcons name="edit" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+              <View style={[styles.headerActionsContainer, { top: statusBarHeight + 10 }]}>
+                <TouchableOpacity style={styles.modernSettingsButton} onPress={() => navigation.navigate('SettingsScreen')}>
+                  <MaterialIcons name="settings" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
+                  <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
               
               <View style={styles.modernProfileSection}>
                 <View style={styles.modernProfileImageContainer}>
@@ -820,12 +825,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 3,
   },
-  modernEditButton: {
+  headerActionsContainer: {
     position: 'absolute',
     right: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    zIndex: 3,
+  },
+  modernSettingsButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 3,
+  },
+  modernEditButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modernProfileSection: {
     alignItems: 'center',

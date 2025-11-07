@@ -11,9 +11,9 @@ const Footer = ({ state, descriptors, navigation }) => {
   const tabs = [
     { key: 'Home', label: 'Home', icon: 'home' },
     { key: 'Leads', label: 'Leads', icon: 'trending-up' },
+    { key: 'Search', label: 'Search', icon: 'search' },
     { key: 'Properties', label: 'Properties', icon: 'business' },
-    { key: 'Chats', label: 'Chats', icon: 'chat' },
-    { key: 'Settings', label: 'Setting', icon: 'settings' }
+    { key: 'Contacts', label: 'Contacts', icon: 'chat' }
   ]
 
   const handleTabPress = (routeName, isFocused) => {

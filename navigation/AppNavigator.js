@@ -25,6 +25,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import MessageScreen from '../screens/MessageScreen';
+import SearchScreen from '../screens/SearchScreen';
 
 // Import Footer component
 import Footer from '../components/Footer';
@@ -52,19 +53,19 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Leads' }}
       />
       <Tab.Screen 
+        name="Search" 
+        component={SearchScreen}
+        options={{ tabBarLabel: 'Search' }}
+      />
+      <Tab.Screen 
         name="Properties" 
         component={PropertiesScreen}
         options={{ tabBarLabel: 'Properties' }}
       />
       <Tab.Screen 
-        name="Chats" 
+        name="Contacts" 
         component={ChatListScreen}
-        options={{ tabBarLabel: 'Chats' }}
-      />     
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{ tabBarLabel: 'Setting' }}
+        options={{ tabBarLabel: 'Contacts' }}
       />
     </Tab.Navigator>
   );
@@ -152,6 +153,14 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="Notifications" 
           component={NotificationsScreen}
+          options={{
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="SettingsScreen" 
+          component={SettingsScreen}
           options={{
             presentation: 'modal',
             headerShown: false,
