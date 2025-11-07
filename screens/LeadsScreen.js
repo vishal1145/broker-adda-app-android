@@ -1397,17 +1397,6 @@ const LeadsScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           
-          {/* Add Lead Button - Full Width */}
-          <View style={styles.filterButtonRow}>
-            <TouchableOpacity 
-              style={styles.addLeadButtonPlaceholder}
-              onPress={() => navigation.navigate('CreateLead')}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="add" size={32} color="#9CA3AF" />
-              <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Leads List */}
@@ -1427,6 +1416,18 @@ const LeadsScreen = ({ navigation }) => {
               </TouchableOpacity>
               <Text style={styles.toggleLabel}>Transferred Me</Text>
             </View>
+          </View>
+          
+          {/* Add Lead Button */}
+          <View style={styles.addLeadButtonContainer}>
+            <TouchableOpacity 
+              style={styles.addLeadButtonPlaceholder}
+              onPress={() => navigation.navigate('CreateLead')}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="add" size={32} color="#9CA3AF" />
+              <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
+            </TouchableOpacity>
           </View>
           
           {isLoading ? (
@@ -1463,7 +1464,7 @@ const LeadsScreen = ({ navigation }) => {
             </View>
           ) : filteredLeads.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="inbox" size={48} color="#9CA3AF" />
+              <MaterialIcons name="people" size={48} color="#9CA3AF" />
               <Text style={styles.emptyTitle}>No Leads Found</Text>
               <Text style={styles.emptyMessage}>
                 {selectedStatus === 'all' 
@@ -2149,6 +2150,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     flexShrink: 1,
+  },
+  // Add Lead Button
+  addLeadButtonContainer: {
+    marginBottom: 16,
   },
   addLeadButtonPlaceholder: {
     alignItems: 'center',

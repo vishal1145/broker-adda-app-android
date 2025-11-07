@@ -405,11 +405,11 @@ const ProfileScreen = ({ navigation }) => {
                 <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
               <View style={[styles.headerActionsContainer, { top: statusBarHeight + 10 }]}>
-                <TouchableOpacity style={styles.modernSettingsButton} onPress={() => navigation.navigate('SettingsScreen')}>
-                  <MaterialIcons name="settings" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.modernEditButton} onPress={handleEditProfile}>
                   <MaterialIcons name="edit" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modernSettingsButton} onPress={() => navigation.navigate('SettingsScreen')}>
+                  <MaterialIcons name="settings" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
               

@@ -801,16 +801,13 @@ const PropertiesScreen = ({ navigation }) => {
           
           {filteredProperties.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="home-work" size={64} color="#D1D5DB" />
+              <MaterialIcons name="home-work" size={48} color="#9CA3AF" />
               <Text style={styles.emptyTitle}>No Properties Found</Text>
-              <Text style={styles.emptyText}>You don't have any properties yet.</Text>
-              <TouchableOpacity 
-                style={styles.addButton}
-                onPress={() => navigation.navigate('CreateProperty')}
-              >
-                <MaterialIcons name="add" size={32} color="#FFFFFF" />
-                <Text style={styles.addButtonText}>Add Your First Property</Text>
-              </TouchableOpacity>
+              <Text style={styles.emptyMessage}>
+                {selectedFilter === 'all' 
+                  ? 'No properties available at the moment'
+                  : `No ${filterOptions.find(option => option.key === selectedFilter)?.label.toLowerCase() || 'properties'} found`}
+              </Text>
             </View>
           ) : (
           <FlatList
@@ -1305,21 +1302,20 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 12,
     marginBottom: 8,
   },
-  emptyText: {
+  emptyMessage: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#9CA3AF',
     textAlign: 'center',
-    marginBottom: 24,
   },
   addButton: {
     flexDirection: 'row',

@@ -381,13 +381,21 @@ const NotificationsScreen = ({ navigation }) => {
             </Text>
           </View>
           
-          <FlatList
-            data={filteredNotifications}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <NotificationCard notification={item} />}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={false}
-          />
+          {filteredNotifications.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="notifications-none" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No Notifications Found</Text>
+              <Text style={styles.emptyMessage}>No notifications available at the moment</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredNotifications}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <NotificationCard notification={item} />}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            />
+          )}
         </View>
       </ScrollView>
       </View>
@@ -751,6 +759,26 @@ const styles = StyleSheet.create({
   priorityText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+
+  // Empty State Styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
   },
 })
 

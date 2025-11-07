@@ -1335,15 +1335,23 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.addLeadText}>Add Lead</Text>
           </TouchableOpacity>
           
-          <FlatList
-            data={recentLeads}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <RecentLeadCard lead={item} />}
-            contentContainerStyle={styles.recentLeadsList}
-            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-          />
+          {recentLeads.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="people" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No Recent Leads</Text>
+              <Text style={styles.emptyMessage}>No leads available at the moment</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={recentLeads}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <RecentLeadCard lead={item} />}
+              contentContainerStyle={styles.recentLeadsList}
+              ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+            />
+          )}
         </View>
 
         {/* Recent Properties */}
@@ -1368,15 +1376,23 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.addPropertyText}>Add Property</Text>
           </TouchableOpacity>
           
-          <FlatList
-            data={recentProperties}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <RecentPropertyCard property={item} />}
-            contentContainerStyle={styles.recentPropertiesList}
-            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
-          />
+          {recentProperties.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="home-work" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No Recent Properties</Text>
+              <Text style={styles.emptyMessage}>No properties available at the moment</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={recentProperties}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => <RecentPropertyCard property={item} />}
+              contentContainerStyle={styles.recentPropertiesList}
+              ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+            />
+          )}
         </View>
 
         {/* Recent Activity */}
@@ -1391,21 +1407,23 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.recentActivityCard}>
-            {recentActivities.length > 0 ? (
-              recentActivities.slice(0, 3).map((activity, index, array) => (
+          {recentActivities.length > 0 ? (
+            <View style={styles.recentActivityCard}>
+              {recentActivities.slice(0, 3).map((activity, index, array) => (
                   <RecentActivityCard 
                     key={activity.id} 
                     activity={activity} 
                     isLast={index === array.length - 1}
                   />
-              ))
-            ) : (
-              <View style={styles.recentActivityItem}>
-                <Text style={styles.recentActivityDescription}>No recent activity</Text>
-              </View>
-            )}
-          </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="notifications-none" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No Recent Activity</Text>
+              <Text style={styles.emptyMessage}>No notifications available at the moment</Text>
+            </View>
+          )}
         </View>
 
         {/* Performance Summary */}
@@ -2413,6 +2431,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1F2937',
+    textAlign: 'center',
+  },
+
+  // Empty State Styles
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: '#9CA3AF',
     textAlign: 'center',
   },
 })
