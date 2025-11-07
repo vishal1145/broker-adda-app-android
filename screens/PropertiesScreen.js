@@ -228,11 +228,9 @@ const PropertiesScreen = ({ navigation }) => {
   const fetchUnreadNotificationCount = async () => {
     try {
       const token = await storage.getToken()
-      const brokerId = await storage.getUserId()
-      const userId = await storage.getBrokerId()
       
       if (token) {
-        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+        const response = await notificationsAPI.getNotifications(token)
         
         if (response && response.success && response.data && response.data.notifications) {
           // Count unread notifications (where isRead is false)

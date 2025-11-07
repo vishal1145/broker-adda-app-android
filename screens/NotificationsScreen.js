@@ -99,6 +99,11 @@ const NotificationsScreen = ({ navigation }) => {
   // Notifications data
   const [notifications, setNotifications] = useState([])
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
+  const [countsByType, setCountsByType] = useState({
+    lead: { total: 0, unread: 0 },
+    property: { total: 0, unread: 0 },
+    transfer: { total: 0, unread: 0 }
+  })
 
   // Helper function to format time ago
   const formatTimeAgo = (dateString) => {
@@ -164,11 +169,9 @@ const NotificationsScreen = ({ navigation }) => {
     try {
       setIsLoadingNotifications(true)
       const token = await storage.getToken()
-      const brokerId = await storage.getUserId()
-      const userId = await storage.getBrokerId()
       
       if (token) {
-        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+        const response = await notificationsAPI.getNotifications(token)
         
         if (response && response.success && response.data && response.data.notifications) {
           const apiNotifications = response.data.notifications.map((notification) => {
@@ -179,6 +182,7 @@ const NotificationsScreen = ({ navigation }) => {
             let icon = 'notifications'
             if (notificationType === 'property') icon = 'home'
             else if (notificationType === 'lead' || notificationType === 'approval') icon = 'trending-up'
+            else if (notificationType === 'transfer') icon = 'swap-horiz'
             else if (notificationType.includes('payment')) icon = 'attach-money'
             else if (notificationType.includes('message')) icon = 'chat-bubble-outline'
             else if (notificationType.includes('system')) icon = 'build'
@@ -197,6 +201,15 @@ const NotificationsScreen = ({ navigation }) => {
           })
           
           setNotifications(apiNotifications)
+          
+          // Store countsByType from API response
+          if (response.data.countsByType) {
+            setCountsByType({
+              lead: response.data.countsByType.lead || { total: 0, unread: 0 },
+              property: response.data.countsByType.property || { total: 0, unread: 0 },
+              transfer: response.data.countsByType.transfer || { total: 0, unread: 0 }
+            })
+          }
         }
       }
     } catch (error) {
@@ -287,6 +300,7 @@ const NotificationsScreen = ({ navigation }) => {
     switch (type) {
       case 'lead': return 'trending-up'
       case 'property': return 'home'
+      case 'transfer': return 'swap-horiz'
       case 'payment': return 'attach-money'
       case 'message': return 'chat-bubble-outline'
       case 'system': return 'build'
@@ -363,14 +377,14 @@ const NotificationsScreen = ({ navigation }) => {
         contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 20 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Overview - two cards */}
+        {/* Stats Overview - three cards */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, styles.statCardGreen]}> 
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="trending-up" size={22} color="#FFFFFF" />
-                  <Text style={styles.statCount}>{notifications.filter(notif => notif.type === 'lead').length}</Text>
+                  <Text style={styles.statCount}>{countsByType.lead?.total || 0}</Text>
                 </View>
                 <Text style={styles.statTitle}>Lead Updates</Text>
               </View>
@@ -380,9 +394,19 @@ const NotificationsScreen = ({ navigation }) => {
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="home" size={22} color="#FFFFFF" />
-                  <Text style={styles.statCount}>{notifications.filter(notif => notif.type === 'property').length}</Text>
+                  <Text style={styles.statCount}>{countsByType.property?.total || 0}</Text>
                 </View>
                 <Text style={styles.statTitle}>Property Updates</Text>
+              </View>
+            </View>
+
+            <View style={[styles.statCard, styles.statCardBlue]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="swap-horiz" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>{countsByType.transfer?.total || 0}</Text>
+                </View>
+                <Text style={styles.statTitle}>Transfer Updates</Text>
               </View>
             </View>
           </View>
@@ -554,6 +578,9 @@ const styles = StyleSheet.create({
   statCardYellow: {
     backgroundColor: '#FCD34D',
   },
+  statCardBlue: {
+    backgroundColor: '#3B82F6',
+  },
   statCardContent: {
     padding: 16,
     minHeight: 88,
@@ -568,6 +595,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
+    flexShrink: 0,
+    textAlign: 'right',
+    minWidth: 40,
   },
   statTitle: {
     fontSize: 14,

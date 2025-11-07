@@ -238,11 +238,9 @@ const HomeScreen = ({ navigation }) => {
   const fetchUnreadNotificationCount = async () => {
     try {
       const token = await storage.getToken()
-      const brokerId = await storage.getUserId()
-      const userId = await storage.getBrokerId()
       
       if (token) {
-        const response = await notificationsAPI.getNotifications(token, brokerId, userId)
+        const response = await notificationsAPI.getNotifications(token)
         
         if (response && response.success && response.data && response.data.notifications) {
           // Count unread notifications (where isRead is false)
@@ -263,12 +261,10 @@ const HomeScreen = ({ navigation }) => {
   const fetchRecentNotifications = async () => {
     try {
       const token = await storage.getToken()
-      const brokerId = await storage.getUserId()
-      const userId = await storage.getBrokerId()
       
       if (token) {
         // Fetch more notifications to allow "Show More" functionality
-        const response = await notificationsAPI.getRecentNotifications(token, 7, brokerId, userId)
+        const response = await notificationsAPI.getRecentNotifications(token, 7)
         
         if (response && response.success && response.data && response.data.notifications) {
           const notifications = response.data.notifications.map((notification, index) => ({
