@@ -517,9 +517,10 @@ const PropertiesScreen = ({ navigation }) => {
             <View style={styles.propertyImageContainer}>
               {hasImages ? (
                 <>
-                  <Image 
-                    source={{ uri: property.images[0] }} 
+                  <SafeImage 
+                    source={{ uri: getSecureImageUrl(property.images[0]) }} 
                     style={styles.propertyImage}
+                    imageType="propertyImage"
                     resizeMode="cover"
                   />
                   {/* Property Type Badge */}

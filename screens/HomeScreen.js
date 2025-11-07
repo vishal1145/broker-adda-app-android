@@ -921,7 +921,7 @@ const HomeScreen = ({ navigation }) => {
             {hasImages ? (
               <>
                 <SafeImage 
-                  source={{ uri: property.images[0] }} 
+                  source={{ uri: getSecureImageUrl(property.images[0]) }} 
                   style={styles.recentPropertyImage}
                   imageType="propertyImage"
                   resizeMode="cover"

@@ -17,6 +17,75 @@ import { propertiesAPI, savedPropertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
 
+// Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
+const getSecureImageUrl = (url) => {
+  if (!url) return null
+  console.log('Original URL:', url)
+  // Convert HTTP to HTTPS for better compatibility with APK builds
+  if (url.startsWith('http://')) {
+    const secureUrl = url.replace('http://', 'https://')
+    console.log('Converted to HTTPS:', secureUrl)
+    return secureUrl
+  }
+  console.log('Using original URL:', url)
+  return url
+}
+
+// Enhanced image component with fallback
+const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
+  const [imageError, setImageError] = useState(false)
+  const [currentSource, setCurrentSource] = useState(source)
+
+  const handleError = (error) => {
+    console.log(`Image error for ${imageType}:`, error)
+    console.log('Failed URL:', currentSource?.uri)
+    
+    // If we're using HTTPS and it fails, try HTTP as fallback
+    if (currentSource?.uri?.startsWith('https://')) {
+      const httpUrl = currentSource.uri.replace('https://', 'http://')
+      console.log('Trying HTTP fallback:', httpUrl)
+      setCurrentSource({ uri: httpUrl })
+      setImageError(false)
+    } else {
+      setImageError(true)
+    }
+  }
+
+  const retry = () => {
+    setImageError(false)
+    setCurrentSource(source)
+  }
+
+  if (imageError) {
+    return (
+      <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+        {fallbackText ? (
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+            {fallbackText}
+          </Text>
+        ) : (
+          <MaterialIcons name="home" size={20} color="#065F46" />
+        )}
+        <TouchableOpacity 
+          style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+          onPress={retry}
+        >
+          <MaterialIcons name="refresh" size={10} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  return (
+    <Image
+      source={currentSource}
+      style={style}
+      onError={handleError}
+      {...props}
+    />
+  )
+}
+
 const PropertyDetailsScreen = ({ navigation, route }) => {
   const { property: initialProperty } = route.params || {}
   const insets = useSafeAreaInsets()
@@ -434,9 +503,10 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           <View style={styles.mainImageContainer}>
             {property.images && property.images.length > 0 ? (
               <>
-                <Image 
-                  source={{ uri: property.images[currentImageIndex] || property.images[0] }} 
+                <SafeImage 
+                  source={{ uri: getSecureImageUrl(property.images[currentImageIndex] || property.images[0]) }} 
                   style={styles.mainImage}
+                  imageType="propertyMainImage"
                   resizeMode="cover"
                 />
                 
@@ -517,9 +587,10 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                     onPress={() => handleThumbnailPress(index)}
                     activeOpacity={0.7}
                   >
-                    <Image 
-                      source={{ uri: image }} 
+                    <SafeImage 
+                      source={{ uri: getSecureImageUrl(image) }} 
                       style={styles.thumbnailImage}
+                      imageType="propertyThumbnail"
                       resizeMode="cover"
                     />
                   </TouchableOpacity>
