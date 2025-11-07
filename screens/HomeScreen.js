@@ -1263,6 +1263,7 @@ const HomeScreen = ({ navigation }) => {
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
       >
         {/* Dashboard Cards - Matching LeadsScreen Style */}
         <View style={styles.statsSection}>
@@ -1350,6 +1351,7 @@ const HomeScreen = ({ navigation }) => {
               renderItem={({ item }) => <RecentLeadCard lead={item} />}
               contentContainerStyle={styles.recentLeadsList}
               ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+              nestedScrollEnabled={true}
             />
           )}
         </View>
@@ -1391,6 +1393,7 @@ const HomeScreen = ({ navigation }) => {
               renderItem={({ item }) => <RecentPropertyCard property={item} />}
               contentContainerStyle={styles.recentPropertiesList}
               ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+              nestedScrollEnabled={true}
             />
           )}
         </View>
