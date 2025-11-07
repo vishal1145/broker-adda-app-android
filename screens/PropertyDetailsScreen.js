@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
-import { propertiesAPI, savedPropertiesAPI } from '../services/api'
+import { propertiesAPI, savedPropertiesAPI, propertyRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
 
@@ -98,6 +98,8 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [isSaved, setIsSaved] = useState(false)
   const [isCheckingSaved, setIsCheckingSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [ratingsData, setRatingsData] = useState(null)
+  const [isLoadingRatings, setIsLoadingRatings] = useState(false)
   const scrollViewRef = useRef(null)
 
   // Transform API data to match screen expectations
@@ -333,8 +335,38 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   useEffect(() => {
     if (property && (property.id || property._id)) {
       checkSavedProperty()
+      fetchPropertyRatings()
     }
   }, [property])
+
+  // Fetch property ratings
+  const fetchPropertyRatings = async () => {
+    if (!property) return
+    
+    try {
+      setIsLoadingRatings(true)
+      const propertyId = property.id || property._id
+      if (!propertyId) {
+        setIsLoadingRatings(false)
+        return
+      }
+
+      // Try to get token, but continue even if not available (endpoint might not require auth)
+      const token = await storage.getToken()
+
+      const response = await propertyRatingsAPI.getPropertyRatings(propertyId, token)
+      
+      if (response.success && response.data) {
+        setRatingsData(response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching property ratings:', error)
+      // Set default ratings if API fails
+      setRatingsData(null)
+    } finally {
+      setIsLoadingRatings(false)
+    }
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -353,6 +385,20 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       case 'Townhouse': return 'business'
       default: return 'home'
     }
+  }
+
+  // Helper function to get time ago string
+  const getTimeAgo = (date) => {
+    const now = new Date()
+    const diffInSeconds = Math.floor((now - date) / 1000)
+    
+    if (diffInSeconds < 60) return 'Just now'
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} ${Math.floor(diffInSeconds / 60) === 1 ? 'minute' : 'minutes'} ago`
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} ${Math.floor(diffInSeconds / 3600) === 1 ? 'hour' : 'hours'} ago`
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} ${Math.floor(diffInSeconds / 86400) === 1 ? 'day' : 'days'} ago`
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} ${Math.floor(diffInSeconds / 604800) === 1 ? 'week' : 'weeks'} ago`
+    if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)} ${Math.floor(diffInSeconds / 2592000) === 1 ? 'month' : 'months'} ago`
+    return `${Math.floor(diffInSeconds / 31536000)} ${Math.floor(diffInSeconds / 31536000) === 1 ? 'year' : 'years'} ago`
   }
 
   const handleShare = async () => {
@@ -655,6 +701,30 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                 </View>
               </View>
             </View>
+            
+            {/* Property Rating - Bottom */}
+            {ratingsData?.stats?.averageRating !== null && ratingsData?.stats?.averageRating !== undefined && (
+              <View style={styles.propertyRatingContainer}>
+                <View style={styles.propertyRatingStars}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <MaterialIcons 
+                      key={star} 
+                      name="star" 
+                      size={18} 
+                      color={star <= Math.round(ratingsData.stats.averageRating) ? "#FFD700" : "#E5E7EB"} 
+                    />
+                  ))}
+                </View>
+                <Text style={styles.propertyRatingText}>
+                  {ratingsData.stats.averageRating.toFixed(1)}
+                </Text>
+                {ratingsData.stats.totalRatings > 0 && (
+                  <Text style={styles.propertyRatingCount}>
+                    ({ratingsData.stats.totalRatings} {ratingsData.stats.totalRatings === 1 ? 'review' : 'reviews'})
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Property Amenities */}
@@ -757,112 +827,130 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                     <Text style={styles.reviewsRatingsTitle}>Reviews & Ratings</Text>
                   </View>
                   
-                  <View style={styles.overallRatingSection}>
-                    <View style={styles.overallRatingLeft}>
-                      <Text style={styles.overallRatingNumber}>4.7</Text>
-                      <View style={styles.overallRatingStars}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <MaterialIcons key={star} name="star" size={20} color="#FBBF24" />
-                        ))}
+                  {isLoadingRatings ? (
+                    <View style={styles.loadingRatingsContainer}>
+                      <ActivityIndicator size="small" color="#F59E0B" />
+                      <Text style={styles.loadingRatingsText}>Loading ratings...</Text>
+                    </View>
+                  ) : ratingsData?.stats ? (
+                    <View style={styles.overallRatingSection}>
+                      <View style={styles.overallRatingLeft}>
+                        <Text style={styles.overallRatingNumber}>
+                          {ratingsData.stats.averageRating?.toFixed(1) || '0.0'}
+                        </Text>
+                        <View style={styles.overallRatingStars}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <MaterialIcons 
+                              key={star} 
+                              name="star" 
+                              size={20} 
+                              color={star <= Math.round(ratingsData.stats.averageRating || 0) ? "#FBBF24" : "#E5E7EB"} 
+                            />
+                          ))}
+                        </View>
+                        <Text style={styles.overallRatingText}>
+                          {ratingsData.stats.averageRating >= 4.5 ? 'Excellent' :
+                           ratingsData.stats.averageRating >= 4.0 ? 'Very Good' :
+                           ratingsData.stats.averageRating >= 3.5 ? 'Good' :
+                           ratingsData.stats.averageRating >= 3.0 ? 'Average' : 'Below Average'}
+                        </Text>
+                        <Text style={styles.reviewsCount}>
+                          Based on {ratingsData.stats.totalRatings || 0} {ratingsData.stats.totalRatings === 1 ? 'review' : 'reviews'}
+                        </Text>
                       </View>
-                      <Text style={styles.overallRatingText}>Excellent</Text>
-                      <Text style={styles.reviewsCount}>Based on 245 reviews</Text>
-                    </View>
-                    
-                    <View style={styles.starDistribution}>
-                      {[5, 4, 3, 2, 1].map((starLevel) => {
-                        const percentages = { 5: 90, 4: 60, 3: 25, 2: 10, 1: 5 }
-                        return (
-                          <View key={starLevel} style={styles.starDistributionRow}>
-                            <Text style={styles.starLevelText}>{starLevel} Star</Text>
-                            <View style={styles.starDistributionBar}>
-                              <View 
-                                style={[
-                                  styles.starDistributionBarFill, 
-                                  { width: `${percentages[starLevel]}%` }
-                                ]} 
-                              />
+                      
+                      <View style={styles.starDistribution}>
+                        {[5, 4, 3, 2, 1].map((starLevel) => {
+                          const distribution = ratingsData.stats.distribution || {}
+                          const count = distribution[starLevel.toString()] || 0
+                          const total = ratingsData.stats.totalRatings || 1
+                          const percentage = total > 0 ? Math.round((count / total) * 100) : 0
+                          return (
+                            <View key={starLevel} style={styles.starDistributionRow}>
+                              <Text style={styles.starLevelText}>{starLevel} Star</Text>
+                              <View style={styles.starDistributionBar}>
+                                <View 
+                                  style={[
+                                    styles.starDistributionBarFill, 
+                                    { width: `${percentage}%` }
+                                  ]} 
+                                />
+                              </View>
+                              <Text style={styles.starPercentageText}>{percentage}%</Text>
                             </View>
-                            <Text style={styles.starPercentageText}>{percentages[starLevel]}%</Text>
-                          </View>
-                        )
-                      })}
+                          )
+                        })}
+                      </View>
                     </View>
-                  </View>
+                  ) : (
+                    <View style={styles.noRatingsContainer}>
+                      <Text style={styles.noRatingsText}>No ratings available yet</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Recent Reviews */}
                 <View style={styles.recentReviewsSection}>
                   <Text style={styles.recentReviewsTitle}>Recent Reviews</Text>
                   
-                  {[
-                    {
-                      id: 1,
-                      name: 'Rajesh Kumar',
-                      initials: 'RK',
-                      verified: true,
-                      rating: 5,
-                      timeAgo: '2 days ago',
-                      review: 'Excellent property with great amenities. The location is perfect with metro connectivity. Highly recommended!'
-                    },
-                    {
-                      id: 2,
-                      name: 'Priya Sharma',
-                      initials: 'PS',
-                      verified: true,
-                      rating: 5,
-                      timeAgo: '1 week ago',
-                      review: 'Good property overall. The maintenance is well taken care of. Only minor issue is the parking space.'
-                    },
-                    {
-                      id: 3,
-                      name: 'Amit Singh',
-                      initials: 'AS',
-                      verified: false,
-                      rating: 5,
-                      timeAgo: '2 weeks ago',
-                      review: 'Amazing property! The view from the balcony is breathtaking. The builder has maintained high quality standards.'
-                    }
-                  ].map((review) => (
-                    <View key={review.id} style={styles.reviewCard}>
-                      <View style={styles.reviewCardHeader}>
-                        <View style={styles.reviewAvatar}>
-                          <View style={styles.reviewAvatarContainer}>
-                            <Text style={styles.reviewAvatarText}>{review.initials}</Text>
-                          </View>
-                        </View>
-                        <View style={styles.reviewCardInfo}>
-                          <View style={styles.reviewNameRow}>
-                            <Text style={styles.reviewName}>{review.name}</Text>
-                            {review.verified && (
-                              <View style={[styles.verifiedBadge, { backgroundColor: '#10B981' + '20' }]}>
-                                <MaterialIcons name="circle" size={8} color="#10B981" />
-                                <Text style={[styles.verifiedBadgeText, { color: '#10B981' }]}>Verified</Text>
+                  {isLoadingRatings ? (
+                    <View style={styles.loadingReviewsContainer}>
+                      <ActivityIndicator size="small" color="#6B7280" />
+                      <Text style={styles.loadingReviewsText}>Loading reviews...</Text>
+                    </View>
+                  ) : ratingsData?.ratings && ratingsData.ratings.length > 0 ? (
+                    <>
+                      {ratingsData.ratings.map((review) => {
+                        const userName = review.userId?.name || 'Anonymous'
+                        const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AN'
+                        const reviewDate = review.createdAt ? new Date(review.createdAt) : new Date()
+                        const timeAgo = getTimeAgo(reviewDate)
+                        
+                        return (
+                          <View key={review._id} style={styles.reviewCard}>
+                            <View style={styles.reviewCardHeader}>
+                              <View style={styles.reviewAvatar}>
+                                <View style={styles.reviewAvatarContainer}>
+                                  <Text style={styles.reviewAvatarText}>{initials}</Text>
+                                </View>
                               </View>
+                              <View style={styles.reviewCardInfo}>
+                                <View style={styles.reviewNameRow}>
+                                  <Text style={styles.reviewName}>{userName}</Text>
+                                </View>
+                                <View style={styles.reviewMetaRow}>
+                                  <View style={styles.reviewStars}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <MaterialIcons 
+                                        key={star} 
+                                        name="star" 
+                                        size={14} 
+                                        color={star <= review.rating ? "#FBBF24" : "#E5E7EB"} 
+                                      />
+                                    ))}
+                                  </View>
+                                  <Text style={styles.reviewTimeAgo}>{timeAgo}</Text>
+                                </View>
+                              </View>
+                            </View>
+                            {review.review && (
+                              <Text style={styles.reviewText}>{review.review}</Text>
                             )}
                           </View>
-                          <View style={styles.reviewMetaRow}>
-                            <View style={styles.reviewStars}>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <MaterialIcons 
-                                  key={star} 
-                                  name="star" 
-                                  size={14} 
-                                  color="#FBBF24" 
-                                />
-                              ))}
-                            </View>
-                            <Text style={styles.reviewTimeAgo}>{review.timeAgo}</Text>
-                          </View>
-                        </View>
-                      </View>
-                      <Text style={styles.reviewText}>{review.review}</Text>
+                        )
+                      })}
+                      
+                      {ratingsData.pagination && ratingsData.pagination.total > ratingsData.ratings.length && (
+                        <TouchableOpacity style={styles.loadMoreButton}>
+                          <Text style={styles.loadMoreButtonText}>Load More Reviews</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  ) : (
+                    <View style={styles.noReviewsContainer}>
+                      <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
                     </View>
-                  ))}
-                  
-                  <TouchableOpacity style={styles.loadMoreButton}>
-                    <Text style={styles.loadMoreButtonText}>Load More Reviews</Text>
-                  </TouchableOpacity>
+                  )}
                 </View>
               </>
             )}
@@ -1313,6 +1401,30 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     flex: 1,
   },
+  propertyRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 8,
+  },
+  propertyRatingStars: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+  },
+  propertyRatingText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  propertyRatingCount: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
   
   // Features
   featuresGrid: {
@@ -1619,6 +1731,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
+  },
+  loadingRatingsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingRatingsText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  noRatingsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  noRatingsText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  loadingReviewsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingReviewsText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  noReviewsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
   },
   
   // Key Features and Location Benefits

@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { authAPI } from '../services/api'
+import { authAPI, brokerRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
 
 const { width, height } = Dimensions.get('window')
@@ -59,6 +59,7 @@ const ProfileScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [profileImage, setProfileImage] = useState(null)
   const [imageLoadErrors, setImageLoadErrors] = useState({})
+  const [brokerRating, setBrokerRating] = useState(null)
 
   // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
   const getSecureImageUrl = (url) => {
@@ -275,9 +276,29 @@ const ProfileScreen = ({ navigation }) => {
     }
   }
 
+  // Fetch broker ratings
+  const fetchBrokerRatings = async () => {
+    try {
+      const token = await storage.getToken()
+      const userId = await storage.getUserId()
+      
+      if (token && userId) {
+        const response = await brokerRatingsAPI.getBrokerRatings(userId, token)
+        
+        if (response && response.success && response.data && response.data.stats) {
+          setBrokerRating(response.data.stats.averageRating)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching broker ratings:', error)
+      // Keep rating as null if API fails
+    }
+  }
+
   // Load profile data on component mount
   useEffect(() => {
     fetchProfileData()
+    fetchBrokerRatings()
   }, [])
 
   const handleLogout = async () => {
@@ -435,6 +456,23 @@ const ProfileScreen = ({ navigation }) => {
                     <MaterialIcons name="business" size={16} color="#FFFFFF" />
                     <Text style={styles.modernFirmName}>{profileData.firm}</Text>
                   </View>
+                  
+                  {/* Broker Rating */}
+                  {brokerRating !== null && (
+                    <View style={styles.ratingContainer}>
+                      <View style={styles.ratingStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <MaterialIcons 
+                            key={star} 
+                            name="star" 
+                            size={18} 
+                            color={star <= Math.round(brokerRating) ? "#FFD700" : "rgba(255, 255, 255, 0.3)"} 
+                          />
+                        ))}
+                      </View>
+                      <Text style={styles.ratingText}>{brokerRating.toFixed(1)}</Text>
+                    </View>
+                  )}
                   
                   {profileData.content && profileData.content.trim() && (
                     <View style={styles.contentContainer}>
@@ -962,6 +1000,25 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    gap: 8,
+    alignSelf: 'center',
+  },
+  ratingStars: {
+    flexDirection: 'row',
+    gap: 2,
+    alignItems: 'center',
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   contentContainer: {
     marginTop: 8,

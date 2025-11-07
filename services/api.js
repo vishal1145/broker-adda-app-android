@@ -644,6 +644,60 @@ export const propertiesAPI = {
   }
 };
 
+// Property Ratings API functions
+export const propertyRatingsAPI = {
+  // Get property ratings by property ID
+  getPropertyRatings: async (propertyId, token = null) => {
+    try {
+      console.log('Fetching property ratings for ID:', propertyId);
+      const headers = {
+        'Accept': 'application/json'
+      };
+      
+      // Add authorization header only if token is provided
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await api.get(`/api/property-ratings/property/${propertyId}`, {
+        headers: headers
+      });
+      console.log('Property ratings fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get property ratings error:', error);
+      throw error;
+    }
+  }
+};
+
+// Broker Ratings API functions
+export const brokerRatingsAPI = {
+  // Get broker ratings by broker ID
+  getBrokerRatings: async (brokerId, token = null) => {
+    try {
+      console.log('Fetching broker ratings for ID:', brokerId);
+      const headers = {
+        'Accept': 'application/json'
+      };
+      
+      // Add authorization header only if token is provided
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await api.get(`/api/broker-ratings/broker/${brokerId}`, {
+        headers: headers
+      });
+      console.log('Broker ratings fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get broker ratings error:', error);
+      throw error;
+    }
+  }
+};
+
 // Saved Properties API functions
 export const savedPropertiesAPI = {
   // Check if property is saved
