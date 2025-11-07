@@ -9,7 +9,8 @@ import {
   Switch,
   Dimensions,
   Linking,
-  Image
+  Image,
+  Alert
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -17,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import appJson from '../app.json'
 import { storage } from '../services/storage'
 import { authAPI, notificationsAPI } from '../services/api'
+import { Snackbar } from '../utils/snackbar'
 
 const { width } = Dimensions.get('window')
 
@@ -146,7 +148,7 @@ const SettingsScreen = ({ navigation }) => {
     }
   }
 
-  // Fetch unread notification count
+  // Fetch unread notification count and notification preferences
   const fetchUnreadNotificationCount = async () => {
     try {
       const token = await storage.getToken()
@@ -156,13 +158,20 @@ const SettingsScreen = ({ navigation }) => {
       if (token) {
         const response = await notificationsAPI.getNotifications(token, brokerId, userId)
         
-        if (response && response.success && response.data && response.data.notifications) {
+        if (response && response.success && response.data) {
           // Count unread notifications (where isRead is false)
-          const unreadCount = response.data.notifications.filter(
-            notification => !notification.isRead
-          ).length
+          if (response.data.notifications) {
+            const unreadCount = response.data.notifications.filter(
+              notification => !notification.isRead
+            ).length
+            
+            setUnreadNotificationCount(unreadCount)
+          }
           
-          setUnreadNotificationCount(unreadCount)
+          // Set push notifications enabled state from API response
+          if (response.data.pushNotificationsEnabled !== undefined) {
+            setPushEnabled(response.data.pushNotificationsEnabled)
+          }
         }
       }
     } catch (error) {
@@ -174,6 +183,100 @@ const SettingsScreen = ({ navigation }) => {
   // Handle message press
   const handleMessagePress = () => {
     navigation.navigate('Notifications')
+  }
+
+  // Handle profile press
+  const handleProfilePress = () => {
+    // Navigate to profile screen
+    navigation.navigate('Profile')
+  }
+
+  // Handle push notifications toggle
+  const handlePushNotificationsToggle = async (value) => {
+    try {
+      // Optimistically update the UI
+      setPushEnabled(value)
+      
+      const token = await storage.getToken()
+      
+      if (!token) {
+        // Revert if no token
+        setPushEnabled(!value)
+        Snackbar.showError('Error', 'No authentication token found. Please login again.')
+        return
+      }
+
+      // Update preference on server using the toggle endpoint
+      const response = await notificationsAPI.togglePushNotifications(token, value)
+      
+      if (response && response.success) {
+        // Update state from response to ensure sync
+        if (response.data && response.data.pushNotificationsEnabled !== undefined) {
+          setPushEnabled(response.data.pushNotificationsEnabled)
+        }
+        Snackbar.showSuccess('Success', response.message || 'Notification preference updated successfully')
+      } else {
+        // Revert on failure
+        setPushEnabled(!value)
+        Snackbar.showError('Error', response?.message || 'Failed to update notification preference')
+      }
+    } catch (error) {
+      console.error('Error updating push notifications preference:', error)
+      // Revert on error
+      setPushEnabled(!value)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update notification preference. Please try again.'
+      Snackbar.showError('Error', errorMessage)
+    }
+  }
+
+  // Handle delete account
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await storage.getToken()
+              
+              if (!token) {
+                Snackbar.showError('Error', 'No authentication token found. Please login again.')
+                return
+              }
+
+              const response = await authAPI.deleteAccount(token)
+              
+              if (response && response.success) {
+                // Clear auth data
+                try {
+                  await storage.clearAuthData()
+                } catch (e) {
+                  // ignore and continue
+                }
+                
+                Snackbar.showSuccess('Success', response.message || 'Account deleted successfully')
+                
+                // Navigate to login screen
+                navigation.reset({ index: 0, routes: [{ name: 'PhoneLogin' }] })
+              } else {
+                Snackbar.showError('Error', response?.message || 'Failed to delete account')
+              }
+            } catch (error) {
+              console.error('Error deleting account:', error)
+              const errorMessage = error.response?.data?.message || error.message || 'Failed to delete account. Please try again.'
+              Snackbar.showError('Error', errorMessage)
+            }
+          }
+        }
+      ]
+    )
   }
 
   // Load profile on component mount
@@ -188,13 +291,13 @@ const SettingsScreen = ({ navigation }) => {
       items: [
         { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate', route: 'Profile', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
         { icon: 'logout', title: 'Logout', subtitle: '', action: 'logout', isEmphasis: true, iconColor: '#F59E0B', iconBg: '#FFF7ED', iconBorder: '#FED7AA' },
-        { icon: 'delete', title: 'Delete Account', subtitle: '', action: 'navigate', destructive: true }
+        { icon: 'delete', title: 'Delete Account', subtitle: '', action: 'deleteAccount', destructive: true }
       ]
     },
     {
       title: 'Notifications',
       items: [
-        { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: setPushEnabled, iconColor: '#2563EB', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: handlePushNotificationsToggle, iconColor: '#2563EB', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
         { icon: 'mail-outline', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: setEmailEnabled, iconColor: '#EF4444', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
         { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: setSmsEnabled, iconColor: '#F59E0B', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
       ]
@@ -254,8 +357,9 @@ const SettingsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
       <View style={styles.container}>
-        {/* Header - Fixed at top */}
-        <View style={styles.header}>
+        {/* Modern Header - Fixed at top */}
+        <View style={styles.modernHeader}>
+          {/* Background Pattern */}
           <View style={styles.headerPattern}>
             <View style={styles.patternCircle1} />
             <View style={styles.patternCircle2} />
@@ -263,21 +367,14 @@ const SettingsScreen = ({ navigation }) => {
           </View>
           
           <View style={styles.headerContent}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <MaterialIcons name="arrow-back" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View style={styles.headerText}>
-              <Text style={styles.headerTitle}>Settings</Text>
-              <Text style={styles.headerSubtitle}>Manage your preferences</Text>
+            <View style={styles.headerLeft}>
+              <View style={styles.welcomeContainer}>
+                <Text style={styles.welcomeGreeting}>Manage Your Settings</Text>
+                <Text style={styles.welcomeName} numberOfLines={1} ellipsizeMode="tail">{userName}</Text>
+              </View>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity 
-                style={styles.headerActionButton}
-                onPress={handleMessagePress}
-              >
+              <TouchableOpacity style={styles.profileButton} onPress={handleMessagePress}>
                 <View style={styles.notificationIconContainer}>
                   <MaterialIcons name="notifications" size={24} color="#FFFFFF" />
                   {unreadNotificationCount > 0 && (
@@ -287,6 +384,26 @@ const SettingsScreen = ({ navigation }) => {
                     ]}>
                       <Text style={styles.notificationBadgeText} numberOfLines={1} ellipsizeMode="clip">
                         {unreadNotificationCount > 99 ? '99+' : String(unreadNotificationCount)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.profileButton} onPress={handleProfilePress}>
+                <View style={styles.profileImageContainer}>
+                  {profileImage ? (
+                    <SafeImage 
+                      source={{ uri: profileImage }} 
+                      style={styles.profileImage}
+                      imageType="profileImage"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.profileInitialsContainer}>
+                      <Text style={styles.profileInitials}>
+                        {(userName && userName[0]) ? userName[0].toUpperCase() : 'U'}
                       </Text>
                     </View>
                   )}
@@ -330,6 +447,8 @@ const SettingsScreen = ({ navigation }) => {
                             navigation.reset({ index: 0, routes: [{ name: 'PhoneLogin' }] })
                           }
                         })()
+                      } else if (item.action === 'deleteAccount') {
+                        handleDeleteAccount()
                       }
                     }}
                   />
@@ -380,7 +499,7 @@ const styles = StyleSheet.create({
   },
 
   // Header Styles
-  header: {
+  modernHeader: {
     backgroundColor: '#0D542BFF',
     paddingTop: 20,
     paddingBottom: 30,
@@ -425,49 +544,40 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     position: 'relative',
     zIndex: 2,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  headerText: {
+  headerLeft: {
     flex: 1,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  welcomeContainer: {
+    marginBottom: 0,
   },
-  headerSubtitle: {
+  welcomeGreeting: {
     fontSize: 16,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  welcomeName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   headerRight: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  headerActionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  profileButton: {
+    padding: 4,
   },
   notificationIconContainer: {
     position: 'relative',
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -502,30 +612,34 @@ const styles = StyleSheet.create({
     lineHeight: 11,
   },
   profileImageContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   profileInitialsContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   profileInitials: {
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   profileImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
 
   // Settings Container

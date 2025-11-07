@@ -53,11 +53,6 @@ const MainTabNavigator = () => {
         options={{ tabBarLabel: 'Leads' }}
       />
       <Tab.Screen 
-        name="Search" 
-        component={SearchScreen}
-        options={{ tabBarLabel: 'Search' }}
-      />
-      <Tab.Screen 
         name="Properties" 
         component={PropertiesScreen}
         options={{ tabBarLabel: 'Properties' }}
@@ -66,6 +61,11 @@ const MainTabNavigator = () => {
         name="Contacts" 
         component={ChatListScreen}
         options={{ tabBarLabel: 'Contacts' }}
+      />
+      <Tab.Screen 
+        name="Settings" 
+        component={SettingsScreen}
+        options={{ tabBarLabel: 'Settings' }}
       />
     </Tab.Navigator>
   );

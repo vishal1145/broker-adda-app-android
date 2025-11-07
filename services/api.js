@@ -207,6 +207,24 @@ export const authAPI = {
       console.error('Check email error:', error);
       throw error;
     }
+  },
+
+  // Delete account
+  deleteAccount: async (token) => {
+    try {
+      console.log('Deleting account');
+      const response = await api.delete('/api/auth/account', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
+      });
+      console.log('Account deleted successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Delete account error:', error);
+      throw error;
+    }
   }
 };
 
@@ -847,6 +865,59 @@ export const notificationsAPI = {
       return response.data;
     } catch (error) {
       console.error('Get recent notifications error:', error);
+      throw error;
+    }
+  },
+  markAllAsRead: async (token) => {
+    try {
+      console.log('Marking all notifications as read');
+      const response = await api.patch('/api/notifications/read-all', {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('All notifications marked as read successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Mark all as read error:', error);
+      throw error;
+    }
+  },
+  updateNotificationPreferences: async (token, preferences) => {
+    try {
+      console.log('Updating notification preferences:', preferences);
+      const response = await api.patch('/api/notifications/preferences', preferences, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Notification preferences updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update notification preferences error:', error);
+      throw error;
+    }
+  },
+  togglePushNotifications: async (token, enable) => {
+    try {
+      console.log('Toggling push notifications:', enable);
+      const response = await api.patch('/api/notifications/push/toggle', {
+        enable: enable
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Push notifications toggled successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Toggle push notifications error:', error);
       throw error;
     }
   },

@@ -14,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { Snackbar } from '../utils/snackbar'
 
 const { width } = Dimensions.get('window')
 
@@ -213,6 +214,9 @@ const NotificationsScreen = ({ navigation }) => {
       const token = await storage.getToken()
       if (!token) return
 
+      // Call API to mark all as read on server
+      const response = await notificationsAPI.markAllAsRead(token)
+
       // Update local state to mark all as read
       setNotifications(prevNotifications => 
         prevNotifications.map(notif => ({
@@ -222,10 +226,27 @@ const NotificationsScreen = ({ navigation }) => {
         }))
       )
 
-      // Optionally call API to mark all as read on server
-      // You can add an API call here if the endpoint exists
+      // Show success message with updated count
+      if (response && response.success) {
+        const updatedCount = response.data?.updatedCount || 0
+        const message = updatedCount > 0 
+          ? `${updatedCount} notification${updatedCount === 1 ? '' : 's'} marked as read`
+          : response.message || 'All notifications marked as read'
+        Snackbar.showSuccess('Success', message)
+      }
     } catch (error) {
       console.error('Error marking all as read:', error)
+      // Still update local state even if API call fails
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => ({
+          ...notif,
+          isRead: true,
+          priority: 'low'
+        }))
+      )
+      // Show error message
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to mark all notifications as read'
+      Snackbar.showError('Error', errorMessage)
     }
   }
 

@@ -11,7 +11,6 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  TextInput
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
@@ -81,8 +80,6 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 }
 
 const SearchScreen = ({ navigation }) => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -93,6 +90,152 @@ const SearchScreen = ({ navigation }) => {
   const [profileImage, setProfileImage] = useState(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const [activeTab, setActiveTab] = useState('Property')
+  
+  // Dummy data for brokers
+  const [dummyBrokers] = useState([
+    {
+      id: 1,
+      name: 'Rajesh Kumar',
+      company: 'Prime Realty Solutions',
+      location: 'Mumbai, Maharashtra',
+      experience: '10+ years',
+      propertiesSold: 125,
+      rating: 4.8,
+      phone: '+91 98765 43210',
+      email: 'rajesh@primerealty.com',
+      image: null
+    },
+    {
+      id: 2,
+      name: 'Priya Sharma',
+      company: 'Elite Properties',
+      location: 'Delhi, NCR',
+      experience: '8+ years',
+      propertiesSold: 98,
+      rating: 4.9,
+      phone: '+91 98765 43211',
+      email: 'priya@eliteproperties.com',
+      image: null
+    },
+    {
+      id: 3,
+      name: 'Amit Patel',
+      company: 'Dream Homes Realty',
+      location: 'Bangalore, Karnataka',
+      experience: '12+ years',
+      propertiesSold: 156,
+      rating: 4.7,
+      phone: '+91 98765 43212',
+      email: 'amit@dreamhomes.com',
+      image: null
+    }
+  ])
+  
+  // Dummy data for leads (matching HomeScreen structure)
+  const [dummyLeads] = useState([
+    {
+      id: 1,
+      title: 'Residential for Buy',
+      requirement: 'Buy',
+      propertyType: 'Residential',
+      timeAgo: '2h ago',
+      preferredLocation: 'Mumbai',
+      secondaryLocation: 'Pune',
+      budget: '₹50,00,000',
+      contactName: 'Rahul Mehta',
+      phone: '+91 98765 43210',
+      email: 'rahul@example.com'
+    },
+    {
+      id: 2,
+      title: 'Commercial for Rent',
+      requirement: 'Rent',
+      propertyType: 'Commercial',
+      timeAgo: '5h ago',
+      preferredLocation: 'Delhi',
+      secondaryLocation: 'Gurgaon',
+      budget: '₹2,00,000',
+      contactName: 'Sneha Gupta',
+      phone: '+91 98765 43211',
+      email: 'sneha@example.com'
+    },
+    {
+      id: 3,
+      title: 'Residential for Buy',
+      requirement: 'Buy',
+      propertyType: 'Residential',
+      timeAgo: '1d ago',
+      preferredLocation: 'Bangalore',
+      secondaryLocation: 'Hyderabad',
+      budget: '₹75,00,000',
+      contactName: 'Vikram Singh',
+      phone: '+91 98765 43212',
+      email: 'vikram@example.com'
+    }
+  ])
+  
+  // Dummy data for properties (matching PropertyScreen structure)
+  const [dummyProperties] = useState([
+    {
+      id: 1,
+      title: 'Luxury Downtown Condo',
+      address: '123 Main Street, Downtown',
+      price: '₹85,00,000',
+      bedrooms: 2,
+      bathrooms: 2,
+      sqft: 1200,
+      furnishing: 'Fully Furnished',
+      type: 'Condo',
+      status: 'active',
+      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop']
+    },
+    {
+      id: 2,
+      title: 'Suburban Family Home',
+      address: '456 Oak Avenue, Suburbia',
+      price: '₹65,00,000',
+      bedrooms: 4,
+      bathrooms: 3,
+      sqft: 2500,
+      furnishing: 'Semi-Furnished',
+      type: 'House',
+      status: 'pending',
+      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop']
+    },
+    {
+      id: 3,
+      title: 'Modern Townhouse',
+      address: '321 Pine Street, Midtown',
+      price: '₹45,00,000',
+      bedrooms: 3,
+      bathrooms: 2,
+      sqft: 1800,
+      furnishing: 'Unfurnished',
+      type: 'Townhouse',
+      status: 'active',
+      images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop']
+    }
+  ])
+  
+  // Get filtered results based on active tab
+  const getFilteredResults = () => {
+    // Return all dummy data based on active tab
+    if (activeTab === 'Broker') return dummyBrokers
+    if (activeTab === 'Leads') return dummyLeads
+    if (activeTab === 'Property') return dummyProperties
+    return []
+  }
+  
+  const filteredResults = getFilteredResults()
+  
+  // Get heading text based on active tab
+  const getHeadingText = () => {
+    if (activeTab === 'Broker') return 'Broker Results'
+    if (activeTab === 'Leads') return 'Leads Result'
+    if (activeTab === 'Property') return 'Property Result'
+    return 'Results'
+  }
 
   // Fetch user profile
   const fetchUserProfile = async () => {
@@ -251,14 +394,6 @@ const SearchScreen = ({ navigation }) => {
     }
   }
 
-  // Handle search input change with debounce
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      performSearch(searchQuery)
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery])
 
   // Handle message press
   const handleMessagePress = () => {
@@ -289,78 +424,230 @@ const SearchScreen = ({ navigation }) => {
     setRefreshing(true)
     await fetchUserProfile()
     await fetchUnreadNotificationCount()
-    if (searchQuery) {
-      await performSearch(searchQuery)
-    }
     setRefreshing(false)
   }
 
-  const renderSearchResult = ({ item }) => {
-    if (item.type === 'property') {
-      return (
-        <TouchableOpacity 
-          style={styles.resultCard}
-          onPress={() => navigation.navigate('PropertyDetails', { property: item.data })}
-          activeOpacity={0.8}
-        >
-          <View style={styles.resultContent}>
-            {item.images && item.images.length > 0 ? (
-              <Image 
-                source={{ uri: item.images[0] }} 
-                style={styles.resultImage}
-                resizeMode="cover"
-              />
+  // Render Broker Card
+  const renderBrokerCard = (broker) => {
+    return (
+      <TouchableOpacity 
+        style={styles.brokerCard}
+        activeOpacity={0.8}
+      >
+        <View style={styles.brokerContent}>
+          <View style={styles.brokerImagePlaceholder}>
+            <MaterialIcons name="person" size={32} color="#D1D5DB" />
+          </View>
+          <View style={styles.brokerTextContainer}>
+            <View style={styles.brokerHeader}>
+              <MaterialIcons name="business" size={16} color="#0D542BFF" />
+              <Text style={styles.brokerType}>Broker</Text>
+            </View>
+            <Text style={styles.brokerName} numberOfLines={1}>
+              {broker.name}
+            </Text>
+            <Text style={styles.brokerCompany} numberOfLines={1}>
+              {broker.company}
+            </Text>
+            <View style={styles.brokerDetails}>
+              <View style={styles.brokerDetailItem}>
+                <MaterialIcons name="location-on" size={14} color="#6B7280" />
+                <Text style={styles.brokerDetailText}>{broker.location}</Text>
+              </View>
+              <View style={styles.brokerDetailItem}>
+                <MaterialIcons name="star" size={14} color="#F59E0B" />
+                <Text style={styles.brokerDetailText}>{broker.rating} ({broker.propertiesSold} properties)</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+  
+  // Render Lead Card (matching HomeScreen style)
+  const renderLeadCard = (lead) => {
+    const getRequirementColor = (req) => {
+      return req === 'Buy' ? '#0D542BFF' : '#F59E0B'
+    }
+
+    const getRequirementTextColor = (req) => {
+      return req === 'Buy' ? '#FFFFFF' : '#1F2937'
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.leadCard}
+        activeOpacity={0.8}
+      >
+        <View style={styles.leadHeader}>
+          <View style={styles.leadHeaderLeft}>
+            <Text style={styles.leadTitle}>{lead.title}</Text>
+            <View style={styles.leadTags}>
+              <View style={[styles.leadTag, { backgroundColor: getRequirementColor(lead.requirement) }]}>
+                <Text style={[styles.leadTagText, { color: getRequirementTextColor(lead.requirement) }]}>
+                  {lead.requirement}
+                </Text>
+              </View>
+              <View style={[styles.leadTag, { backgroundColor: '#FCD34D' }]}>
+                <Text style={styles.leadTagTextYellow}>{lead.propertyType}</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.leadTime}>
+            <MaterialIcons name="schedule" size={14} color="#6B7280" />
+            <Text style={styles.leadTimeText}>{lead.timeAgo}</Text>
+          </View>
+        </View>
+
+        <View style={styles.leadDivider} />
+
+        <View style={styles.leadDetails}>
+          <View style={styles.leadDetailItem}>
+            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <Text style={styles.leadDetailText}>
+              Preferred: {lead.preferredLocation}
+            </Text>
+          </View>
+          <View style={styles.leadDetailItem}>
+            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <Text style={styles.leadDetailText}>
+              Secondary: {lead.secondaryLocation}
+            </Text>
+          </View>
+          <View style={styles.leadDetailItem}>
+            <MaterialIcons name="business" size={16} color="#6B7280" />
+            <Text style={styles.leadDetailText}>
+              Budget: {lead.budget}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+  
+  // Render Property Card (matching PropertyScreen style)
+  const renderPropertyCard = (property) => {
+    const hasImages = property.images && property.images.length > 0
+    const getStatusBackgroundColor = (status) => {
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved') || statusLower.includes('active')) return '#D1FAE5'
+      if (statusLower.includes('pending')) return '#FEF3C7'
+      if (statusLower.includes('rejected')) return '#FEE2E2'
+      if (statusLower.includes('sold')) return '#F3F4F6'
+      return '#D1FAE5'
+    }
+
+    const getStatusTextColor = (status) => {
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved') || statusLower.includes('active')) return '#059669'
+      if (statusLower.includes('pending')) return '#F59E0B'
+      if (statusLower.includes('rejected')) return '#DC2626'
+      if (statusLower.includes('sold')) return '#6B7280'
+      return '#059669'
+    }
+
+    const getStatusDisplayText = (status) => {
+      const statusLower = status?.toLowerCase() || 'active'
+      if (statusLower.includes('approved')) return 'Approved'
+      if (statusLower.includes('pending')) return 'Pending'
+      if (statusLower.includes('rejected')) return 'Rejected'
+      if (statusLower.includes('active')) return 'Active'
+      if (statusLower.includes('sold')) return 'Sold'
+      return status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Active'
+    }
+
+    const statusBgColor = getStatusBackgroundColor(property.status)
+    const statusTextColor = getStatusTextColor(property.status)
+
+    return (
+      <TouchableOpacity 
+        style={styles.propertyCard}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardTopSection}>
+          <View style={styles.propertyImageContainer}>
+            {hasImages ? (
+              <>
+                <Image 
+                  source={{ uri: property.images[0] }} 
+                  style={styles.propertyImage}
+                  resizeMode="cover"
+                />
+                {property.type && (
+                  <View style={styles.propertyTypeBadge}>
+                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
+              </>
             ) : (
-              <View style={styles.resultImagePlaceholder}>
-                <MaterialIcons name="home" size={32} color="#D1D5DB" />
+              <View style={styles.propertyImagePlaceholder}>
+                <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                <Text style={styles.placeholderText}>No Image</Text>
+                {property.type && (
+                  <View style={styles.propertyTypeBadge}>
+                    <Text style={styles.propertyTypeBadgeText}>{property.type}</Text>
+                  </View>
+                )}
               </View>
             )}
-            <View style={styles.resultTextContainer}>
-              <View style={styles.resultHeader}>
-                <MaterialIcons name="home" size={16} color="#0D542BFF" />
-                <Text style={styles.resultType}>Property</Text>
+          </View>
+
+          <View style={styles.propertyContent}>
+            <View style={styles.titleRow}>
+              <MaterialIcons name="home" size={16} color="#1F2937" />
+              <Text style={styles.propertyTitle} numberOfLines={1}>
+                {property.title}
+              </Text>
+            </View>
+            
+            <View style={styles.addressRow}>
+              <MaterialIcons name="location-on" size={14} color="#6B7280" />
+              <Text style={styles.propertyAddressText} numberOfLines={1}>
+                {property.address}
+              </Text>
+            </View>
+            
+            <Text style={styles.propertyPrice}>
+              {property.price}
+            </Text>
+            
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>Status</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusBgColor }]}>
+                <Text style={[styles.statusBadgeText, { color: statusTextColor }]}>
+                  {getStatusDisplayText(property.status)}
+                </Text>
               </View>
-              <Text style={styles.resultTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.resultAddress} numberOfLines={1}>
-                {item.address}
-              </Text>
-              <Text style={styles.resultPrice}>{item.price}</Text>
             </View>
           </View>
-        </TouchableOpacity>
-      )
-    } else {
-      return (
-        <TouchableOpacity 
-          style={styles.resultCard}
-          onPress={() => navigation.navigate('LeadDetails', { lead: item.data })}
-          activeOpacity={0.8}
-        >
-          <View style={styles.resultContent}>
-            <View style={styles.resultImagePlaceholder}>
-              <MaterialIcons name="person" size={32} color="#D1D5DB" />
-            </View>
-            <View style={styles.resultTextContainer}>
-              <View style={styles.resultHeader}>
-                <MaterialIcons name="person" size={16} color="#0D542BFF" />
-                <Text style={styles.resultType}>Lead</Text>
-              </View>
-              <Text style={styles.resultTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={styles.resultAddress} numberOfLines={1}>
-                {item.address}
-              </Text>
-              {item.phone && (
-                <Text style={styles.resultMeta}>{item.phone}</Text>
-              )}
-            </View>
+        </View>
+        
+        <View style={styles.divider} />
+        
+        <View style={styles.propertyFeatures}>
+          <View style={styles.featureItem}>
+            <MaterialIcons name="bed" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
           </View>
-        </TouchableOpacity>
-      )
-    }
+          
+          <View style={styles.featureItem}>
+            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <MaterialIcons name="home" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
+          </View>
+          
+          <View style={styles.featureItem}>
+            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+            <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
   }
 
   return (
@@ -423,32 +710,60 @@ const SearchScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Search Input - Below Header */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
-            <MaterialIcons name="search" size={24} color="#6B7280" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search properties, leads, locations..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity 
-                onPress={() => setSearchQuery('')}
-                style={styles.clearButton}
-              >
-                <MaterialIcons name="close" size={20} color="#6B7280" />
-              </TouchableOpacity>
-            )}
+        {/* Tab Navigation */}
+        <View style={styles.tabContainerWrapper}>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'Broker' && styles.tabActive
+              ]}
+              onPress={() => setActiveTab('Broker')}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === 'Broker' && styles.tabTextActive
+              ]}>
+                Broker
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'Leads' && styles.tabActive
+              ]}
+              onPress={() => setActiveTab('Leads')}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === 'Leads' && styles.tabTextActive
+              ]}>
+                Leads
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'Property' && styles.tabActive
+              ]}
+              onPress={() => setActiveTab('Property')}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.tabText,
+                activeTab === 'Property' && styles.tabTextActive
+              ]}>
+                Property
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      
-        <ScrollView 
-          style={styles.scrollView} 
+        
+        {/* Results Section */}
+        <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -459,47 +774,45 @@ const SearchScreen = ({ navigation }) => {
             />
           }
         >
-          {isSearching && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#0D542BFF" />
-              <Text style={styles.loadingText}>Searching...</Text>
-            </View>
-          )}
-
-          {!isSearching && searchQuery.length === 0 && (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="search" size={64} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>Start Searching</Text>
-              <Text style={styles.emptyText}>
-                Search for properties, leads, or locations to get started
-              </Text>
-            </View>
-          )}
-
-          {!isSearching && searchQuery.length > 0 && searchResults.length === 0 && (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="search-off" size={64} color="#D1D5DB" />
-              <Text style={styles.emptyTitle}>No Results Found</Text>
-              <Text style={styles.emptyText}>
-                Try searching with different keywords
-              </Text>
-            </View>
-          )}
-
-          {!isSearching && searchResults.length > 0 && (
-            <View style={styles.resultsSection}>
-              <Text style={styles.resultsCount}>
-                {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
-              </Text>
+          <View style={styles.resultsSection}>
+            <Text style={styles.resultsCount}>{getHeadingText()}</Text>
+            
+            {isSearching ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0D542BFF" />
+                <Text style={styles.loadingText}>Searching...</Text>
+              </View>
+            ) : filteredResults.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <MaterialIcons 
+                  name={activeTab === 'Broker' ? 'person' : activeTab === 'Leads' ? 'people' : 'home'} 
+                  size={48} 
+                  color="#9CA3AF" 
+                />
+                <Text style={styles.emptyTitle}>No {activeTab} Found</Text>
+                <Text style={styles.emptyText}>
+                  No {activeTab.toLowerCase()} available at the moment
+                </Text>
+              </View>
+            ) : (
               <FlatList
-                data={searchResults}
-                keyExtractor={(item) => `${item.type}-${item.id}`}
-                renderItem={renderSearchResult}
-                showsVerticalScrollIndicator={false}
+                data={filteredResults}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => {
+                  if (activeTab === 'Broker') {
+                    return renderBrokerCard(item)
+                  } else if (activeTab === 'Leads') {
+                    return renderLeadCard(item)
+                  } else if (activeTab === 'Property') {
+                    return renderPropertyCard(item)
+                  }
+                  return null
+                }}
                 scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
               />
-            </View>
-          )}
+            )}
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -678,6 +991,41 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
 
+  // Tab Navigation
+  tabContainerWrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    backgroundColor: '#F8FAFC',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+  },
+  tabActive: {
+    backgroundColor: '#E8F5E8',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#000000',
+  },
+  tabTextActive: {
+    color: '#0D542BFF',
+    fontWeight: '600',
+  },
+
   // Search Input
   searchContainer: {
     paddingHorizontal: 20,
@@ -718,10 +1066,295 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   resultsCount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
     marginBottom: 16,
+  },
+  
+  // Broker Card Styles
+  brokerCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  brokerContent: {
+    flexDirection: 'row',
+    padding: 12,
+  },
+  brokerImagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  brokerTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  brokerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  brokerType: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0D542BFF',
+    textTransform: 'uppercase',
+  },
+  brokerName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  brokerCompany: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  brokerDetails: {
+    gap: 6,
+  },
+  brokerDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  brokerDetailText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  
+  // Lead Card Styles (matching HomeScreen)
+  leadCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  leadHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  leadHeaderLeft: {
+    flex: 1,
+  },
+  leadTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  leadTags: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  leadTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  leadTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  leadTagTextYellow: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  leadTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  leadTimeText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  leadDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 12,
+  },
+  leadDetails: {
+    gap: 10,
+  },
+  leadDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  leadDetailText: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  
+  // Property Card Styles (matching PropertyScreen)
+  propertyCard: {
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    overflow: 'hidden',
+  },
+  cardTopSection: {
+    flexDirection: 'row',
+    padding: 12,
+    marginBottom: 0,
+  },
+  propertyImageContainer: {
+    width: 130,
+    height: 130,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 12,
+    position: 'relative',
+  },
+  propertyImage: {
+    width: '100%',
+    height: '100%',
+  },
+  propertyImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  placeholderText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  propertyTypeBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#0D542BFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    zIndex: 10,
+  },
+  propertyTypeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  propertyContent: {
+    flex: 1,
+    justifyContent: 'flex-start',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  propertyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1F2937',
+    flex: 1,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  propertyAddressText: {
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
+  },
+  propertyPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#1F2937',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 10,
+    marginTop: 10,
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  propertyFeatures: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingTop: 4,
+    paddingLeft: 12,
+    paddingRight: 12,
+    paddingBottom: 12,
+    alignItems: 'center',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  featureText: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 16,
   },
   resultCard: {
     backgroundColor: '#FFFFFF',
