@@ -1810,6 +1810,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
           style={styles.input}
           value={formData.licenseNumber}
           onChangeText={(text) => updateFormData('licenseNumber', text)}
+          onFocus={handleInputFocus}
           placeholder="BRE #01234567"
           placeholderTextColor="#8E8E93"
         />
@@ -1821,6 +1822,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
           style={styles.input}
           value={formData.experience}
           onChangeText={(text) => updateFormData('experience', text)}
+          onFocus={handleInputFocus}
           placeholder="Enter years of experience"
           placeholderTextColor="#8E8E93"
           keyboardType="numeric"
@@ -1852,7 +1854,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
               value={formData.address}
               onChangeText={handleAddressChange}
               onFocus={handleInputFocus}
-              placeholder="Enter your address"
+              placeholder="Enter address"
               placeholderTextColor="#8E8E93"
               multiline
               numberOfLines={2}
@@ -1920,7 +1922,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
             style={styles.textArea}
             value={formData.about}
             onChangeText={(text) => updateFormData('about', text)}
-            placeholder="Tell us about yourself, your experience, and what makes you unique as a real estate professional..."
+            placeholder="Enter about yourself"
             placeholderTextColor="#8E8E93"
             multiline
             numberOfLines={4}
@@ -1950,70 +1952,60 @@ const CreateProfileScreen = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.socialLabel}>
-          {/* <FontAwesome name="linkedin" size={16} color="#0077B5" /> */}
-          <Text style={styles.socialLabelText}>LinkedIn</Text>
-        </View>
+        <Text style={styles.inputLabel}>LinkedIn</Text>
         <TextInput
-          style={styles.socialInput}
+          style={styles.input}
           value={formData.linkedin}
           onChangeText={(text) => updateFormData('linkedin', text)}
+          onFocus={handleInputFocus}
           placeholder="https://linkedin.com/in/yourprofile"
           placeholderTextColor="#8E8E93"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.socialLabel}>
-          {/* <MaterialIcons name="camera-alt" size={16} color="#E4405F" /> */}
-          <Text style={styles.socialLabelText}>Instagram</Text>
-        </View>
+        <Text style={styles.inputLabel}>Instagram</Text>
         <TextInput
-          style={styles.socialInput}
+          style={styles.input}
           value={formData.instagram}
           onChangeText={(text) => updateFormData('instagram', text)}
+          onFocus={handleInputFocus}
           placeholder="https://instagram.com/yourprofile"
           placeholderTextColor="#8E8E93"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.socialLabel}>
-          {/* <MaterialIcons name="language" size={16} color="#009689" /> */}
-          <Text style={styles.socialLabelText}>Website</Text>
-        </View>
+        <Text style={styles.inputLabel}>Website</Text>
         <TextInput
-          style={styles.socialInput}
+          style={styles.input}
           value={formData.website}
           onChangeText={(text) => updateFormData('website', text)}
+          onFocus={handleInputFocus}
           placeholder="https://yourwebsite.com"
           placeholderTextColor="#8E8E93"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.socialLabel}>
-          {/* <MaterialIcons name="alternate-email" size={16} color="#1DA1F2" /> */}
-          <Text style={styles.socialLabelText}>Twitter</Text>
-        </View>
+        <Text style={styles.inputLabel}>Twitter</Text>
         <TextInput
-          style={styles.socialInput}
+          style={styles.input}
           value={formData.twitter}
           onChangeText={(text) => updateFormData('twitter', text)}
+          onFocus={handleInputFocus}
           placeholder="https://twitter.com/yourprofile"
           placeholderTextColor="#8E8E93"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.socialLabel}>
-          {/* <FontAwesome name="facebook" size={16} color="#1877F2" /> */}
-          <Text style={styles.socialLabelText}>Facebook</Text>
-        </View>
+        <Text style={styles.inputLabel}>Facebook</Text>
         <TextInput
-          style={styles.socialInput}
+          style={styles.input}
           value={formData.facebook}
           onChangeText={(text) => updateFormData('facebook', text)}
+          onFocus={handleInputFocus}
           placeholder="https://facebook.com/yourprofile"
           placeholderTextColor="#8E8E93"
         />
@@ -2146,7 +2138,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
           return (
             <View key={doc.key} style={styles.documentCardWrapper}>
               {/* Document Title Above Card */}
-              <Text style={styles.documentTitleAbove}>{doc.title}</Text>
+              <Text style={styles.inputLabel}>{doc.title}</Text>
               
               <TouchableOpacity 
                 style={[
@@ -2714,6 +2706,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    fontSize: 16,
+    color: '#000000',
   },
   inputText: {
     flex: 1,
@@ -2893,12 +2887,6 @@ const styles = StyleSheet.create({
   },
   documentCardWrapper: {
     marginBottom: 20,
-  },
-  documentTitleAbove: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
   },
   documentCard: {
     width: '100%',
@@ -3155,19 +3143,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
-    maxHeight: Dimensions.get('window').height * 0.4, // Increased height to show more options
-    elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    marginTop: -1,
     zIndex: 1001,
   },
   addressSuggestionsList: {
-    maxHeight: Dimensions.get('window').height * 0.4, // Increased height to show more options
+    maxHeight: Dimensions.get('window').height * 0.4,
   },
   addressSuggestionItem: {
     paddingVertical: 14,
@@ -3224,8 +3212,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E8',
   },
   regionCardName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#000000',
     marginBottom: 8,
     lineHeight: 20,

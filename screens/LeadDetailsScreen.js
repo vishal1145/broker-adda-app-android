@@ -776,7 +776,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.leadInfoDetailsGrid}>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="trending-up" size={16} color="#9CA3AF" />
+                <MaterialIcons name="trending-up" size={20} color="#6B7280" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>REQUIREMENT</Text>
                   <Text style={styles.leadInfoDetailValue}>{leadData.requirement || 'Not specified'}</Text>
@@ -785,7 +785,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="home" size={16} color="#9CA3AF" />
+                <MaterialIcons name="home" size={20} color="#6B7280" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>PROPERTY TYPE</Text>
                   <Text style={styles.leadInfoDetailValue}>{leadData.propertyType || 'Not specified'}</Text>
@@ -794,7 +794,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="attach-money" size={16} color="#9CA3AF" />
+                <MaterialIcons name="attach-money" size={20} color="#6B7280" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>BUDGET</Text>
                   <Text style={styles.leadInfoDetailValue}>{formatBudget(leadData.budget)}</Text>
@@ -803,7 +803,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
             </View>
             <View style={styles.leadInfoDetailRow}>
               <View style={styles.leadInfoDetailItem}>
-                <MaterialIcons name="location-on" size={16} color="#9CA3AF" />
+                <MaterialIcons name="location-on" size={20} color="#6B7280" />
                 <View style={styles.leadInfoDetailContent}>
                   <Text style={styles.leadInfoDetailLabel}>REGION(S)</Text>
                   <Text style={styles.leadInfoDetailValue}>
@@ -851,7 +851,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.timelineCard}>
             <View style={styles.timelineItem}>
               <View style={styles.timelineIcon}>
-                <MaterialIcons name="add" size={20} color="#0D542BFF" />
+                <MaterialIcons name="add" size={20} color="#6B7280" />
               </View>
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>Lead Created</Text>
@@ -873,14 +873,8 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
         {/* Share History Section */}
         <View style={styles.shareHistorySection}>
+          <Text style={styles.sectionTitle}>Share History</Text>
           <View style={styles.shareHistoryCard}>
-            <View style={styles.shareHistoryHeader}>
-              <View style={styles.shareHistoryIcon}>
-                <MaterialIcons name="share" size={20} color="#0D542BFF" />
-              </View>
-              <Text style={styles.shareHistoryTitle}>Share History</Text>
-            </View>
-            
             {leadData.transfers && leadData.transfers.length > 0 ? (
               <View style={styles.shareHistoryContent}>
                 {leadData.transfers.map((transfer, index) => (
@@ -1480,18 +1474,21 @@ const styles = StyleSheet.create({
   },
   leadInfoName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 2,
+    lineHeight: 22,
   },
   leadInfoEmail: {
     fontSize: 14,
+    lineHeight: 22,
     color: '#6B7280',
+    marginBottom: 2,
   },
   leadInfoPhone: {
     fontSize: 14,
     color: '#6B7280',
-    marginTop: 2,
+    marginTop: 0,
   },
   leadInfoStatusBadge: {
     paddingHorizontal: 8,
@@ -1515,22 +1512,25 @@ const styles = StyleSheet.create({
   },
   leadInfoDetailItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   leadInfoDetailContent: {
     flex: 1,
   },
   leadInfoDetailLabel: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#9CA3AF',
-    marginBottom: 2,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   leadInfoDetailValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#111827',
+    lineHeight: 22,
   },
 
   // Details Section
@@ -1539,10 +1539,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   detailsGrid: {
     gap: 12,
@@ -1612,9 +1612,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createdByAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1626,9 +1626,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   createdByAvatarImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   createdByInfo: {
     flex: 1,
@@ -1680,7 +1682,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0FDFA',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
@@ -1715,25 +1717,6 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-  },
-  shareHistoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  shareHistoryIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0FDFA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  shareHistoryTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
   },
   shareHistoryContent: {
     gap: 12,

@@ -128,19 +128,20 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
   },
   emptyIcon: {
     marginBottom: 16,
   },
-  emptyText: {
-    fontSize: 16,
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
     color: '#6B7280',
-    textAlign: 'center',
+    marginTop: 12,
     marginBottom: 8,
   },
-  emptySubtext: {
+  emptyMessage: {
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',

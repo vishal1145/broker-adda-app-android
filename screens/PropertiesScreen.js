@@ -546,7 +546,7 @@ const PropertiesScreen = ({ navigation }) => {
             <View style={styles.propertyContent}>
               {/* Title with Icon */}
               <View style={styles.titleRow}>
-                <MaterialIcons name="home" size={16} color="#1F2937" />
+                <MaterialIcons name="home" size={16} color="#6B7280" />
                 <Text style={styles.propertyTitle} numberOfLines={1}>
                   {property.title}
                 </Text>
@@ -583,22 +583,22 @@ const PropertiesScreen = ({ navigation }) => {
           {/* Features Below - Starting from Image Position */}
           <View style={styles.propertyFeatures}>
             <View style={styles.featureItem}>
-              <MaterialIcons name="bed" size={16} color="#6B7280" />
+              <MaterialIcons name="bed" size={20} color="#6B7280" />
               <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="bathtub" size={16} color="#6B7280" />
+              <MaterialIcons name="bathtub" size={20} color="#6B7280" />
               <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="home" size={16} color="#6B7280" />
+              <MaterialIcons name="home" size={20} color="#6B7280" />
               <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="square-foot" size={16} color="#6B7280" />
+              <MaterialIcons name="square-foot" size={20} color="#6B7280" />
               <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
             </View>
           </View>
@@ -697,11 +697,11 @@ const PropertiesScreen = ({ navigation }) => {
         {/* Stats Overview */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
-            {/* Total Properties - Light Green */}
+            {/* Total Properties - Green */}
             <View style={[styles.statCard, styles.statCardGreen]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="home" size={22} color="#0D542BFF" />
+                  <MaterialIcons name="home" size={22} color="#FFFFFF" />
                   <Text 
                     style={styles.statCount}
                     numberOfLines={1}
@@ -715,11 +715,11 @@ const PropertiesScreen = ({ navigation }) => {
               </View>
             </View>
             
-            {/* Approved - White */}
-            <View style={[styles.statCard, styles.statCardWhite]}>
+            {/* Approved - Blue */}
+            <View style={[styles.statCard, styles.statCardBlue]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="check-circle" size={22} color="#0D542BFF" />
+                  <MaterialIcons name="check-circle" size={22} color="#FFFFFF" />
                   <Text 
                     style={styles.statCount}
                     numberOfLines={1}
@@ -736,11 +736,11 @@ const PropertiesScreen = ({ navigation }) => {
               </View>
             </View>
             
-            {/* Pending - Light Yellow/Beige */}
+            {/* Pending - Yellow */}
             <View style={[styles.statCard, styles.statCardYellow]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="schedule" size={22} color="#F59E0B" />
+                  <MaterialIcons name="schedule" size={22} color="#FFFFFF" />
                   <Text 
                     style={styles.statCount}
                     numberOfLines={1}
@@ -757,13 +757,13 @@ const PropertiesScreen = ({ navigation }) => {
               </View>
             </View>
             
-            {/* Rejected - Light Red/Pink with Red Text */}
+            {/* Rejected - Red */}
             <View style={[styles.statCard, styles.statCardRed]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
-                  <MaterialIcons name="cancel" size={22} color="#DC2626" />
+                  <MaterialIcons name="cancel" size={22} color="#FFFFFF" />
                   <Text 
-                    style={[styles.statCount, styles.statCountRed]}
+                    style={styles.statCount}
                     numberOfLines={1}
                     adjustsFontSizeToFit={true}
                     minimumFontScale={0.6}
@@ -774,7 +774,7 @@ const PropertiesScreen = ({ navigation }) => {
                     }).length.toLocaleString()}
                   </Text>
                 </View>
-                <Text style={[styles.statTitle, styles.statTitleRed]}>Rejected</Text>
+                <Text style={styles.statTitle}>Rejected</Text>
               </View>
             </View>
           </View>
@@ -793,7 +793,7 @@ const PropertiesScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('CreateProperty')}
               activeOpacity={0.8}
             >
-              <MaterialIcons name="add" size={32} color="#9CA3AF" />
+              <MaterialIcons name="add" size={32} color="#6B7280" />
               <Text style={styles.addPropertyButtonPlaceholderText}>Add Property</Text>
             </TouchableOpacity>
           </View>
@@ -1019,16 +1019,16 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   statCardGreen: {
-    backgroundColor: '#D1FAE5', // Light green
+    backgroundColor: '#34D399',
   },
-  statCardWhite: {
-    backgroundColor: '#FFFFFF', // White
+  statCardBlue: {
+    backgroundColor: '#3B82F6',
   },
   statCardYellow: {
-    backgroundColor: '#FEF3C7', // Light yellow/beige
+    backgroundColor: '#FCD34D',
   },
   statCardRed: {
-    backgroundColor: '#FEE2E2', // Light red/pink
+    backgroundColor: '#EF4444',
   },
   statCardContent: {
     padding: 16,
@@ -1043,21 +1043,15 @@ const styles = StyleSheet.create({
   statCount: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#FFFFFF',
     flexShrink: 0,
     textAlign: 'right',
     minWidth: 40,
   },
-  statCountRed: {
-    color: '#DC2626', // Red color for rejected
-  },
   statTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6B7280',
-  },
-  statTitleRed: {
-    color: '#DC2626', // Red color for rejected
+    color: '#FFFFFF',
   },
 
   // Add Property Button
@@ -1100,7 +1094,7 @@ const styles = StyleSheet.create({
   addPropertyButtonPlaceholderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#9CA3AF',
+    color: '#6B7280',
     marginTop: 8,
   },
 
@@ -1116,9 +1110,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
+    marginBottom: 12,
   },
   sortButton: {
     flexDirection: 'row',
@@ -1213,8 +1208,8 @@ const styles = StyleSheet.create({
   },
   propertyTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     flex: 1,
   },
   addressRow: {
@@ -1237,7 +1232,7 @@ const styles = StyleSheet.create({
   propertyPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#111827',
     marginBottom: 8,
   },
   statusRow: {
@@ -1248,7 +1243,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 14,
-    color: '#1F2937',
+    color: '#6B7280',
   },
   statusBadge: {
     paddingHorizontal: 10,

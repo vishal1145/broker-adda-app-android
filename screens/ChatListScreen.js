@@ -288,9 +288,9 @@ const ChatListScreen = ({ navigation }) => {
 
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
-            <MaterialIcons name="chat-bubble-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No Chats Yet</Text>
-            <Text style={styles.emptySubtext}>
+            <MaterialIcons name="chat-bubble-outline" size={48} color="#9CA3AF" />
+            <Text style={styles.emptyTitle}>No Chats Yet</Text>
+            <Text style={styles.emptyMessage}>
                 Start a conversation with your contacts
             </Text>
         </View>

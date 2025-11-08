@@ -9,7 +9,9 @@ import {
   Image,
   Share,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking,
+  Modal
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -35,6 +37,14 @@ const getSecureImageUrl = (url) => {
 const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
   const [imageError, setImageError] = useState(false)
   const [currentSource, setCurrentSource] = useState(source)
+
+  // Update currentSource when source prop changes
+  useEffect(() => {
+    if (source?.uri) {
+      setCurrentSource(source)
+      setImageError(false) // Reset error state when source changes
+    }
+  }, [source?.uri])
 
   const handleError = (error) => {
     console.log(`Image error for ${imageType}:`, error)
@@ -100,7 +110,21 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   const [isSaving, setIsSaving] = useState(false)
   const [ratingsData, setRatingsData] = useState(null)
   const [isLoadingRatings, setIsLoadingRatings] = useState(false)
+  const [videoModalVisible, setVideoModalVisible] = useState(false)
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState(null)
   const scrollViewRef = useRef(null)
+
+  // Combine images and videos into a single media array
+  const getMediaArray = () => {
+    if (!property) return []
+    const images = (property.images || []).map(img => ({ type: 'image', url: img }))
+    const videos = (property.videos || []).map(vid => ({ type: 'video', url: vid }))
+    return [...images, ...videos]
+  }
+
+  const mediaArray = getMediaArray()
+  const currentMedia = mediaArray[currentImageIndex]
+  const isCurrentVideo = currentMedia?.type === 'video'
 
   // Transform API data to match screen expectations
   const transformPropertyData = (apiProperty) => {
@@ -209,6 +233,8 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       // Reset state when navigating to a new property
       setCurrentImageIndex(0)
       setActiveTab('description')
+      setVideoModalVisible(false)
+      setSelectedVideoUrl(null)
       
       // Scroll to top when navigating to a new property
       if (scrollViewRef.current) {
@@ -415,7 +441,37 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   }
 
   const handleThumbnailPress = (index) => {
-    setCurrentImageIndex(index)
+    const media = mediaArray[index]
+    setCurrentImageIndex(index) // Set as current media first
+    if (media?.type === 'video') {
+      // Open video in external player or show modal
+      const videoUrl = getSecureImageUrl(media.url)
+      setSelectedVideoUrl(videoUrl)
+      setVideoModalVisible(true)
+    }
+  }
+
+  const handlePlayVideo = (videoUrl) => {
+    const secureUrl = getSecureImageUrl(videoUrl)
+    setSelectedVideoUrl(secureUrl)
+    setVideoModalVisible(true)
+  }
+
+  const handleOpenVideo = async () => {
+    if (selectedVideoUrl) {
+      try {
+        const supported = await Linking.canOpenURL(selectedVideoUrl)
+        if (supported) {
+          await Linking.openURL(selectedVideoUrl)
+        } else {
+          Alert.alert('Error', 'Cannot open this video')
+        }
+      } catch (error) {
+        console.error('Error opening video:', error)
+        Alert.alert('Error', 'Failed to open video')
+      }
+    }
+    setVideoModalVisible(false)
   }
 
   const handleEdit = () => {
@@ -543,18 +599,36 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Property Images */}
+        {/* Property Images & Videos */}
         <View style={styles.imageSection}>
-          {/* Fixed Main Image */}
+          {/* Fixed Main Image/Video */}
           <View style={styles.mainImageContainer}>
-            {property.images && property.images.length > 0 ? (
+            {mediaArray.length > 0 ? (
               <>
-                <SafeImage 
-                  source={{ uri: getSecureImageUrl(property.images[currentImageIndex] || property.images[0]) }} 
-                  style={styles.mainImage}
-                  imageType="propertyMainImage"
-                  resizeMode="cover"
-                />
+                {isCurrentVideo ? (
+                  // Video Display
+                  <TouchableOpacity 
+                    style={styles.videoContainer}
+                    onPress={() => handlePlayVideo(currentMedia.url)}
+                    activeOpacity={0.9}
+                  >
+                    <View style={styles.videoPlaceholder}>
+                      <MaterialIcons name="videocam" size={64} color="#FFFFFF" />
+                      <Text style={styles.videoPlaceholderText}>Video</Text>
+                    </View>
+                    <View style={styles.videoPlayButton}>
+                      <MaterialIcons name="play-circle-filled" size={64} color="#FFFFFF" />
+                    </View>
+                  </TouchableOpacity>
+                ) : (
+                  // Image Display
+                  <SafeImage 
+                    source={{ uri: getSecureImageUrl(currentMedia?.url || property.images?.[0]) }} 
+                    style={styles.mainImage}
+                    imageType="propertyMainImage"
+                    resizeMode="cover"
+                  />
+                )}
                 
                 {/* Featured Badge */}
                 <View style={styles.featuredBadge}>
@@ -615,15 +689,15 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             )}
           </View>
 
-          {/* Scrollable Thumbnail Row */}
-          {property.images?.length > 1 && (
+          {/* Scrollable Thumbnail Row - Images & Videos */}
+          {mediaArray.length > 1 && (
             <View style={styles.thumbnailContainer}>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.thumbnailScroll}
               >
-                {property.images.map((image, index) => (
+                {mediaArray.map((media, index) => (
                   <TouchableOpacity
                     key={index}
                     style={[
@@ -633,12 +707,25 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                     onPress={() => handleThumbnailPress(index)}
                     activeOpacity={0.7}
                   >
-                    <SafeImage 
-                      source={{ uri: getSecureImageUrl(image) }} 
-                      style={styles.thumbnailImage}
-                      imageType="propertyThumbnail"
-                      resizeMode="cover"
-                    />
+                    {media.type === 'video' ? (
+                      // Video Thumbnail
+                      <View style={styles.videoThumbnail}>
+                        <View style={styles.videoThumbnailIcon}>
+                          <MaterialIcons name="videocam" size={24} color="#FFFFFF" />
+                        </View>
+                        <View style={styles.videoThumbnailPlayIcon}>
+                          <MaterialIcons name="play-circle-filled" size={32} color="#FFFFFF" />
+                        </View>
+                      </View>
+                    ) : (
+                      // Image Thumbnail
+                      <SafeImage 
+                        source={{ uri: getSecureImageUrl(media.url) }} 
+                        style={styles.thumbnailImage}
+                        imageType="propertyThumbnail"
+                        resizeMode="cover"
+                      />
+                    )}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -1016,6 +1103,49 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Video Modal */}
+      <Modal
+        visible={videoModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setVideoModalVisible(false)}
+      >
+        <View style={styles.videoModalContainer}>
+          <View style={styles.videoModalContent}>
+            <View style={styles.videoModalHeader}>
+              <Text style={styles.videoModalTitle}>Property Video</Text>
+              <TouchableOpacity 
+                onPress={() => setVideoModalVisible(false)}
+                style={styles.videoModalCloseButton}
+              >
+                <MaterialIcons name="close" size={24} color="#1F2937" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.videoModalBody}>
+              <MaterialIcons name="videocam" size={64} color="#0D542BFF" />
+              <Text style={styles.videoModalText}>
+                Video will open in your default video player
+              </Text>
+            </View>
+            <View style={styles.videoModalActions}>
+              <TouchableOpacity 
+                style={styles.videoModalCancelButton}
+                onPress={() => setVideoModalVisible(false)}
+              >
+                <Text style={styles.videoModalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.videoModalPlayButton}
+                onPress={handleOpenVideo}
+              >
+                <MaterialIcons name="play-arrow" size={24} color="#FFFFFF" />
+                <Text style={styles.videoModalPlayText}>Play Video</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       </View>
     </SafeAreaView>
   )
@@ -1207,19 +1337,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   statusBadge: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 6,
+    backgroundColor: '#E8F5E8',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  statusBadgeActive: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#0D542BFF',
+  },
+  statusBadgeBlocked: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusTextActive: {
+    color: '#0D542BFF',
+  },
+  statusTextBlocked: {
+    color: '#EF4444',
   },
   thumbnailContainer: {
     paddingVertical: 12,
@@ -1371,24 +1513,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   propertyDetailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
-    marginBottom: 4,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   propertyDetailValue: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
+    lineHeight: 22,
   },
   propertyDetailsHeader: {
     marginBottom: 20,
   },
   propertyDetailsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 8,
+    lineHeight: 22,
   },
   propertyDetailsAddressRow: {
     flexDirection: 'row',
@@ -1398,6 +1544,7 @@ const styles = StyleSheet.create({
   },
   propertyDetailsAddress: {
     fontSize: 14,
+    lineHeight: 22,
     color: '#6B7280',
     flex: 1,
   },
@@ -1975,12 +2122,14 @@ const styles = StyleSheet.create({
   },
   inspectionDay: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 4,
+    lineHeight: 22,
   },
   inspectionTime: {
     fontSize: 14,
+    lineHeight: 22,
     color: '#6B7280',
   },
   inspectionStatus: {
@@ -2048,6 +2197,140 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  
+  // Video Styles
+  videoContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  videoPlaceholderText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginTop: 12,
+  },
+  videoPlayButton: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoThumbnail: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#1F2937',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  videoThumbnailIcon: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+  },
+  videoThumbnailPlayIcon: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  // Video Modal Styles
+  videoModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  videoModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    overflow: 'hidden',
+  },
+  videoModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  videoModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  videoModalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoModalBody: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoModalText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 20,
+  },
+  videoModalActions: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  videoModalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoModalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  videoModalPlayButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#0D542BFF',
+    gap: 8,
+  },
+  videoModalPlayText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 })
 

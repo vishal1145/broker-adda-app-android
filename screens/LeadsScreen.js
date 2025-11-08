@@ -133,13 +133,13 @@ const SafeImage = ({ source, style, imageType, fallbackText, ...props }) => {
 
   if (imageError) {
     return (
-      <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+      <View style={[style, { backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }]}>
         {fallbackText ? (
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#6B7280' }}>
             {fallbackText}
           </Text>
         ) : (
-          <MaterialIcons name="person" size={20} color="#065F46" />
+          <MaterialIcons name="person" size={20} color="#6B7280" />
         )}
         <TouchableOpacity 
           style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
@@ -165,6 +165,7 @@ const LeadsScreen = ({ navigation }) => {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [showTransferredLeads, setShowTransferredLeads] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showStatusModal, setShowStatusModal] = useState(false)
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false)
   
   // Advanced Filter state
@@ -347,10 +348,6 @@ const LeadsScreen = ({ navigation }) => {
       regionId: region._id,
       regionName: region.name
     }))
-    setShowRegionDropdown(false)
-    // Close other dropdowns
-    setShowRequirementDropdown(false)
-    setShowPropertyTypeDropdown(false)
     console.log('Region selected:', region.name, 'ID:', region._id)
   }
 
@@ -359,10 +356,6 @@ const LeadsScreen = ({ navigation }) => {
       ...prev,
       requirement: requirement.value
     }))
-    setShowRequirementDropdown(false)
-    // Close other dropdowns
-    setShowRegionDropdown(false)
-    setShowPropertyTypeDropdown(false)
   }
 
   const handleFilterPropertyTypeSelect = (propertyType) => {
@@ -370,10 +363,6 @@ const LeadsScreen = ({ navigation }) => {
       ...prev,
       propertyType: propertyType.value
     }))
-    setShowPropertyTypeDropdown(false)
-    // Close other dropdowns
-    setShowRegionDropdown(false)
-    setShowRequirementDropdown(false)
   }
 
   const clearFilters = () => {
@@ -480,7 +469,7 @@ const LeadsScreen = ({ navigation }) => {
             createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
-            avatar: lead.createdBy?.brokerImage || null,
+            avatar: null, // No customer image in API, show initials instead
             sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
               id: t.toBroker._id,
               name: t.toBroker.name,
@@ -565,7 +554,7 @@ const LeadsScreen = ({ navigation }) => {
             createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
-            avatar: lead.createdBy?.brokerImage || null,
+            avatar: null, // No customer image in API, show initials instead
             sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
               id: t.toBroker._id,
               name: t.toBroker.name,
@@ -682,7 +671,7 @@ const LeadsScreen = ({ navigation }) => {
             createdDate: lead.createdAt ? new Date(lead.createdAt).toISOString().split('T')[0] : 'Unknown',
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
-            avatar: lead.createdBy?.brokerImage || null,
+            avatar: null, // No customer image in API, show initials instead
             sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
               id: t.toBroker._id,
               name: t.toBroker.name,
@@ -837,10 +826,33 @@ const LeadsScreen = ({ navigation }) => {
     navigation.navigate('ShareLead', { lead })
   }
 
-  // Handle status change
+  // Handle status change (for main screen dropdown)
   const handleStatusChange = (statusKey) => {
     setSelectedStatus(statusKey)
     setShowStatusDropdown(false)
+    setLeadsData([]) // Clear current data to show loading state
+    const statusOption = statusOptions.find(option => option.key === statusKey)
+    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+    
+    // Check if advanced filters are applied and use them
+    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                              filterData.requirement !== 'All Requirements' || 
+                              filterData.propertyType !== 'All Property Types' || 
+                              filterData.budgetMax !== 0
+    
+    if (hasAdvancedFilters) {
+      // Apply both status and advanced filters
+      applyFiltersWithStatus(apiStatus)
+    } else {
+      // Apply only status filter
+      fetchLeads(false, searchQuery, apiStatus)
+    }
+  }
+
+  // Handle status change in modal
+  const handleStatusChangeInModal = (statusKey) => {
+    setSelectedStatus(statusKey)
+    setShowStatusModal(false)
     setLeadsData([]) // Clear current data to show loading state
     const statusOption = statusOptions.find(option => option.key === statusKey)
     const apiStatus = statusOption ? statusOption.apiValue : 'all'
@@ -1030,7 +1042,7 @@ const LeadsScreen = ({ navigation }) => {
     const isDeleting = deletingLeadId === lead.id
 
     const getActionIconColor = (buttonType) => {
-      return '#9E9E9E'
+      return '#6B7280'
     }
 
     return (
@@ -1070,7 +1082,7 @@ const LeadsScreen = ({ navigation }) => {
         <View style={styles.leadDetailsGrid}>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="trending-up" size={16} color="#9CA3AF" />
+              <MaterialIcons name="trending-up" size={20} color="#6B7280" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REQUIREMENT</Text>
                 <Text style={styles.detailValue}>{lead.requirement || 'Not specified'}</Text>
@@ -1079,7 +1091,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="home" size={16} color="#9CA3AF" />
+              <MaterialIcons name="home" size={20} color="#6B7280" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>PROPERTY TYPE</Text>
                 <Text style={styles.detailValue}>{lead.propertyType || 'Not specified'}</Text>
@@ -1088,7 +1100,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="attach-money" size={16} color="#9CA3AF" />
+              <MaterialIcons name="attach-money" size={20} color="#6B7280" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>BUDGET</Text>
                 <Text style={styles.detailValue}>{lead.budget}</Text>
@@ -1097,7 +1109,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           <View style={styles.detailRow}>
             <View style={styles.detailItem}>
-              <MaterialIcons name="location-on" size={16} color="#9CA3AF" />
+              <MaterialIcons name="location-on" size={20} color="#6B7280" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>REGION(S)</Text>
                 <Text style={styles.detailValue}>{lead.region || 'Not specified'}</Text>
@@ -1346,42 +1358,17 @@ const LeadsScreen = ({ navigation }) => {
           <View style={styles.dropdownContainerFullWidth}>
             <TouchableOpacity
               style={styles.dropdownButton}
-              onPress={() => setShowStatusDropdown(!showStatusDropdown)}
+              onPress={() => setShowStatusModal(true)}
             >
               <Text style={styles.dropdownButtonText}>
                 {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
               </Text>
               <MaterialIcons 
-                name={showStatusDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                name="keyboard-arrow-down" 
                 size={24} 
                 color="#6B7280" 
               />
             </TouchableOpacity>
-            
-            {showStatusDropdown && (
-              <View style={styles.dropdownMenu}>
-                {statusOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.key}
-                    style={[
-                      styles.dropdownItem,
-                      selectedStatus === option.key && styles.dropdownItemActive
-                    ]}
-                    onPress={() => handleStatusChange(option.key)}
-                  >
-                    <Text style={[
-                      styles.dropdownItemText,
-                      selectedStatus === option.key && styles.dropdownItemTextActive
-                    ]}>
-                      {option.label}
-                    </Text>
-                    {selectedStatus === option.key && (
-                      <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
           </View>
 
           {/* Advanced Filter Button - Full Width */}
@@ -1423,7 +1410,7 @@ const LeadsScreen = ({ navigation }) => {
               onPress={() => navigation.navigate('CreateLead')}
               activeOpacity={0.8}
             >
-              <MaterialIcons name="add" size={32} color="#9CA3AF" />
+              <MaterialIcons name="add" size={32} color="#6B7280" />
               <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
             </TouchableOpacity>
           </View>
@@ -1518,64 +1505,52 @@ const LeadsScreen = ({ navigation }) => {
               {/* Region Filter */}
               <View style={styles.filterFieldContainer}>
                 <Text style={styles.filterFieldLabel}>Region</Text>
-                <View style={styles.dropdownContainer}>
-                  <TouchableOpacity
-                    style={styles.filterDropdownButton}
-                    onPress={() => {
-                      setShowRegionDropdown(!showRegionDropdown)
-                      setShowRequirementDropdown(false)
-                      setShowPropertyTypeDropdown(false)
-                    }}
-                  >
-                    <Text style={styles.filterDropdownText}>
-                      {filterData.regionName}
-                    </Text>
-                    <MaterialIcons 
-                      name={showRegionDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                      size={24} 
-                      color="#6B7280" 
-                    />
-                  </TouchableOpacity>
-                  
-                  {showRegionDropdown && (
-                    <View style={styles.filterDropdownMenuDownward}>
-                      <ScrollView 
-                        showsVerticalScrollIndicator={true}
-                        style={{ maxHeight: 280 }}
-                        nestedScrollEnabled={true}
-                      >
-                        <TouchableOpacity
-                          style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
-                          onPress={() => handleRegionSelect({ _id: null, name: 'All Regions' })}
-                        >
-                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Regions</Text>
-                        </TouchableOpacity>
-                        {isLoadingRegions ? (
-                          <View style={styles.filterDropdownItem}>
-                            <ActivityIndicator size="small" color="#0D542BFF" />
-                            <Text style={styles.filterDropdownItemText}>Loading regions...</Text>
-                          </View>
-                        ) : (
-                          regions && regions.length > 0 ? (
-                            regions.map((region) => (
-                              <TouchableOpacity
-                                key={region._id}
-                                style={styles.filterDropdownItem}
-                                onPress={() => handleRegionSelect(region)}
-                              >
-                                <Text style={styles.filterDropdownItemText}>{region.name}</Text>
-                              </TouchableOpacity>
-                            ))
-                          ) : (
-                            <View style={styles.filterDropdownItem}>
-                              <Text style={styles.filterDropdownItemText}>
-                                {regions ? 'No regions available' : 'Failed to load regions'}
-                              </Text>
-                            </View>
-                          )
-                        )}
-                      </ScrollView>
+                <View style={styles.chipContainer}>
+                  {isLoadingRegions ? (
+                    <View style={styles.chipLoadingContainer}>
+                      <ActivityIndicator size="small" color="#0D542BFF" />
+                      <Text style={styles.chipLoadingText}>Loading regions...</Text>
                     </View>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterChip,
+                          filterData.regionName === 'All Regions' && styles.filterChipActive
+                        ]}
+                        onPress={() => handleRegionSelect({ _id: null, name: 'All Regions' })}
+                      >
+                        <Text style={[
+                          styles.filterChipText,
+                          filterData.regionName === 'All Regions' && styles.filterChipTextActive
+                        ]}>
+                          All Regions
+                        </Text>
+                      </TouchableOpacity>
+                      {regions && regions.length > 0 ? (
+                        regions.map((region) => (
+                          <TouchableOpacity
+                            key={region._id}
+                            style={[
+                              styles.filterChip,
+                              filterData.regionId === region._id && styles.filterChipActive
+                            ]}
+                            onPress={() => handleRegionSelect(region)}
+                          >
+                            <Text style={[
+                              styles.filterChipText,
+                              filterData.regionId === region._id && styles.filterChipTextActive
+                            ]}>
+                              {region.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))
+                      ) : (
+                        <Text style={styles.chipEmptyText}>
+                          {regions ? 'No regions available' : 'Failed to load regions'}
+                        </Text>
+                      )}
+                    </>
                   )}
                 </View>
               </View>
@@ -1583,112 +1558,48 @@ const LeadsScreen = ({ navigation }) => {
               {/* Requirement Filter */}
               <View style={styles.filterFieldContainer}>
                 <Text style={styles.filterFieldLabel}>Requirement</Text>
-                <View style={styles.dropdownContainer}>
-                  <TouchableOpacity
-                    style={styles.filterDropdownButton}
-                    onPress={() => {
-                      setShowRequirementDropdown(!showRequirementDropdown)
-                      setShowRegionDropdown(false)
-                      setShowPropertyTypeDropdown(false)
-                    }}
-                  >
-                    <Text style={styles.filterDropdownText}>
-                      {filterData.requirement}
-                    </Text>
-                    <MaterialIcons 
-                      name={showRequirementDropdown ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                      size={24} 
-                      color="#6B7280" 
-                    />
-                  </TouchableOpacity>
-                  
-                  {showRequirementDropdown && (
-                    <View style={styles.filterDropdownMenuDownward}>
-                      <ScrollView 
-                        showsVerticalScrollIndicator={true}
-                        style={{ maxHeight: 280 }}
-                        nestedScrollEnabled={true}
-                      >
-                        <TouchableOpacity
-                          style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
-                          onPress={() => handleFilterRequirementSelect({ key: 'All Requirements', value: 'All Requirements' })}
-                        >
-                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Requirements</Text>
-                        </TouchableOpacity>
-                        {requirementOptions.slice(1).map((option) => (
-                          <TouchableOpacity
-                            key={option.key}
-                            style={[
-                              styles.filterDropdownItem,
-                              filterData.requirement === option.value && { backgroundColor: '#F0FDFA' }
-                            ]}
-                            onPress={() => handleFilterRequirementSelect(option)}
-                          >
-                            <Text style={[
-                              styles.filterDropdownItemText,
-                              filterData.requirement === option.value && { color: '#0D542BFF', fontWeight: '600' }
-                            ]}>{option.value}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
+                <View style={styles.chipContainer}>
+                  {requirementOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.key}
+                      style={[
+                        styles.filterChip,
+                        filterData.requirement === option.value && styles.filterChipActive
+                      ]}
+                      onPress={() => handleFilterRequirementSelect(option)}
+                    >
+                      <Text style={[
+                        styles.filterChipText,
+                        filterData.requirement === option.value && styles.filterChipTextActive
+                      ]}>
+                        {option.value}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
 
               {/* Property Type Filter */}
               <View style={styles.filterFieldContainer}>
                 <Text style={styles.filterFieldLabel}>Property Type</Text>
-                <View style={styles.dropdownContainer}>
-                  <TouchableOpacity
-                    style={styles.filterDropdownButton}
-                    onPress={() => {
-                      setShowPropertyTypeDropdown(!showPropertyTypeDropdown)
-                      setShowRegionDropdown(false)
-                      setShowRequirementDropdown(false)
-                    }}
-                  >
-                    <Text style={styles.filterDropdownText}>
-                      {filterData.propertyType}
-                    </Text>
-                    <MaterialIcons 
-                      name={showPropertyTypeDropdown ? "keyboard-arrow-down" : "keyboard-arrow-up"} 
-                      size={24} 
-                      color="#6B7280" 
-                    />
-                  </TouchableOpacity>
-                  
-                  {showPropertyTypeDropdown && (
-                    <View style={styles.filterDropdownMenuUpward}>
-                      <ScrollView 
-                        showsVerticalScrollIndicator={true}
-                        style={{ maxHeight: 280 }}
-                        nestedScrollEnabled={true}
-                      >
-                        <TouchableOpacity
-                          style={[styles.filterDropdownItem, { backgroundColor: '#F0FDFA' }]}
-                          onPress={() => handleFilterPropertyTypeSelect({ key: 'All Property Types', value: 'All Property Types' })}
-                        >
-                          <Text style={[styles.filterDropdownItemText, { color: '#0D542BFF', fontWeight: '600' }]}>All Property Types</Text>
-                        </TouchableOpacity>
-                        {propertyTypeOptions.slice(1).map((option) => (
-                          <TouchableOpacity
-                            key={option.key}
-                            style={[
-                              styles.filterDropdownItem,
-                              filterData.propertyType === option.value && { backgroundColor: '#F0FDFA' }
-                            ]}
-                            onPress={() => handleFilterPropertyTypeSelect(option)}
-                          >
-                            <Text style={[
-                              styles.filterDropdownItemText,
-                              filterData.propertyType === option.value && { color: '#0D542BFF', fontWeight: '600' }
-                            ]}>{option.value}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
+                <View style={styles.chipContainer}>
+                  {propertyTypeOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.key}
+                      style={[
+                        styles.filterChip,
+                        filterData.propertyType === option.value && styles.filterChipActive
+                      ]}
+                      onPress={() => handleFilterPropertyTypeSelect(option)}
+                    >
+                      <Text style={[
+                        styles.filterChipText,
+                        filterData.propertyType === option.value && styles.filterChipTextActive
+                      ]}>
+                        {option.value}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
 
@@ -1717,6 +1628,56 @@ const LeadsScreen = ({ navigation }) => {
               >
                 <Text style={styles.applyFiltersButtonText}>Apply Filters</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Status Filter Modal */}
+      <Modal
+        visible={showStatusModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowStatusModal(false)}
+        statusBarTranslucent={true}
+      >
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
+          <TouchableOpacity 
+            style={styles.modalBackdrop} 
+            activeOpacity={1} 
+            onPress={() => setShowStatusModal(false)}
+          />
+          <View style={styles.statusModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Status</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowStatusModal(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.statusModalBody}>
+              <View style={styles.chipContainer}>
+                {statusOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[
+                      styles.filterChip,
+                      selectedStatus === option.key && styles.filterChipActive
+                    ]}
+                    onPress={() => handleStatusChangeInModal(option.key)}
+                  >
+                    <Text style={[
+                      styles.filterChipText,
+                      selectedStatus === option.key && styles.filterChipTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -2035,7 +1996,7 @@ const styles = StyleSheet.create({
   dropdownButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#111827',
   },
   dropdownMenu: {
     position: 'absolute',
@@ -2069,7 +2030,8 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#111827',
+    lineHeight: 22,
   },
   dropdownItemTextActive: {
     color: '#0D542BFF',
@@ -2097,7 +2059,7 @@ const styles = StyleSheet.create({
   advancedFilterText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#111827',
     flexShrink: 1,
   },
   advancedFilterButtonFullWidth: {
@@ -2169,7 +2131,7 @@ const styles = StyleSheet.create({
   addLeadButtonPlaceholderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#9CA3AF',
+    color: '#6B7280',
     marginTop: 8,
   },
 
@@ -2185,9 +2147,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
+    marginBottom: 12,
   },
   // Toggle Button Styles
   toggleContainer: {
@@ -2255,14 +2218,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   leadAvatarText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#6B7280',
   },
   leadAvatarImage: {
     width: 40,
@@ -2274,12 +2237,14 @@ const styles = StyleSheet.create({
   },
   leadName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 2,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 8,
+    lineHeight: 22,
   },
   leadEmail: {
     fontSize: 14,
+    lineHeight: 22,
     color: '#6B7280',
   },
   statusBadge: {
@@ -2304,22 +2269,25 @@ const styles = StyleSheet.create({
   },
   detailItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   detailContent: {
     flex: 1,
   },
   detailLabel: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#9CA3AF',
-    marginBottom: 2,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#6B7280',
+    color: '#111827',
+    lineHeight: 22,
   },
   divider: {
     height: 1,
@@ -2336,9 +2304,11 @@ const styles = StyleSheet.create({
   },
   sharedWithLabel: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#9CA3AF',
+    fontWeight: '600',
+    color: '#6B7280',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sharedAvatars: {
     flexDirection: 'row',
@@ -2524,6 +2494,20 @@ const styles = StyleSheet.create({
     maxHeight: '80%', // Increased height for more content
     minHeight: 400, // Minimum height for content
   },
+  statusModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    maxHeight: '60%',
+    minHeight: 300,
+  },
+  statusModalBody: {
+    paddingVertical: 20,
+    paddingTop: 20,
+  },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2583,10 +2567,53 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent', // Ensure no background
   },
   filterFieldLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
     marginBottom: 8,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 0,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  filterChipActive: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 0,
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#000000',
+  },
+  filterChipTextActive: {
+    color: '#0D542BFF',
+    fontWeight: '600',
+  },
+  chipLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  chipLoadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+  chipEmptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    paddingVertical: 12,
   },
   filterDropdownButton: {
     flexDirection: 'row',
@@ -2607,7 +2634,8 @@ const styles = StyleSheet.create({
   filterDropdownText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#111827',
+    lineHeight: 22,
   },
   filterDropdownMenu: {
     position: 'absolute',
@@ -2675,7 +2703,8 @@ const styles = StyleSheet.create({
   filterDropdownItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1F2937',
+    color: '#111827',
+    lineHeight: 22,
   },
 
   // Slider Styles
@@ -2689,9 +2718,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sliderFieldLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
   },
   sliderValueContainer: {
     flexDirection: 'row',

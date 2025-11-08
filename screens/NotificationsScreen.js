@@ -418,17 +418,18 @@ const NotificationsScreen = ({ navigation }) => {
         <View style={styles.notificationsSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              Notifications (
-              <Text style={styles.countText}>{notifications.length}</Text>
-              <Text> / </Text>
-              <Text style={styles.unreadCountText}>{notifications.filter(n => !n.isRead).length} Unread</Text>
-              )
+              Notifications
             </Text>
+            <View style={styles.countContainer}>
+              <Text style={styles.countText}>{notifications.length}</Text>
+              <Text style={styles.countSeparator}> / </Text>
+              <Text style={styles.unreadCountText}>{notifications.filter(n => !n.isRead).length} Unread</Text>
+            </View>
           </View>
           
           {filteredNotifications.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <MaterialIcons name="notifications-none" size={48} color="#9CA3AF" />
+              <MaterialIcons name="notifications-none" size={48} color="#D1D5DB" />
               <Text style={styles.emptyTitle}>No Notifications Found</Text>
               <Text style={styles.emptyMessage}>No notifications available at the moment</Text>
             </View>
@@ -669,9 +670,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
+    marginBottom: 12,
   },
   countText: {
     color: '#1F2937',
@@ -679,6 +681,15 @@ const styles = StyleSheet.create({
   },
   unreadCountText: {
     color: '#0D542BFF',
+    fontWeight: '700',
+  },
+  countContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  countSeparator: {
+    color: '#6B7280',
+    fontSize: 20,
     fontWeight: '700',
   },
   sortButton: {

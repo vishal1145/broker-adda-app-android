@@ -31,7 +31,6 @@ const ShareLeadScreen = ({ navigation, route }) => {
     selectedBrokers: [],
     notes: ''
   })
-  const [showShareRegionModal, setShowShareRegionModal] = useState(false)
   const [showShareBrokerModal, setShowShareBrokerModal] = useState(false)
   const [allBrokers, setAllBrokers] = useState([])
   const [filteredBrokers, setFilteredBrokers] = useState([])
@@ -79,8 +78,11 @@ const ShareLeadScreen = ({ navigation, route }) => {
       selectedRegionName: '',
       selectedBrokers: []
     }))
-    setShowShareRegionModal(false)
     setShowShareBrokerModal(false)
+    // Clear filtered brokers when switching away from region
+    if (shareType !== 'region') {
+      setFilteredBrokers([])
+    }
   }
 
   const handleShareRegionSelect = (regionName) => {
@@ -94,7 +96,46 @@ const ShareLeadScreen = ({ navigation, route }) => {
       // Fetch brokers for this region
       fetchBrokersByRegion(selectedRegion._id)
     }
-    setShowShareRegionModal(false)
+  }
+
+  // Render chip group (matching CreatePropertyScreen pattern)
+  const renderChipGroup = (options, selectedValue, onSelect, fieldName) => (
+    <View style={styles.chipContainer}>
+      {options.map((option) => {
+        const optionValue = typeof option === 'string' ? option : (option.name || option)
+        const isSelected = selectedValue === optionValue
+        return (
+          <TouchableOpacity
+            key={optionValue}
+            style={[
+              styles.chip,
+              isSelected && styles.chipSelected
+            ]}
+            onPress={() => onSelect(optionValue)}
+            activeOpacity={0.8}
+          >
+            <Text style={[
+              styles.chipText,
+              isSelected && styles.chipTextSelected
+            ]}>
+              {optionValue}
+            </Text>
+          </TouchableOpacity>
+        )
+      })}
+    </View>
+  )
+
+  // Validation function
+  const isFormValid = () => {
+    if (shareData.shareType === 'region') {
+      return shareData.selectedRegion && shareData.selectedRegionName.trim() !== ''
+    } else if (shareData.shareType === 'selected') {
+      return shareData.selectedBrokers.length > 0
+    } else if (shareData.shareType === 'all') {
+      return true
+    }
+    return false
   }
 
   const handleBrokerSelect = (broker) => {
@@ -342,19 +383,19 @@ const ShareLeadScreen = ({ navigation, route }) => {
             </View>
             
             {/* Share Type Selection */}
-            <View style={styles.addLeadFieldContainer}>
-              <Text style={styles.addLeadFieldLabel}>Share Type *</Text>
-              <View style={styles.addLeadButtonGroup}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Share Type *</Text>
+              <View style={styles.chipContainer}>
                 <TouchableOpacity
                   style={[
-                    styles.addLeadFormButton,
-                    shareData.shareType === 'all' && styles.addLeadFormButtonActive
+                    styles.chip,
+                    shareData.shareType === 'all' && styles.chipSelected
                   ]}
                   onPress={() => handleShareTypeChange('all')}
                 >
                   <Text style={[
-                    styles.addLeadFormButtonText,
-                    shareData.shareType === 'all' && styles.addLeadFormButtonTextActive
+                    styles.chipText,
+                    shareData.shareType === 'all' && styles.chipTextSelected
                   ]}>
                     All Brokers
                   </Text>
@@ -362,14 +403,14 @@ const ShareLeadScreen = ({ navigation, route }) => {
 
                 <TouchableOpacity
                   style={[
-                    styles.addLeadFormButton,
-                    shareData.shareType === 'region' && styles.addLeadFormButtonActive
+                    styles.chip,
+                    shareData.shareType === 'region' && styles.chipSelected
                   ]}
                   onPress={() => handleShareTypeChange('region')}
                 >
                   <Text style={[
-                    styles.addLeadFormButtonText,
-                    shareData.shareType === 'region' && styles.addLeadFormButtonTextActive
+                    styles.chipText,
+                    shareData.shareType === 'region' && styles.chipTextSelected
                   ]}>
                     By Region
                   </Text>
@@ -377,14 +418,14 @@ const ShareLeadScreen = ({ navigation, route }) => {
 
                 <TouchableOpacity
                   style={[
-                    styles.addLeadFormButton,
-                    shareData.shareType === 'selected' && styles.addLeadFormButtonActive
+                    styles.chip,
+                    shareData.shareType === 'selected' && styles.chipSelected
                   ]}
                   onPress={() => handleShareTypeChange('selected')}
                 >
                   <Text style={[
-                    styles.addLeadFormButtonText,
-                    shareData.shareType === 'selected' && styles.addLeadFormButtonTextActive
+                    styles.chipText,
+                    shareData.shareType === 'selected' && styles.chipTextSelected
                   ]}>
                     Selected
                   </Text>
@@ -396,26 +437,26 @@ const ShareLeadScreen = ({ navigation, route }) => {
             {shareData.shareType === 'region' && (
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Select Region *</Text>
-                <TouchableOpacity
-                  style={[styles.input, isLoadingRegions && styles.disabledInput]}
-                  onPress={() => {
-                    if (!isLoadingRegions && regions.length > 0) {
-                      setShowShareRegionModal(true)
-                    }
-                  }}
-                  disabled={isLoadingRegions || regions.length === 0}
-                >
-                  <Text style={[styles.inputText, !shareData.selectedRegionName && styles.placeholderText]}>
-                    {isLoadingRegions ? 'Loading regions...' : 
-                     regions.length === 0 ? 'No regions available' :
-                     shareData.selectedRegionName || 'Select region'}
-                  </Text>
-                  {isLoadingRegions ? (
+                {isLoadingRegions ? (
+                  <View style={styles.loadingContainer}>
                     <ActivityIndicator size="small" color="#0D542BFF" />
-                  ) : (
-                    <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-                  )}
-                </TouchableOpacity>
+                    <Text style={styles.loadingText}>Loading regions...</Text>
+                  </View>
+                ) : regions && regions.length > 0 ? (
+                  <>
+                    {renderChipGroup(
+                      regions.map(r => r.name || r),
+                      shareData.selectedRegionName,
+                      (value) => handleShareRegionSelect(value),
+                      'region'
+                    )}
+                    {!shareData.selectedRegionName && (
+                      <Text style={styles.errorText}>Region is required.</Text>
+                    )}
+                  </>
+                ) : (
+                  <Text style={styles.errorText}>No regions available.</Text>
+                )}
               </View>
             )}
 
@@ -446,29 +487,34 @@ const ShareLeadScreen = ({ navigation, route }) => {
                     <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
                   )}
                 </TouchableOpacity>
+                {shareData.selectedBrokers.length === 0 && !isLoadingBrokers && allBrokers.length > 0 && (
+                  <Text style={styles.errorText}>Please select at least one broker.</Text>
+                )}
               </View>
             )}
 
             {/* Share Notes */}
-            <View style={styles.addLeadFieldContainer}>
-              <Text style={styles.addLeadFieldLabel}>Share Notes (Optional)</Text>
-              <TextInput
-                style={styles.addLeadTextInput}
-                placeholder="Add any specific instructions or context..."
-                placeholderTextColor="#9CA3AF"
-                value={shareData.notes}
-                onChangeText={(text) => setShareData(prev => ({ ...prev, notes: text }))}
-                onFocus={() => {
-                  setTimeout(() => {
-                    shareLeadScrollRef.current?.scrollToEnd({ animated: true })
-                  }, 100)
-                }}
-                multiline={true}
-                numberOfLines={3}
-                textAlignVertical="top"
-                returnKeyType="done"
-                blurOnSubmit={true}
-              />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Share Notes (Optional)</Text>
+              <View style={styles.textAreaContainer}>
+                <TextInput
+                  style={styles.textArea}
+                  placeholder="Add any specific instructions or context..."
+                  placeholderTextColor="#8E8E93"
+                  value={shareData.notes}
+                  onChangeText={(text) => setShareData(prev => ({ ...prev, notes: text }))}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      shareLeadScrollRef.current?.scrollToEnd({ animated: true })
+                    }, 100)
+                  }}
+                  multiline={true}
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                />
+              </View>
             </View>
 
             {/* Action Button */}
@@ -476,15 +522,15 @@ const ShareLeadScreen = ({ navigation, route }) => {
               <TouchableOpacity 
                 style={[
                   styles.actionButton, 
-                  isSharing ? styles.actionButtonDisabled : null
+                  (!isFormValid() || isSharing) ? styles.actionButtonDisabled : null
                 ]} 
                 onPress={handleShareSubmit}
-                disabled={isSharing}
+                disabled={isSharing || !isFormValid()}
               >
                 {isSharing ? (
-                  <View style={styles.buttonContent}>
+                  <View style={styles.buttonLoadingContainer}>
                     <ActivityIndicator size="small" color="#FFFFFF" />
-                    <Text style={[styles.actionButtonText, { marginLeft: 8 }]}>
+                    <Text style={[styles.actionButtonText, styles.buttonLoadingText]}>
                       Sharing...
                     </Text>
                   </View>
@@ -499,44 +545,6 @@ const ShareLeadScreen = ({ navigation, route }) => {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Region Selection Modal */}
-      <Modal visible={showShareRegionModal} transparent animationType="fade" statusBarTranslucent>
-        <SafeAreaView style={styles.modalOverlay} edges={['bottom']}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Region</Text>
-              <TouchableOpacity onPress={() => setShowShareRegionModal(false)}>
-                <MaterialIcons name="close" size={24} color="#8E8E93" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.modalList}>
-              {isLoadingRegions ? (
-                <View style={styles.modalItem}>
-                  <ActivityIndicator size="small" color="#0D542BFF" />
-                  <Text style={[styles.modalItemText, { marginLeft: 12 }]}>Loading regions...</Text>
-                </View>
-              ) : regions && regions.length > 0 ? (
-                regions.map((region) => (
-                  <TouchableOpacity
-                    key={region._id}
-                    style={styles.modalItem}
-                    onPress={() => handleShareRegionSelect(region.name)}
-                  >
-                    <Text style={styles.modalItemText}>{region.name}</Text>
-                    {shareData.selectedRegionName === region.name && (
-                      <MaterialIcons name="check" size={20} color="#0D542BFF" />
-                    )}
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <View style={styles.modalItem}>
-                  <Text style={styles.modalItemText}>No regions available</Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      </Modal>
 
       {/* Broker Selection Modal */}
       <Modal visible={showShareBrokerModal} transparent animationType="fade" statusBarTranslucent>
@@ -548,7 +556,7 @@ const ShareLeadScreen = ({ navigation, route }) => {
                 setShowShareBrokerModal(false)
                 setBrokerSearchQuery('')
               }}>
-                <MaterialIcons name="close" size={24} color="#8E8E93" />
+                <MaterialIcons name="close" size={24} color="#000000" />
               </TouchableOpacity>
             </View>
             
@@ -558,7 +566,7 @@ const ShareLeadScreen = ({ navigation, route }) => {
                 <TextInput
                   style={styles.modalSearchInput}
                   placeholder="Search brokers..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#8E8E93"
                   value={brokerSearchQuery}
                   onChangeText={setBrokerSearchQuery}
                 />
@@ -680,10 +688,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    flexGrow: 1,
     paddingBottom: 20,
   },
   singlePageForm: {
+    paddingHorizontal: 20,
+    paddingBottom: 0,
+    paddingTop: 0,
     flex: 1,
   },
   titleSection: {
@@ -699,17 +710,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     lineHeight: 30,
   },
-  addLeadFieldContainer: {
-    marginBottom: 20,
-  },
-  addLeadFieldLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
@@ -727,6 +729,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    fontSize: 16,
+    color: '#000000',
   },
   inputText: {
     flex: 1,
@@ -736,28 +740,52 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#8E8E93',
   },
+  errorText: {
+    fontSize: 12,
+    color: '#FF3B30',
+    marginTop: 4,
+    marginLeft: 4,
+  },
   disabledInput: {
     backgroundColor: '#F5F5F5',
     color: '#8E8E93',
     borderColor: '#E0E0E0',
   },
-  addLeadTextInput: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
-    fontSize: 16,
-    color: '#1F2937',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    minHeight: 80,
-    maxHeight: 120,
   },
-  addLeadButtonGroup: {
+  loadingText: {
+    marginLeft: 12,
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  textAreaContainer: {
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    minHeight: 100,
+  },
+  textArea: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+  },
+  chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  addLeadFormButton: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
@@ -769,15 +797,15 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  addLeadFormButtonActive: {
+  chipSelected: {
     backgroundColor: '#E8F5E8',
     borderColor: '#E5E5EA',
   },
-  addLeadFormButtonText: {
+  chipText: {
     fontSize: 14,
     color: '#000000',
   },
-  addLeadFormButtonTextActive: {
+  chipTextSelected: {
     color: '#0D542BFF',
     fontWeight: '600',
   },
@@ -911,6 +939,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonLoadingText: {
+    marginLeft: 8,
   },
 })
 

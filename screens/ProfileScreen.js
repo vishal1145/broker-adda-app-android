@@ -1128,7 +1128,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
     marginBottom: 12,
@@ -1342,7 +1342,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   documentTitleAbove: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#6B7280',
     marginBottom: 8,

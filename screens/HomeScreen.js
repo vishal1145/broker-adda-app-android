@@ -86,7 +86,7 @@ const HomeScreen = ({ navigation }) => {
     if (imageError) {
       return (
         <View style={[style, { backgroundColor: '#F5F5F5', alignItems: 'center', justifyContent: 'center' }]}>
-          <MaterialIcons name="broken-image" size={24} color="#8E8E93" />
+          <MaterialIcons name="broken-image" size={24} color="#6B7280" />
           <TouchableOpacity 
             style={styles.retryButton}
             onPress={retry}
@@ -906,104 +906,106 @@ const HomeScreen = ({ navigation }) => {
     const statusTextColor = getStatusTextColor(property.status)
 
     return (
-      <TouchableOpacity 
-        style={styles.recentPropertyCard}
-        onPress={() => navigation.navigate('PropertyDetails', { property })}
-        activeOpacity={0.8}
-      >
-        <View style={styles.recentCardTopSection}>
-          {/* Property Image - Left Side */}
-          <View style={styles.recentPropertyImageContainer}>
-            {hasImages ? (
-              <>
-                <SafeImage 
-                  source={{ uri: getSecureImageUrl(property.images[0]) }} 
-                  style={styles.recentPropertyImage}
-                  imageType="propertyImage"
-                  resizeMode="cover"
-                />
-                {/* Property Type Badge */}
-                {property.type && (
-                  <View style={styles.recentPropertyTypeBadge}>
-                    <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <View style={styles.recentPropertyImagePlaceholder}>
-                <MaterialIcons name="home" size={48} color="#D1D5DB" />
-                <Text style={styles.recentPlaceholderText}>No Image</Text>
-                {/* Property Type Badge on Placeholder */}
-                {property.type && (
-                  <View style={styles.recentPropertyTypeBadge}>
-                    <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
+      <View style={styles.recentPropertyCard}>
+        <TouchableOpacity 
+          style={styles.recentCardContentWrapper}
+          onPress={() => navigation.navigate('PropertyDetails', { property })}
+          activeOpacity={0.8}
+        >
+          <View style={styles.recentCardTopSection}>
+            {/* Property Image - Left Side */}
+            <View style={styles.recentPropertyImageContainer}>
+              {hasImages ? (
+                <>
+                  <SafeImage 
+                    source={{ uri: getSecureImageUrl(property.images[0]) }} 
+                    style={styles.recentPropertyImage}
+                    imageType="propertyImage"
+                    resizeMode="cover"
+                  />
+                  {/* Property Type Badge */}
+                  {property.type && (
+                    <View style={styles.recentPropertyTypeBadge}>
+                      <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
+                    </View>
+                  )}
+                </>
+              ) : (
+                <View style={styles.recentPropertyImagePlaceholder}>
+                  <MaterialIcons name="home" size={48} color="#D1D5DB" />
+                  <Text style={styles.recentPlaceholderText}>No Image</Text>
+                  {/* Property Type Badge on Placeholder */}
+                  {property.type && (
+                    <View style={styles.recentPropertyTypeBadge}>
+                      <Text style={styles.recentPropertyTypeBadgeText}>{property.type}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
 
-          {/* Property Content - Right Side */}
-          <View style={styles.recentPropertyContent}>
-            {/* Title with Icon */}
-            <View style={styles.recentTitleRow}>
-              <MaterialIcons name="home" size={16} color="#1F2937" />
-              <Text style={styles.recentPropertyTitle} numberOfLines={1}>
-                {property.title}
-              </Text>
-            </View>
-            
-            {/* Address with Icon */}
-            <View style={styles.recentAddressRow}>
-              <MaterialIcons name="location-on" size={14} color="#6B7280" />
-              <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
-                {property.address}
-              </Text>
-            </View>
-            
-            {/* Price */}
-            <Text style={styles.recentPropertyPrice}>
-              {property.price}
-            </Text>
-            
-            {/* Status Row */}
-            <View style={styles.recentStatusRow}>
-              <Text style={styles.recentStatusLabel}>Status</Text>
-              <View style={[styles.recentStatusBadge, { backgroundColor: statusBgColor }]}>
-                <Text style={[styles.recentStatusBadgeText, { color: statusTextColor }]}>
-                  {getStatusDisplayText(property.status)}
+            {/* Property Content - Right Side */}
+            <View style={styles.recentPropertyContent}>
+              {/* Title with Icon */}
+              <View style={styles.recentTitleRow}>
+                <MaterialIcons name="home" size={16} color="#6B7280" />
+                <Text style={styles.recentPropertyTitle} numberOfLines={1}>
+                  {property.title}
                 </Text>
               </View>
+              
+              {/* Address with Icon */}
+              <View style={styles.recentAddressRow}>
+                <MaterialIcons name="location-on" size={14} color="#6B7280" />
+                <Text style={styles.recentPropertyAddressText} numberOfLines={1}>
+                  {property.address}
+                </Text>
+              </View>
+              
+              {/* Price */}
+              <Text style={styles.recentPropertyPrice}>
+                {property.price}
+              </Text>
+              
+              {/* Status Row */}
+              <View style={styles.recentStatusRow}>
+                <Text style={styles.recentStatusLabel}>Status</Text>
+                <View style={[styles.recentStatusBadge, { backgroundColor: statusBgColor }]}>
+                  <Text style={[styles.recentStatusBadgeText, { color: statusTextColor }]}>
+                    {getStatusDisplayText(property.status)}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-        
-        {/* Divider - Full Width */}
-        <View style={styles.recentDivider} />
-        
-        {/* Features Below - Starting from Image Position */}
-        <View style={styles.recentPropertyFeatures}>
-          <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="bed" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.bedrooms} Bed</Text>
-          </View>
           
-          <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="bathtub" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.bathrooms} Bath</Text>
-          </View>
+          {/* Divider - Full Width */}
+          <View style={styles.recentDivider} />
           
-          <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="home" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.furnishing || 'Not Specified'}</Text>
+          {/* Features Below - Starting from Image Position */}
+          <View style={styles.recentPropertyFeatures}>
+            <View style={styles.recentFeatureItem}>
+              <MaterialIcons name="bed" size={20} color="#6B7280" />
+              <Text style={styles.recentFeatureText}>{property.bedrooms} Bed</Text>
+            </View>
+            
+            <View style={styles.recentFeatureItem}>
+              <MaterialIcons name="bathtub" size={20} color="#6B7280" />
+              <Text style={styles.recentFeatureText}>{property.bathrooms} Bath</Text>
+            </View>
+            
+            <View style={styles.recentFeatureItem}>
+              <MaterialIcons name="home" size={20} color="#6B7280" />
+              <Text style={styles.recentFeatureText}>{property.furnishing || 'Not Specified'}</Text>
+            </View>
+            
+            <View style={styles.recentFeatureItem}>
+              <MaterialIcons name="square-foot" size={20} color="#6B7280" />
+              <Text style={styles.recentFeatureText}>{property.sqft || 0} sq.ft</Text>
+            </View>
           </View>
-          
-          <View style={styles.recentFeatureItem}>
-            <MaterialIcons name="square-foot" size={16} color="#6B7280" />
-            <Text style={styles.recentFeatureText}>{property.sqft || 0} sq.ft</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     )
   }
 
@@ -1013,7 +1015,7 @@ const HomeScreen = ({ navigation }) => {
       <View>
         <View style={styles.recentActivityItem}>
           <View style={styles.recentActivityIconContainer}>
-            <MaterialIcons name={activity.icon || 'notifications'} size={18} color="#9CA3AF" />
+            <MaterialIcons name={activity.icon || 'notifications'} size={18} color="#6B7280" />
           </View>
           <View style={styles.recentActivityContent}>
             <Text style={styles.recentActivityDescription}>{activity.title || activity.description}</Text>
@@ -1328,7 +1330,7 @@ const HomeScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('CreateLead')}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="add" size={32} color="#9CA3AF" />
+            <MaterialIcons name="add" size={32} color="#6B7280" />
             <Text style={styles.addLeadText}>Add Lead</Text>
           </TouchableOpacity>
           
@@ -1370,7 +1372,7 @@ const HomeScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('CreateProperty')}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="add" size={32} color="#9CA3AF" />
+            <MaterialIcons name="add" size={32} color="#6B7280" />
             <Text style={styles.addPropertyText}>Add Property</Text>
           </TouchableOpacity>
           
@@ -1626,9 +1628,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#1F2937',
+    marginBottom: 12,
   },
   sectionBadge: {
     backgroundColor: '#F0FDFA',
@@ -1950,9 +1953,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   chartCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 20,
   },
   chartWrapper: {
@@ -2127,8 +2130,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    marginBottom: 12,
     width: width - 80,
-    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2137,6 +2140,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E7EB',
     overflow: 'hidden',
+  },
+  recentCardContentWrapper: {
+    padding: 12,
   },
   recentCardTopSection: {
     flexDirection: 'row',
@@ -2196,8 +2202,8 @@ const styles = StyleSheet.create({
   },
   recentPropertyTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     flex: 1,
   },
   recentAddressRow: {
@@ -2214,7 +2220,7 @@ const styles = StyleSheet.create({
   recentPropertyPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#111827',
     marginBottom: 8,
   },
   recentStatusRow: {
@@ -2225,7 +2231,7 @@ const styles = StyleSheet.create({
   },
   recentStatusLabel: {
     fontSize: 14,
-    color: '#1F2937',
+    color: '#6B7280',
   },
   recentStatusBadge: {
     paddingHorizontal: 10,
@@ -2259,9 +2265,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   recentFeatureText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6B7280',
-    fontWeight: '500',
+    lineHeight: 16,
   },
 
   // Add Property Card Styles
@@ -2271,7 +2277,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#EAB308',
-    padding: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -2284,8 +2291,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   addPropertyText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#6B7280',
     marginTop: 8,
   },
@@ -2297,7 +2304,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#EAB308',
-    padding: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -2310,8 +2318,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   addLeadText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#6B7280',
     marginTop: 8,
   },
