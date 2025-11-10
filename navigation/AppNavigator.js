@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -32,6 +32,9 @@ import Footer from '../components/Footer';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Navigation ref for global access
+export const navigationRef = { current: null };
 
 // Main Tab Navigator for authenticated screens
 const MainTabNavigator = () => {
@@ -73,8 +76,15 @@ const MainTabNavigator = () => {
 
 // Main App Navigator
 const AppNavigator = () => {
+  const navRef = useRef(null);
+  
+  // Set the navigation ref for global access
+  React.useEffect(() => {
+    navigationRef.current = navRef.current;
+  }, []);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navRef}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{

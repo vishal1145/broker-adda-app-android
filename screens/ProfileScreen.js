@@ -54,7 +54,9 @@ const ProfileScreen = ({ navigation }) => {
     commissionEarned: '$1.2M',
     rating: 4.8,
     socialMedia: {},
-    documents: []
+    documents: [],
+    isEmailVerified: false,
+    isPhoneVerified: false
   })
   
   const [isLoading, setIsLoading] = useState(true)
@@ -179,37 +181,45 @@ const ProfileScreen = ({ navigation }) => {
       if (token && brokerId) {
         const response = await authAPI.getProfile(brokerId, token)
         
-        if (response && response.data && response.data.broker) {
+        if (response && response.data) {
           const broker = response.data.broker
+          const user = response.data.user
           
-          // Map API data to profile data
-          const mappedData = {
-            name: broker.name || broker.userId?.name || '-',
-            brokerId: broker._id || '',
-            role: 'Senior Broker', // Default role
-            mobileNumber: broker.phone || broker.userId?.phone || '-',
-            whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || '-',
-            email: broker.email || broker.userId?.email || '-',
-            officeAddress: broker.address || '-',
-            website: broker.website || '-',
-            firm: broker.firmName || '-',
-            content: broker.content || '',
-            gender: broker.gender ? broker.gender.charAt(0).toUpperCase() + broker.gender.slice(1).toLowerCase() : '-',
-            status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
-            joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric'
-            }) : '-',
-            licenseNumber: broker.licenseNumber || '-',
-            specializations: broker.specializations || [],
-            regions: broker.region ? broker.region.map(r => r.name) : [],
-            yearsExperience: broker.experience?.years ? broker.experience.years.toString() : '0',
-            totalClients: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '0',
-            totalProperty: broker.propertyCount !== undefined ? broker.propertyCount.toString() : (broker.propertiesListed?.count ? broker.propertiesListed.count.toString() : '0'),
-            commissionEarned: '$1.2M', // Default
-            rating: 4.8, // Default
-            socialMedia: broker.socialMedia || {},
+          // Extract verification status from user object
+          const isEmailVerified = user?.isEmailVerified === true
+          const isPhoneVerified = user?.isPhoneVerified === true
+          
+          if (broker) {
+            // Map API data to profile data
+            const mappedData = {
+              name: broker.name || broker.userId?.name || user?.name || '-',
+              brokerId: broker._id || '',
+              role: 'Senior Broker', // Default role
+              mobileNumber: broker.phone || broker.userId?.phone || user?.phone || '-',
+              whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || user?.phone || '-',
+              email: broker.email || broker.userId?.email || user?.email || '-',
+              officeAddress: broker.address || '-',
+              website: broker.website || '-',
+              firm: broker.firmName || '-',
+              content: broker.content || '',
+              gender: broker.gender ? broker.gender.charAt(0).toUpperCase() + broker.gender.slice(1).toLowerCase() : '-',
+              status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
+              joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              }) : '-',
+              licenseNumber: broker.licenseNumber || '-',
+              specializations: broker.specializations || [],
+              regions: broker.region ? broker.region.map(r => r.name) : [],
+              yearsExperience: broker.experience?.years ? broker.experience.years.toString() : '0',
+              totalClients: broker.leadsCreated?.count ? broker.leadsCreated.count.toString() : '0',
+              totalProperty: broker.propertyCount !== undefined ? broker.propertyCount.toString() : (broker.propertiesListed?.count ? broker.propertiesListed.count.toString() : '0'),
+              commissionEarned: '$1.2M', // Default
+              rating: 4.8, // Default
+              socialMedia: broker.socialMedia || {},
+              isEmailVerified: isEmailVerified,
+              isPhoneVerified: isPhoneVerified,
             documents: [
               {
                 id: 1,
@@ -258,14 +268,15 @@ const ProfileScreen = ({ navigation }) => {
               // Only show documents that have a non-empty kycDocs value
               return kycValue && kycValue.trim() !== '' && doc.url && doc.url.trim() !== ''
             })
-          }
-          
-          setProfileData(mappedData)
-          
-          // Set profile image if available with secure URL
-          if (broker.brokerImage) {
-            const secureImageUrl = getSecureImageUrl(broker.brokerImage)
-            setProfileImage(secureImageUrl)
+            }
+            
+            setProfileData(mappedData)
+            
+            // Set profile image if available with secure URL
+            if (broker.brokerImage) {
+              const secureImageUrl = getSecureImageUrl(broker.brokerImage)
+              setProfileImage(secureImageUrl)
+            }
           }
         }
       }
@@ -586,7 +597,7 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.infoLabel}>Mobile</Text>
                 <View style={styles.valueWithIcon}>
                   <Text style={styles.infoValue}>{profileData.mobileNumber}</Text>
-                  {profileData.mobileNumber && profileData.mobileNumber !== '-' && String(profileData.mobileNumber).trim() !== '' ? (
+                  {profileData.isPhoneVerified ? (
                     <MaterialIcons style={styles.verifiedIcon} name="verified" size={16} color="#10B981" />
                   ) : null}
                 </View>
@@ -611,7 +622,7 @@ const ProfileScreen = ({ navigation }) => {
                 <Text style={styles.infoLabel}>Email</Text>
                 <View style={styles.valueWithIcon}>
                   <Text style={styles.infoValue}>{profileData.email}</Text>
-                  {profileData.email && profileData.email !== '-' && String(profileData.email).trim() !== '' ? (
+                  {profileData.isEmailVerified ? (
                     <MaterialIcons style={styles.verifiedIcon} name="verified" size={16} color="#10B981" />
                   ) : null}
                 </View>

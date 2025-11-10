@@ -1,5 +1,8 @@
 import axios from 'axios';
 import config from '../config/env';
+import storage from './storage';
+import { navigationRef } from '../navigation/AppNavigator';
+import { CommonActions } from '@react-navigation/native';
 
 const getBaseURL = () => {
   // Debug environment variable loading
@@ -18,9 +21,21 @@ const api = axios.create({
   }
 });
 
-// Request interceptor for logging
+// Request interceptor for adding token and logging
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Automatically add token to requests if not already present
+    if (!config.headers.Authorization) {
+      try {
+        const token = await storage.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error('Error getting token in request interceptor:', error);
+      }
+    }
+    
     console.log('API Request:', config.method?.toUpperCase(), config.url);
     console.log('Full URL:', config.baseURL + config.url);
     console.log('Request Headers:', config.headers);
@@ -33,6 +48,32 @@ api.interceptors.request.use(
   }
 );
 
+// Helper function to handle token expiration and redirect to login
+const handleTokenExpiration = async () => {
+  try {
+    // Clear all authentication data
+    await storage.clearAuthData();
+    console.log('Token expired or removed. Clearing auth data and redirecting to login...');
+    
+    // Navigate to Login screen using navigation ref
+    if (navigationRef.current) {
+      navigationRef.current.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        })
+      );
+    }
+  } catch (error) {
+    console.error('Error handling token expiration:', error);
+  }
+};
+
+// Export logout utility function for manual logout
+export const logout = async () => {
+  await handleTokenExpiration();
+};
+
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
@@ -40,7 +81,7 @@ api.interceptors.response.use(
     console.log('Response Data:', response.data);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.error('API Response Error:', error.response?.status, error.message);
     console.error('Error Details:', {
       message: error.message,
@@ -48,6 +89,12 @@ api.interceptors.response.use(
       response: error.response?.data,
       request: error.request
     });
+    
+    // Handle 401 Unauthorized (token expired or invalid)
+    if (error.response?.status === 401) {
+      await handleTokenExpiration();
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -950,6 +997,63 @@ export const notificationsAPI = {
       return response.data;
     } catch (error) {
       console.error('Toggle push notifications error:', error);
+      throw error;
+    }
+  },
+  updateEmailNotification: async (token, enabled) => {
+    try {
+      console.log('Updating email notification preference:', enabled);
+      const response = await api.patch('/api/notifications/preferences', {
+        emailNotification: enabled
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Email notification preference updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update email notification error:', error);
+      throw error;
+    }
+  },
+  updateSmsNotification: async (token, enabled) => {
+    try {
+      console.log('Updating SMS notification preference:', enabled);
+      const response = await api.patch('/api/notifications/preferences', {
+        smsNotification: enabled
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('SMS notification preference updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update SMS notification error:', error);
+      throw error;
+    }
+  },
+  updatePushNotification: async (token, enabled) => {
+    try {
+      console.log('Updating push notification preference:', enabled);
+      const response = await api.patch('/api/notifications/preferences', {
+        pushNotification: enabled
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Push notification preference updated successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Update push notification error:', error);
       throw error;
     }
   },

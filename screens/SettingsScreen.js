@@ -131,6 +131,19 @@ const SettingsScreen = ({ navigation }) => {
             const secureImageUrl = getSecureImageUrl(broker.brokerImage)
             setProfileImage(secureImageUrl)
           }
+          
+          // Set email, SMS, and push notification status from broker profile
+          if (broker.userId) {
+            if (broker.userId.emailNotification !== undefined) {
+              setEmailEnabled(broker.userId.emailNotification)
+            }
+            if (broker.userId.smsNotification !== undefined) {
+              setSmsEnabled(broker.userId.smsNotification)
+            }
+            if (broker.userId.pushNotification !== undefined) {
+              setPushEnabled(broker.userId.pushNotification)
+            }
+          }
         } else {
           // No broker data found, keep default 'User'
           setUserName('User')
@@ -148,7 +161,7 @@ const SettingsScreen = ({ navigation }) => {
     }
   }
 
-  // Fetch unread notification count and notification preferences
+  // Fetch unread notification count
   const fetchUnreadNotificationCount = async () => {
     try {
       const token = await storage.getToken()
@@ -164,11 +177,6 @@ const SettingsScreen = ({ navigation }) => {
             ).length
             
             setUnreadNotificationCount(unreadCount)
-          }
-          
-          // Set push notifications enabled state from API response
-          if (response.data.pushNotificationsEnabled !== undefined) {
-            setPushEnabled(response.data.pushNotificationsEnabled)
           }
         }
       }
@@ -204,25 +212,101 @@ const SettingsScreen = ({ navigation }) => {
         return
       }
 
-      // Update preference on server using the toggle endpoint
-      const response = await notificationsAPI.togglePushNotifications(token, value)
+      // Update preference on server
+      const response = await notificationsAPI.updatePushNotification(token, value)
       
       if (response && response.success) {
         // Update state from response to ensure sync
-        if (response.data && response.data.pushNotificationsEnabled !== undefined) {
-          setPushEnabled(response.data.pushNotificationsEnabled)
+        if (response.data && response.data.preferences && response.data.preferences.pushNotification !== undefined) {
+          setPushEnabled(response.data.preferences.pushNotification)
         }
-        Snackbar.showSuccess('Success', response.message || 'Notification preference updated successfully')
+        Snackbar.showSuccess('Success', response.message || 'Push notification preference updated successfully')
       } else {
         // Revert on failure
         setPushEnabled(!value)
-        Snackbar.showError('Error', response?.message || 'Failed to update notification preference')
+        Snackbar.showError('Error', response?.message || 'Failed to update push notification preference')
       }
     } catch (error) {
-      console.error('Error updating push notifications preference:', error)
+      console.error('Error updating push notification preference:', error)
       // Revert on error
       setPushEnabled(!value)
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to update notification preference. Please try again.'
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update push notification preference. Please try again.'
+      Snackbar.showError('Error', errorMessage)
+    }
+  }
+
+  // Handle email notifications toggle
+  const handleEmailNotificationsToggle = async (value) => {
+    try {
+      // Optimistically update the UI
+      setEmailEnabled(value)
+      
+      const token = await storage.getToken()
+      
+      if (!token) {
+        // Revert if no token
+        setEmailEnabled(!value)
+        Snackbar.showError('Error', 'No authentication token found. Please login again.')
+        return
+      }
+
+      // Update preference on server
+      const response = await notificationsAPI.updateEmailNotification(token, value)
+      
+      if (response && response.success) {
+        // Update state from response to ensure sync
+        if (response.data && response.data.preferences && response.data.preferences.emailNotification !== undefined) {
+          setEmailEnabled(response.data.preferences.emailNotification)
+        }
+        Snackbar.showSuccess('Success', response.message || 'Email notification preference updated successfully')
+      } else {
+        // Revert on failure
+        setEmailEnabled(!value)
+        Snackbar.showError('Error', response?.message || 'Failed to update email notification preference')
+      }
+    } catch (error) {
+      console.error('Error updating email notification preference:', error)
+      // Revert on error
+      setEmailEnabled(!value)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update email notification preference. Please try again.'
+      Snackbar.showError('Error', errorMessage)
+    }
+  }
+
+  // Handle SMS notifications toggle
+  const handleSmsNotificationsToggle = async (value) => {
+    try {
+      // Optimistically update the UI
+      setSmsEnabled(value)
+      
+      const token = await storage.getToken()
+      
+      if (!token) {
+        // Revert if no token
+        setSmsEnabled(!value)
+        Snackbar.showError('Error', 'No authentication token found. Please login again.')
+        return
+      }
+
+      // Update preference on server
+      const response = await notificationsAPI.updateSmsNotification(token, value)
+      
+      if (response && response.success) {
+        // Update state from response to ensure sync
+        if (response.data && response.data.preferences && response.data.preferences.smsNotification !== undefined) {
+          setSmsEnabled(response.data.preferences.smsNotification)
+        }
+        Snackbar.showSuccess('Success', response.message || 'SMS notification preference updated successfully')
+      } else {
+        // Revert on failure
+        setSmsEnabled(!value)
+        Snackbar.showError('Error', response?.message || 'Failed to update SMS notification preference')
+      }
+    } catch (error) {
+      console.error('Error updating SMS notification preference:', error)
+      // Revert on error
+      setSmsEnabled(!value)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update SMS notification preference. Please try again.'
       Snackbar.showError('Error', errorMessage)
     }
   }
@@ -296,8 +380,8 @@ const SettingsScreen = ({ navigation }) => {
       title: 'Notifications',
       items: [
         { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: handlePushNotificationsToggle, iconColor: '#6B7280', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
-        { icon: 'email', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: setEmailEnabled, iconColor: '#6B7280', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
-        { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: setSmsEnabled, iconColor: '#6B7280', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
+        { icon: 'email', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: handleEmailNotificationsToggle, iconColor: '#6B7280', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
+        { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: handleSmsNotificationsToggle, iconColor: '#6B7280', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
       ]
     },
     {
