@@ -561,7 +561,7 @@ const PropertiesScreen = ({ navigation }) => {
               </View>
               
               {/* Price */}
-              <Text style={styles.propertyPrice}>
+              <Text style={styles.propertyPrice} numberOfLines={1}>
                 {property.price}
               </Text>
               
@@ -583,23 +583,23 @@ const PropertiesScreen = ({ navigation }) => {
           {/* Features Below - Starting from Image Position */}
           <View style={styles.propertyFeatures}>
             <View style={styles.featureItem}>
-              <MaterialIcons name="bed" size={20} color="#6B7280" />
-              <Text style={styles.featureText}>{property.bedrooms} Bed</Text>
+              <MaterialIcons name="bed" size={18} color="#6B7280" />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">{property.bedrooms} Bed</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="bathtub" size={20} color="#6B7280" />
-              <Text style={styles.featureText}>{property.bathrooms} Bath</Text>
+              <MaterialIcons name="bathtub" size={18} color="#6B7280" />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">{property.bathrooms} Bath</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="home" size={20} color="#6B7280" />
-              <Text style={styles.featureText}>{property.furnishing || 'Not Specified'}</Text>
+              <MaterialIcons name="home" size={18} color="#6B7280" />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">{property.furnishing || 'Not Specified'}</Text>
             </View>
             
             <View style={styles.featureItem}>
-              <MaterialIcons name="square-foot" size={20} color="#6B7280" />
-              <Text style={styles.featureText}>{property.sqft || 0} sq.ft</Text>
+              <MaterialIcons name="square-foot" size={18} color="#6B7280" />
+              <Text style={styles.featureText} numberOfLines={1} ellipsizeMode="tail">{property.sqft || 0} sq.ft</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -1230,10 +1230,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   propertyPrice: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#111827',
     marginBottom: 8,
+    flex: 1,
   },
   statusRow: {
     flexDirection: 'row',
@@ -1275,8 +1276,8 @@ const styles = StyleSheet.create({
   },
   propertyFeatures: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
     paddingTop: 4,
     paddingLeft: 0,
     alignItems: 'center',
@@ -1285,11 +1286,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    minWidth: 0,
   },
   featureText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    lineHeight: 16,
+    lineHeight: 14,
+    flexShrink: 1,
+    flex: 1,
   },
   
   // Empty State Styles

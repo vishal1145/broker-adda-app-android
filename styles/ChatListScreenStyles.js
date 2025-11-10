@@ -45,14 +45,14 @@ export const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitials: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#6B7280',
   },
   statusIndicator: {
     position: 'absolute',
@@ -81,8 +81,8 @@ export const styles = StyleSheet.create({
   },
   chatName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     flex: 1,
     marginRight: 8,
   },
@@ -97,14 +97,14 @@ export const styles = StyleSheet.create({
     marginBottom: 4,
   },
   lastMessage: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
     flex: 1,
   },
   lastMessageUnread: {
-    fontSize: 14,
-    color: '#1F2937',
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '500',
   },
   chatRight: {
     alignItems: 'flex-end',

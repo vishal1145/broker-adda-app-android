@@ -1307,8 +1307,9 @@ const LeadsScreen = ({ navigation }) => {
                 <Text style={styles.statTitle}>Share with me</Text>
               </View>
             </View>
-            
-            <View style={[styles.statCard, styles.statCardYellow]}>
+          </View>
+          <View style={styles.shareByMeCardContainer}>
+            <View style={[styles.statCard, styles.statCardYellow, styles.statCardFullWidth]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="send" size={22} color="#FFFFFF" />
@@ -1924,6 +1925,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
+  },
+  statCardFullWidth: {
+    width: width - 40,
+  },
+  shareByMeCardContainer: {
+    marginTop: 12,
   },
   statCardGreen: {
     backgroundColor: '#34D399',

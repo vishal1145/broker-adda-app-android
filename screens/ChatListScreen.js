@@ -45,13 +45,13 @@ const SafeImage = ({ source, style, fallbackText, ...props }) => {
 
     if (imageError) {
         return (
-            <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+            <View style={[style, { backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }]}>
                 {fallbackText ? (
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#6B7280' }}>
                         {fallbackText}
                     </Text>
                 ) : (
-                    <MaterialIcons name="person" size={24} color="#065F46" />
+                    <MaterialIcons name="person" size={24} color="#6B7280" />
                 )}
                 <TouchableOpacity
                     style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#0D542BFF', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}

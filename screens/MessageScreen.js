@@ -43,13 +43,13 @@ const SafeImage = ({ source, style, fallbackText, ...props }) => {
 
   if (imageError) {
     return (
-      <View style={[style, { backgroundColor: '#D1FAE5', alignItems: 'center', justifyContent: 'center' }]}>
+      <View style={[style, { backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }]}>
         {fallbackText ? (
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#065F46' }}>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#6B7280' }}>
             {fallbackText}
           </Text>
         ) : (
-          <MaterialIcons name="person" size={20} color="#065F46" />
+          <MaterialIcons name="person" size={20} color="#6B7280" />
         )}
       </View>
     )
@@ -121,7 +121,7 @@ const LeadCard = ({ lead, navigation }) => (
           activeOpacity={0.7}
         >
           <Text style={styles.leadCardLabel}>View Details</Text>
-          <MaterialIcons name="arrow-forward" size={18} color="#009689" />
+          <MaterialIcons name="arrow-forward" size={18} color="#111827" />
         </TouchableOpacity>
     </View>
   </View>
@@ -446,9 +446,9 @@ const MessageScreen = ({ navigation, route }) => {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <MaterialIcons name="chat-bubble-outline" size={64} color="#D1D5DB" />
-      <Text style={styles.emptyText}>No messages yet</Text>
-      <Text style={styles.emptySubtext}>Start the conversation by sending a message</Text>
+      <MaterialIcons name="chat-bubble-outline" size={48} color="#9CA3AF" />
+      <Text style={styles.emptyTitle}>No messages yet</Text>
+      <Text style={styles.emptyMessage}>Start the conversation by sending a message</Text>
     </View>
   )
 
@@ -465,7 +465,7 @@ const MessageScreen = ({ navigation, route }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <MaterialIcons name="arrow-back" size={24} color="#009689" />
+          <MaterialIcons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
 
         <View style={styles.headerInfo}>

@@ -287,30 +287,30 @@ const SettingsScreen = ({ navigation }) => {
     {
       title: 'Account',
       items: [
-        { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate', route: 'Profile', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
-        { icon: 'logout', title: 'Logout', subtitle: '', action: 'logout', isEmphasis: true, iconColor: '#F59E0B', iconBg: '#FFF7ED', iconBorder: '#FED7AA' },
+        { icon: 'person', title: 'Profile Information', subtitle: 'Manage your personal details', action: 'navigate', route: 'Profile', iconColor: '#6B7280', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' },
+        { icon: 'logout', title: 'Logout', subtitle: '', action: 'logout', isEmphasis: true, iconColor: '#6B7280', iconBg: '#FFF7ED', iconBorder: '#FED7AA' },
         { icon: 'delete', title: 'Delete Account', subtitle: '', action: 'deleteAccount', destructive: true }
       ]
     },
     {
       title: 'Notifications',
       items: [
-        { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: handlePushNotificationsToggle, iconColor: '#2563EB', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
-        { icon: 'mail-outline', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: setEmailEnabled, iconColor: '#EF4444', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
-        { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: setSmsEnabled, iconColor: '#F59E0B', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
+        { icon: 'notifications-none', title: 'Push Notifications', subtitle: '', action: 'toggle', value: pushEnabled, onToggle: handlePushNotificationsToggle, iconColor: '#6B7280', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'email', title: 'Email Notifications', subtitle: '', action: 'toggle', value: emailEnabled, onToggle: setEmailEnabled, iconColor: '#6B7280', iconBg: '#FEF2F2', iconBorder: '#FECACA' },
+        { icon: 'sms', title: 'SMS Alerts', subtitle: '', action: 'toggle', value: smsEnabled, onToggle: setSmsEnabled, iconColor: '#6B7280', iconBg: '#FFFBEB', iconBorder: '#FDE68A' }
       ]
     },
     {
       title: 'Privacy & Security',
       items: [
-        { icon: 'lock-outline', title: 'Privacy Policy', subtitle: '', action: 'navigate', url: 'https://brokergully.com/privacy', iconColor: '#3B82F6', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
-        { icon: 'description', title: 'Terms of Service', subtitle: '', action: 'navigate', url: 'https://brokergully.com/terms', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
+        { icon: 'lock-outline', title: 'Privacy Policy', subtitle: '', action: 'navigate', url: 'https://brokergully.com/privacy', iconColor: '#6B7280', iconBg: '#EFF6FF', iconBorder: '#BFDBFE' },
+        { icon: 'description', title: 'Terms of Service', subtitle: '', action: 'navigate', url: 'https://brokergully.com/terms', iconColor: '#6B7280', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     },
     {
       title: 'Support',
       items: [
-        { icon: 'help-outline', title: 'Help Center', subtitle: 'Get help and find answers to common questions', action: 'navigate', url: 'https://brokergully.com/contact', iconColor: '#0D542BFF', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
+        { icon: 'help-outline', title: 'Help Center', subtitle: 'Get help and find answers to common questions', action: 'navigate', url: 'https://brokergully.com/contact', iconColor: '#6B7280', iconBg: '#ECFDF5', iconBorder: '#A7F3D0' }
       ]
     }
   ]
@@ -326,7 +326,7 @@ const SettingsScreen = ({ navigation }) => {
           <MaterialIcons
             name={item.icon}
             size={22}
-            color={item.destructive ? '#EF4444' : (item.iconColor || '#0D542BFF')}
+            color={item.destructive ? '#EF4444' : (item.iconColor || '#6B7280')}
           />
         </View>
         <View style={styles.settingInfo}>
@@ -707,12 +707,12 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 2,
   },
   settingSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
   },
   settingRight: {
@@ -757,12 +757,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   versionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
   },
   versionSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
     marginTop: 2,
   },

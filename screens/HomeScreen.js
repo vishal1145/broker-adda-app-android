@@ -622,8 +622,8 @@ const HomeScreen = ({ navigation }) => {
   }
 
   // Dashboard Card Component - matching LeadsScreen style exactly
-  const DashboardCard = ({ title, value, icon, colorClass }) => (
-    <View style={[styles.statCard, styles[colorClass]]}>
+  const DashboardCard = ({ title, value, icon, colorClass, fullWidth = false }) => (
+    <View style={[styles.statCard, styles[colorClass], fullWidth && styles.statCardFullWidth]}>
       <View style={styles.statCardContent}>
         <View style={styles.statTopRow}>
           <MaterialIcons name={icon} size={22} color="#FFFFFF" />
@@ -847,19 +847,19 @@ const HomeScreen = ({ navigation }) => {
         {/* Details Section */}
         <View style={styles.recentLeadDetails}>
           <View style={styles.recentLeadDetailItem}>
-            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <MaterialIcons name="location-on" size={14} color="#6B7280" />
             <Text style={styles.recentLeadDetailText}>
               Preferred: {lead.preferredLocation}
             </Text>
           </View>
           <View style={styles.recentLeadDetailItem}>
-            <MaterialIcons name="location-on" size={16} color="#6B7280" />
+            <MaterialIcons name="location-on" size={14} color="#6B7280" />
             <Text style={styles.recentLeadDetailText}>
               Secondary: {lead.secondaryLocation}
             </Text>
           </View>
           <View style={styles.recentLeadDetailItem}>
-            <MaterialIcons name="business" size={16} color="#6B7280" />
+            <MaterialIcons name="business" size={14} color="#6B7280" />
             <Text style={styles.recentLeadDetailText}>
               Budget: {lead.budget}
             </Text>
@@ -985,23 +985,23 @@ const HomeScreen = ({ navigation }) => {
           {/* Features Below - Starting from Image Position */}
           <View style={styles.recentPropertyFeatures}>
             <View style={styles.recentFeatureItem}>
-              <MaterialIcons name="bed" size={20} color="#6B7280" />
-              <Text style={styles.recentFeatureText}>{property.bedrooms} Bed</Text>
+              <MaterialIcons name="bed" size={18} color="#6B7280" />
+              <Text style={styles.recentFeatureText} numberOfLines={1} ellipsizeMode="tail">{property.bedrooms} Bed</Text>
             </View>
             
             <View style={styles.recentFeatureItem}>
-              <MaterialIcons name="bathtub" size={20} color="#6B7280" />
-              <Text style={styles.recentFeatureText}>{property.bathrooms} Bath</Text>
+              <MaterialIcons name="bathtub" size={18} color="#6B7280" />
+              <Text style={styles.recentFeatureText} numberOfLines={1} ellipsizeMode="tail">{property.bathrooms} Bath</Text>
             </View>
             
             <View style={styles.recentFeatureItem}>
-              <MaterialIcons name="home" size={20} color="#6B7280" />
-              <Text style={styles.recentFeatureText}>{property.furnishing || 'Not Specified'}</Text>
+              <MaterialIcons name="home" size={18} color="#6B7280" />
+              <Text style={styles.recentFeatureText} numberOfLines={1} ellipsizeMode="tail">{property.furnishing || 'Not Specified'}</Text>
             </View>
             
             <View style={styles.recentFeatureItem}>
-              <MaterialIcons name="square-foot" size={20} color="#6B7280" />
-              <Text style={styles.recentFeatureText}>{property.sqft || 0} sq.ft</Text>
+              <MaterialIcons name="square-foot" size={18} color="#6B7280" />
+              <Text style={styles.recentFeatureText} numberOfLines={1} ellipsizeMode="tail">{property.sqft || 0} sq.ft</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -1278,14 +1278,17 @@ const HomeScreen = ({ navigation }) => {
               icon="home"
               colorClass="statCardBlue"
             />
+          </View>
+          <View style={styles.connectionsCardContainer}>
             <DashboardCard
               title="Connections"
               value={dashboardCards.connections}
               icon="chat"
               colorClass="statCardPurple"
+              fullWidth={true}
             />
-            </View>
           </View>
+        </View>
 
         {/* Lead Performance Overview */}
         <View style={styles.section}>
@@ -1324,16 +1327,6 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           
-          {/* Add Lead Card */}
-          <TouchableOpacity 
-            style={styles.addLeadCard}
-            onPress={() => navigation.navigate('CreateLead')}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="add" size={32} color="#6B7280" />
-            <Text style={styles.addLeadText}>Add Lead</Text>
-          </TouchableOpacity>
-          
           {recentLeads.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialIcons name="people" size={48} color="#9CA3AF" />
@@ -1342,11 +1335,24 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : (
             <FlatList
-              data={recentLeads}
+              data={[{ id: 'add-lead', isAddCard: true }, ...recentLeads]}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <RecentLeadCard lead={item} />}
+              renderItem={({ item }) => 
+                item.isAddCard ? (
+                  <TouchableOpacity 
+                    style={styles.addLeadCardInline}
+                    onPress={() => navigation.navigate('CreateLead')}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="add" size={32} color="#6B7280" />
+                    <Text style={styles.addLeadText}>Add Lead</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <RecentLeadCard lead={item} />
+                )
+              }
               contentContainerStyle={styles.recentLeadsList}
               ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
               nestedScrollEnabled={true}
@@ -1366,16 +1372,6 @@ const HomeScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           
-          {/* Add Property Card */}
-          <TouchableOpacity 
-            style={styles.addPropertyCard}
-            onPress={() => navigation.navigate('CreateProperty')}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="add" size={32} color="#6B7280" />
-            <Text style={styles.addPropertyText}>Add Property</Text>
-          </TouchableOpacity>
-          
           {recentProperties.length === 0 ? (
             <View style={styles.emptyContainer}>
               <MaterialIcons name="home-work" size={48} color="#9CA3AF" />
@@ -1384,11 +1380,24 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : (
             <FlatList
-              data={recentProperties}
+              data={[{ id: 'add-property', isAddCard: true }, ...recentProperties]}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <RecentPropertyCard property={item} />}
+              renderItem={({ item }) => 
+                item.isAddCard ? (
+                  <TouchableOpacity 
+                    style={styles.addPropertyCardInline}
+                    onPress={() => navigation.navigate('CreateProperty')}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialIcons name="add" size={32} color="#6B7280" />
+                    <Text style={styles.addPropertyText}>Add Property</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <RecentPropertyCard property={item} />
+                )
+              }
               contentContainerStyle={styles.recentPropertiesList}
               ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
               nestedScrollEnabled={true}
@@ -1668,6 +1677,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
+  },
+  statCardFullWidth: {
+    width: width - 40,
+  },
+  connectionsCardContainer: {
+    marginTop: 12,
   },
   statCardGreen: {
     backgroundColor: '#34D399',
@@ -1986,8 +2001,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   sourcesLegendText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
     color: '#6B7280',
   },
 
@@ -2019,8 +2033,8 @@ const styles = StyleSheet.create({
   },
   recentLeadTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 8,
   },
   recentLeadTags: {
@@ -2064,8 +2078,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   recentLeadDetailText: {
-    fontSize: 14,
-    color: '#1F2937',
+    fontSize: 13,
+    color: '#6B7280',
   },
   recentLeadContact: {
     flexDirection: 'row',
@@ -2131,7 +2145,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     marginBottom: 12,
-    width: width - 80,
+    width: width - 40,
+    minHeight: 200,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2218,8 +2233,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recentPropertyPrice: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#111827',
     marginBottom: 8,
   },
@@ -2253,8 +2268,8 @@ const styles = StyleSheet.create({
   },
   recentPropertyFeatures: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
     paddingTop: 4,
     paddingLeft: 0,
     alignItems: 'center',
@@ -2263,11 +2278,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flex: 1,
+    minWidth: 0,
   },
   recentFeatureText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    lineHeight: 16,
+    lineHeight: 14,
+    flexShrink: 1,
+    flex: 1,
   },
 
   // Add Property Card Styles
@@ -2283,7 +2302,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
     minHeight: 100,
-    width: width - 80,
+    width: width - 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  addPropertyCardInline: {
+    backgroundColor: '#FEFCE8',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#EAB308',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: (width - 40) / 2,
+    height: 200,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2311,6 +2348,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 100,
     width: width - 80,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  addLeadCardInline: {
+    backgroundColor: '#FEFCE8',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#EAB308',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: (width - 40) / 2,
+    alignSelf: 'stretch',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2355,15 +2410,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recentActivityDescription: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 4,
     lineHeight: 20,
   },
   recentActivityTimeText: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#6B7280',
   },
   recentActivityDivider: {
     height: 1,
@@ -2404,15 +2459,15 @@ const styles = StyleSheet.create({
     minHeight: 180,
   },
   performanceCardTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 6,
     textAlign: 'center',
   },
   performanceCardTarget: {
-    fontSize: 11,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#6B7280',
     marginBottom: 16,
     textAlign: 'center',
   },

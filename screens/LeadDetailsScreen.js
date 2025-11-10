@@ -906,7 +906,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                         style={styles.shareHistoryDeleteButton}
                         onPress={() => handleDeleteTransfer(transfer)}
                       >
-                        <MaterialIcons name="delete" size={16} color="#EF4444" />
+                        <MaterialIcons name="delete" size={18} color="#EF4444" />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -1460,14 +1460,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   leadInfoAvatarText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#065F46',
+    color: '#6B7280',
   },
   leadInfoContent: {
     flex: 1,
@@ -1759,14 +1759,11 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   shareHistoryDeleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FECACA',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
     marginLeft: 8,
   },
   shareHistoryEmpty: {

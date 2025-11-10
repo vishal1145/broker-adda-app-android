@@ -1042,45 +1042,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
               </>
             )}
           </View>
-
-          {/* Inspection Times */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Inspection Times</Text>
-            <View style={styles.inspectionCard}>
-              {[
-                { day: 'Saturday', time: '10:00 AM to 11:00 AM', status: 'Available' },
-                { day: 'Sunday', time: '02:00 PM to 03:00 PM', status: 'Available' },
-                { day: 'Monday', time: '09:00 AM to 10:00 AM', status: 'Past' },
-              ].map((slot, index, array) => (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.inspectionSlot,
-                    index === array.length - 1 && styles.inspectionSlotLast
-                  ]}
-                >
-                  <View style={styles.inspectionSlotInfo}>
-                    <Text style={styles.inspectionDay}>{slot.day}</Text>
-                    <Text style={styles.inspectionTime}>{slot.time}</Text>
-                  </View>
-                  <View style={[
-                    styles.inspectionStatus,
-                    slot.status === 'Past' && styles.inspectionStatusPast
-                  ]}>
-                    <Text style={[
-                      styles.inspectionStatusText,
-                      slot.status === 'Past' && { color: getStatusColor('sold') }
-                    ]}>
-                      {slot.status}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-              <TouchableOpacity style={styles.bookInspectionButton}>
-                <Text style={styles.bookInspectionButtonText}>Book Inspection</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
       </ScrollView>
 

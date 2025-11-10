@@ -399,8 +399,9 @@ const NotificationsScreen = ({ navigation }) => {
                 <Text style={styles.statTitle}>Property Updates</Text>
               </View>
             </View>
-
-            <View style={[styles.statCard, styles.statCardBlue]}>
+          </View>
+          <View style={styles.transferCardContainer}>
+            <View style={[styles.statCard, styles.statCardBlue, styles.statCardFullWidth]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="swap-horiz" size={22} color="#FFFFFF" />
@@ -572,6 +573,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
+  },
+  statCardFullWidth: {
+    width: width - 40,
+  },
+  transferCardContainer: {
+    marginTop: 12,
   },
   statCardGreen: {
     backgroundColor: '#34D399',
@@ -755,16 +762,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
     marginBottom: 2,
   },
   unreadTitle: {
     fontWeight: '700',
   },
   notificationTime: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
   },
   notificationActions: {

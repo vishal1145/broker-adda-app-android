@@ -352,7 +352,12 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         features: editProperty.features || [],
         locationBenefits: editProperty.locationBenefits || [],
         images: editProperty.images || [],
-        videos: editProperty.videos || [],
+        videos: (editProperty.videos || []).filter(video => 
+          video && typeof video === 'string' && video.trim() !== '' &&
+          (video.trim().startsWith('http://') || 
+           video.trim().startsWith('https://') || 
+           video.trim().startsWith('file://'))
+        ),
         status: normalizeStatus(editProperty.status),
         notes: editProperty.notes || ''
       }))
@@ -1040,9 +1045,20 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         }
       })
       
-      // Videos
+      // Videos - only send valid URIs
       formData.videos.forEach(video => {
-        propertyFormData.append('videos[]', video)
+        // Only append if video is a valid URI (http, https, or file://)
+        if (video && typeof video === 'string' && video.trim() !== '') {
+          const trimmedVideo = video.trim()
+          // Check if it's a valid URI (starts with http://, https://, or file://)
+          if (trimmedVideo.startsWith('http://') || 
+              trimmedVideo.startsWith('https://') || 
+              trimmedVideo.startsWith('file://')) {
+            propertyFormData.append('videos[]', trimmedVideo)
+          } else {
+            console.log('Skipping invalid video URI:', trimmedVideo)
+          }
+        }
       })
       
       // Notes
