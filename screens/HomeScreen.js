@@ -1328,11 +1328,15 @@ const HomeScreen = ({ navigation }) => {
           </View>
           
           {recentLeads.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="people" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyTitle}>No Recent Leads</Text>
-              <Text style={styles.emptyMessage}>No leads available at the moment</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.addLeadCard}
+              onPress={() => navigation.navigate('CreateLead')}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="add" size={32} color="#6B7280" />
+              <Text style={styles.addLeadText}>Add Lead</Text>
+              <Text style={styles.addLeadEmptyMessage}>No recent lead</Text>
+            </TouchableOpacity>
           ) : (
             <FlatList
               data={[{ id: 'add-lead', isAddCard: true }, ...recentLeads]}
@@ -1373,11 +1377,15 @@ const HomeScreen = ({ navigation }) => {
           </View>
           
           {recentProperties.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="home-work" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyTitle}>No Recent Properties</Text>
-              <Text style={styles.emptyMessage}>No properties available at the moment</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.addPropertyCard}
+              onPress={() => navigation.navigate('CreateProperty')}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name="add" size={32} color="#6B7280" />
+              <Text style={styles.addPropertyText}>Add Property</Text>
+              <Text style={styles.addPropertyEmptyMessage}>No recent property</Text>
+            </TouchableOpacity>
           ) : (
             <FlatList
               data={[{ id: 'add-property', isAddCard: true }, ...recentProperties]}
@@ -2333,6 +2341,13 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 8,
   },
+  addPropertyEmptyMessage: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#9CA3AF',
+    marginTop: 8,
+    marginBottom: 4,
+  },
 
   // Add Lead Card Styles
   addLeadCard: {
@@ -2347,7 +2362,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
     minHeight: 100,
-    width: width - 80,
+    width: width - 40,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -2377,6 +2392,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#6B7280',
     marginTop: 8,
+  },
+  addLeadEmptyMessage: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#9CA3AF',
+    marginTop: 8,
+    marginBottom: 4,
   },
 
   // Recent Activity Styles

@@ -684,6 +684,7 @@ const CreatePropertyScreen = ({ navigation, route }) => {
           PermissionsAndroid.PERMISSIONS.CAMERA
         )
         if (checkResult) {
+          console.log('Camera permission already granted')
           return true
         }
         
@@ -698,10 +699,24 @@ const CreatePropertyScreen = ({ navigation, route }) => {
             buttonPositive: 'OK',
           }
         )
-        return granted === PermissionsAndroid.RESULTS.GRANTED
+        
+        console.log('Camera permission result:', granted)
+        
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          return true
+        } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+          Snackbar.showError(
+            'Permission Denied', 
+            'Camera permission was denied. Please enable it in app settings to take photos.'
+          )
+          return false
+        } else {
+          Snackbar.showError('Permission Denied', 'Camera permission is required to take photos')
+          return false
+        }
       } catch (err) {
-        console.warn('Camera permission error:', err)
-        Snackbar.showError('Error', 'Failed to request camera permission')
+        console.error('Camera permission error:', err)
+        Snackbar.showError('Error', 'Failed to request camera permission. Please try again.')
         return false
       }
     }

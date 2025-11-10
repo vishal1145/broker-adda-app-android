@@ -2512,14 +2512,14 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   statusModalBody: {
-    paddingVertical: 20,
-    paddingTop: 20,
+    paddingVertical: 0,
+    paddingTop: 16,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 0,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
@@ -2534,8 +2534,8 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     flex: 1,
-    paddingVertical: 20,
-    paddingTop: 20, // Add extra padding at top for upward dropdowns
+    paddingVertical: 0,
+    paddingTop: 16, // Add extra padding at top for upward dropdowns
     paddingBottom: 40, // Add extra padding at bottom
     backgroundColor: 'transparent', // Ensure no background color
   },

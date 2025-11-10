@@ -825,7 +825,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </View>
                 ))
               ) : (
-                <Text style={styles.emptyText}>No property amenities listed</Text>
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyText}>No property amenities listed</Text>
+                </View>
               )}
             </View>
           </View>
@@ -841,7 +843,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </View>
                 ))
               ) : (
-                <Text style={styles.emptyText}>No nearby amenities listed</Text>
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyText}>No nearby amenities listed</Text>
+                </View>
               )}
             </View>
           </View>
@@ -857,7 +861,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </View>
                 ))
               ) : (
-                <Text style={styles.emptyText}>No key features listed</Text>
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyText}>No key features listed</Text>
+                </View>
               )}
             </View>
           </View>
@@ -873,7 +879,9 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   </View>
                 ))
               ) : (
-                <Text style={styles.emptyText}>No location benefits listed</Text>
+                <View style={styles.emptyStateContainer}>
+                  <Text style={styles.emptyText}>No location benefits listed</Text>
+                </View>
               )}
             </View>
           </View>
@@ -901,9 +909,15 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
 
             {activeTab === 'description' ? (
               <View style={styles.tabContentCard}>
-                <Text style={styles.tabContentText}>
-                  {property.description || 'No description available'}
-                </Text>
+                {property.description ? (
+                  <Text style={styles.tabContentText}>
+                    {property.description}
+                  </Text>
+                ) : (
+                  <View style={styles.emptyStateContainer}>
+                    <Text style={styles.emptyText}>No description available</Text>
+                  </View>
+                )}
               </View>
             ) : (
               <>
@@ -1938,10 +1952,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
   },
+  emptyStateContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
   emptyText: {
     fontSize: 14,
     color: '#9CA3AF',
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   
   // Stats

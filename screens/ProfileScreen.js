@@ -536,7 +536,9 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyStateText}>No specializations added yet</Text>
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateText}>No specializations added yet</Text>
+              </View>
             )}
           </View>
         </View>
@@ -552,7 +554,9 @@ const ProfileScreen = ({ navigation }) => {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyStateText}>No regions added yet</Text>
+              <View style={styles.emptyStateContainer}>
+                <Text style={styles.emptyStateText}>No regions added yet</Text>
+              </View>
             )}
           </View>
         </View>
@@ -1454,13 +1458,18 @@ const styles = StyleSheet.create({
   regionTagText: {
     color: '#374151',
   },
+  emptyStateContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
   emptyStateText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#9CA3AF',
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 20,
   },
   emptyDocumentsContainer: {
     alignItems: 'center',

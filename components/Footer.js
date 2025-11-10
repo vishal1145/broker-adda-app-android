@@ -29,7 +29,7 @@ const Footer = ({ state, descriptors, navigation }) => {
   };
 
   const renderIcon = (iconName, isActive) => {
-    const iconColor = isActive ? '#0D542BFF' : '#9E9E9E'
+    const iconColor = isActive ? '#0D542BFF' : '#6B7280'
     return (
       <MaterialIcons name={iconName} size={24} color={iconColor} />
     )
@@ -54,7 +54,7 @@ const Footer = ({ state, descriptors, navigation }) => {
               </View>
               <Text style={[
                 styles.label,
-                { color: isFocused ? '#0D542BFF' : '#9E9E9E' }
+                { color: isFocused ? '#0D542BFF' : '#6B7280' }
               ]}>
                 {tab.label}
               </Text>

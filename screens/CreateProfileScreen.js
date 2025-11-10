@@ -120,6 +120,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
   const [showManualRegionSelection, setShowManualRegionSelection] = useState(false)
   const [selectedRegionId, setSelectedRegionId] = useState('')
   const [locationLoading, setLocationLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState({})
 
   const genderOptions = ['Male', 'Female', 'Other']
   const specializations = ['Residential', 'Commercial', 'Industrial', 'Land', 'Rental', 'Investment']
@@ -128,6 +129,14 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+    
+    // Real-time validation
+    const error = validateField(field, value)
+    if (error) {
+      updateFieldError(field, error)
+    } else {
+      clearFieldError(field)
+    }
   }
 
   const toggleSpecialization = (option) => {
@@ -187,9 +196,108 @@ const CreateProfileScreen = ({ navigation, route }) => {
     }
   }
 
+  // Validation helper functions
+  const validateField = (fieldName, value) => {
+    let error = ''
+    
+    switch (fieldName) {
+      case 'fullName':
+        if (!value || !value.trim()) {
+          error = 'Full name is required.'
+        } else if (value.trim().length < 2) {
+          error = 'Full name must be at least 2 characters.'
+        }
+        break
+      case 'gender':
+        if (!value) {
+          error = 'Gender is required.'
+        }
+        break
+      case 'email':
+        if (!value || !value.trim()) {
+          error = 'Email address is required.'
+        } else {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (!emailRegex.test(value.trim())) {
+            error = 'Please enter a valid email address.'
+          }
+        }
+        break
+      case 'phone':
+        if (!value || !value.trim()) {
+          error = 'Phone number is required.'
+        }
+        break
+      case 'firmName':
+        if (!value || !value.trim()) {
+          error = 'Firm name is required.'
+        } else if (value.trim().length < 2) {
+          error = 'Firm name must be at least 2 characters.'
+        }
+        break
+      case 'whatsappNumber':
+        if (value && value.trim()) {
+          const whatsappValidation = validateWhatsAppNumber(value)
+          if (!whatsappValidation.isValid) {
+            error = whatsappValidation.error
+          }
+        }
+        break
+      case 'licenseNumber':
+        if (!value || !value.trim()) {
+          error = 'License number is required.'
+        }
+        break
+      case 'address':
+        if (!value || !value.trim()) {
+          error = 'Address is required.'
+        } else if (value.trim().length < 5) {
+          error = 'Address must be at least 5 characters.'
+        }
+        break
+      case 'state':
+        if (!value) {
+          error = 'State is required.'
+        }
+        break
+      case 'city':
+        if (!value) {
+          error = 'City is required.'
+        }
+        break
+      case 'selectedRegionId':
+        if (!value) {
+          error = 'Region is required.'
+        }
+        break
+      default:
+        break
+    }
+    
+    return error
+  }
+
+  // Update field error
+  const updateFieldError = (fieldName, error) => {
+    setFieldErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }))
+  }
+
+  // Clear field error
+  const clearFieldError = (fieldName) => {
+    setFieldErrors(prev => {
+      const newErrors = { ...prev }
+      delete newErrors[fieldName]
+      return newErrors
+    })
+  }
+
   // Handle WhatsApp number change with validation
   const handleWhatsAppNumberChange = (text) => {
     updateFormData('whatsappNumber', text)
+    // Validation is already handled in updateFormData
   }
 
   // Use current phone number for WhatsApp
@@ -205,25 +313,28 @@ const CreateProfileScreen = ({ navigation, route }) => {
   // Step validation functions
   const isStep1Valid = () => {
     // Step 1: Personal Information - validate required fields
-    const basicValidation = formData.fullName.trim() && 
-           formData.gender && 
-           formData.email.trim() && 
-           formData.phone.trim() && 
-           formData.firmName.trim()
+    const fullNameValid = formData.fullName.trim() && formData.fullName.trim().length >= 2
+    const genderValid = formData.gender
+    const emailValid = formData.email.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+    const phoneValid = formData.phone.trim()
+    const firmNameValid = formData.firmName.trim() && formData.firmName.trim().length >= 2
     
     // If WhatsApp number is provided, it must be valid
+    let whatsappValid = true
     if (formData.whatsappNumber && formData.whatsappNumber.trim()) {
       const whatsappValidation = validateWhatsAppNumber(formData.whatsappNumber)
-      return basicValidation && whatsappValidation.isValid
+      whatsappValid = whatsappValidation.isValid
     }
     
-    return basicValidation
+    return fullNameValid && genderValid && emailValid && phoneValid && firmNameValid && whatsappValid
   }
 
   const isStep2Valid = () => {
     // Step 2: Professional Information - validate required fields
-    return formData.licenseNumber.trim() && 
-           formData.address.trim()
+    const licenseValid = formData.licenseNumber.trim()
+    const addressValid = formData.address.trim() && formData.address.trim().length >= 5
+    
+    return licenseValid && addressValid
   }
 
   const isStep3Valid = () => {
@@ -348,6 +459,14 @@ const CreateProfileScreen = ({ navigation, route }) => {
     setSelectedRegionId(region._id)
     updateFormData('regions', region.name)
     updateFormData('selectedRegionId', region._id)
+    
+    // Validate region selection
+    const error = validateField('selectedRegionId', region._id)
+    if (error) {
+      updateFieldError('selectedRegionId', error)
+    } else {
+      clearFieldError('selectedRegionId')
+    }
     
     // For nearby regions, extract state and city from the region data
     if (!showManualRegionSelection) {
@@ -566,6 +685,14 @@ const CreateProfileScreen = ({ navigation, route }) => {
       setAddressSuggestions([])
       setShowAddressSuggestions(false)
       setShowAllSuggestions(false)
+    }
+    
+    // Validate address field
+    const error = validateField('address', text)
+    if (error) {
+      updateFieldError('address', error)
+    } else {
+      clearFieldError('address')
     }
   }
 
@@ -1398,62 +1525,92 @@ const CreateProfileScreen = ({ navigation, route }) => {
   }
 
   const validateForm = () => {
+    let isValid = true
+    const errors = {}
+    
     // Personal Info validation
-        if (!formData.fullName.trim()) {
-          Snackbar.showValidationError('Please enter your full name')
-          return false
-        }
-        if (!formData.gender) {
-          Snackbar.showValidationError('Please select your gender')
-          return false
-        }
-        if (!formData.email.trim()) {
-          Snackbar.showValidationError('Please enter your email address')
-          return false
-        }
-        if (!formData.phone.trim()) {
-          Snackbar.showValidationError('Please enter your phone number')
-          return false
-        }
-        if (!formData.firmName.trim()) {
-          Snackbar.showValidationError('Please enter your firm name')
-          return false
-        }
-        
-        // WhatsApp number validation (optional but must be valid if provided)
-        if (formData.whatsappNumber && formData.whatsappNumber.trim()) {
-          const whatsappValidation = validateWhatsAppNumber(formData.whatsappNumber)
-          if (!whatsappValidation.isValid) {
-            Snackbar.showValidationError(whatsappValidation.error)
-            return false
-          }
-        }
+    const fullNameError = validateField('fullName', formData.fullName)
+    if (fullNameError) {
+      errors.fullName = fullNameError
+      isValid = false
+    }
+    
+    const genderError = validateField('gender', formData.gender)
+    if (genderError) {
+      errors.gender = genderError
+      isValid = false
+    }
+    
+    const emailError = validateField('email', formData.email)
+    if (emailError) {
+      errors.email = emailError
+      isValid = false
+    }
+    
+    const phoneError = validateField('phone', formData.phone)
+    if (phoneError) {
+      errors.phone = phoneError
+      isValid = false
+    }
+    
+    const firmNameError = validateField('firmName', formData.firmName)
+    if (firmNameError) {
+      errors.firmName = firmNameError
+      isValid = false
+    }
+    
+    // WhatsApp number validation (optional but must be valid if provided)
+    if (formData.whatsappNumber && formData.whatsappNumber.trim()) {
+      const whatsappError = validateField('whatsappNumber', formData.whatsappNumber)
+      if (whatsappError) {
+        errors.whatsappNumber = whatsappError
+        isValid = false
+      }
+    }
 
     // Professional validation
-        if (!formData.licenseNumber.trim()) {
-          Snackbar.showValidationError('Please enter your license number')
-          return false
-        }
-        if (!formData.address.trim()) {
-          Snackbar.showValidationError('Please enter your address')
-          return false
-        }
+    const licenseError = validateField('licenseNumber', formData.licenseNumber)
+    if (licenseError) {
+      errors.licenseNumber = licenseError
+      isValid = false
+    }
+    
+    const addressError = validateField('address', formData.address)
+    if (addressError) {
+      errors.address = addressError
+      isValid = false
+    }
 
     // Regions validation - always require state, city, and region selection
-        if (!formData.state) {
-          Snackbar.showValidationError('Please select your state')
-          return false
-        }
-        if (!formData.city) {
-          Snackbar.showValidationError('Please select your city')
-          return false
-        }
-        if (!formData.selectedRegionId) {
-          Snackbar.showValidationError('Please select your regions')
-          return false
-        }
-
-        return true
+    const stateError = validateField('state', formData.state)
+    if (stateError) {
+      errors.state = stateError
+      isValid = false
+    }
+    
+    const cityError = validateField('city', formData.city)
+    if (cityError) {
+      errors.city = cityError
+      isValid = false
+    }
+    
+    const regionError = validateField('selectedRegionId', formData.selectedRegionId)
+    if (regionError) {
+      errors.selectedRegionId = regionError
+      isValid = false
+    }
+    
+    // Update all field errors at once
+    setFieldErrors(errors)
+    
+    if (!isValid) {
+      // Scroll to first error field
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+      }, 100)
+    }
+    
+    return isValid
   }
 
   // Check if all mandatory fields are filled
@@ -1696,104 +1853,148 @@ const CreateProfileScreen = ({ navigation, route }) => {
     </View>
   )
 
-  const renderPersonalInfo = () => (
-    <View style={styles.sectionContainer}>
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Full Name *</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.fullName}
-          onChangeText={(text) => updateFormData('fullName', text)}
-          onFocus={handleInputFocus}
-          placeholder="Enter your full name"
-          placeholderTextColor="#8E8E93"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Gender *</Text>
-        <TouchableOpacity 
-          style={styles.input}
-          onPress={() => setShowGenderModal(true)}
-        >
-          <Text style={[styles.inputText, !formData.gender && styles.placeholderText]}>
-            {formData.gender || 'Select gender'}
-          </Text>
-          <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Email Address *</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.email}
-          onChangeText={(text) => updateFormData('email', text)}
-          onFocus={handleInputFocus}
-          placeholder="Enter your email"
-          placeholderTextColor="#8E8E93"
-          keyboardType="email-address"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Phone Number *</Text>
-        <TextInput
-          style={[styles.input, styles.disabledInput]}
-          value={formData.phone}
-          placeholder="Enter your phone"
-          placeholderTextColor="#8E8E93"
-          keyboardType="numeric"
-          editable={false}
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Firm Name *</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.firmName}
-          onChangeText={(text) => updateFormData('firmName', text)}
-          onFocus={handleInputFocus}
-          placeholder="Enter firm name"
-          placeholderTextColor="#8E8E93"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <View style={styles.whatsappHeader}>
-          <Text style={styles.inputLabel}>WhatsApp Number</Text>
-          <TouchableOpacity 
-            style={[styles.phoneButton, !formData.phone && styles.phoneButtonDisabled]}
-            onPress={handleUseCurrentPhoneNumber}
-            disabled={!formData.phone}
-          >
-            <MaterialIcons name="phone" size={16} color={formData.phone ? "#0D542BFF" : "#8E8E93"} />
-            <Text style={[styles.phoneButtonText, !formData.phone && styles.phoneButtonTextDisabled]}>
-              Use Current Phone
-            </Text>
-          </TouchableOpacity>
+  const renderPersonalInfo = () => {
+    const trimmedFullName = formData.fullName.trim()
+    const fullNameError = !trimmedFullName || trimmedFullName.length < 2
+    
+    const trimmedEmail = formData.email.trim()
+    const emailError = !trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+    
+    const trimmedFirmName = formData.firmName.trim()
+    const firmNameError = !trimmedFirmName || trimmedFirmName.length < 2
+    
+    const whatsappError = formData.whatsappNumber && formData.whatsappNumber.trim() && !validateWhatsAppNumber(formData.whatsappNumber).isValid
+    
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Full Name *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              fullNameError && styles.inputError
+            ]}
+            value={formData.fullName}
+            onChangeText={(text) => updateFormData('fullName', text)}
+            onFocus={handleInputFocus}
+            placeholder="Enter your full name"
+            placeholderTextColor="#8E8E93"
+          />
+          {!trimmedFullName && (
+            <Text style={styles.errorText}>Full name is required.</Text>
+          )}
+          {trimmedFullName && trimmedFullName.length < 2 && (
+            <Text style={styles.errorText}>Full name must be at least 2 characters.</Text>
+          )}
         </View>
-        <TextInput
-          style={[
-            styles.input,
-            formData.whatsappNumber && !validateWhatsAppNumber(formData.whatsappNumber).isValid && styles.inputError
-          ]}
-          value={formData.whatsappNumber}
-          onChangeText={handleWhatsAppNumberChange}
-          onFocus={handleInputFocus}
-          placeholder="Enter WhatsApp number"
-          placeholderTextColor="#8E8E93"
-          keyboardType="numeric"
-        />
-        {formData.whatsappNumber && !validateWhatsAppNumber(formData.whatsappNumber).isValid && (
-          <Text style={styles.errorText}>
-            {validateWhatsAppNumber(formData.whatsappNumber).error}
-          </Text>
-        )}
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Gender *</Text>
+          <TouchableOpacity 
+            style={[
+              styles.input,
+              !formData.gender && styles.inputError
+            ]}
+            onPress={() => setShowGenderModal(true)}
+          >
+            <Text style={[styles.inputText, !formData.gender && styles.placeholderText]}>
+              {formData.gender || 'Select gender'}
+            </Text>
+            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+          </TouchableOpacity>
+          {!formData.gender && (
+            <Text style={styles.errorText}>Gender is required.</Text>
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Email Address *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              emailError && styles.inputError
+            ]}
+            value={formData.email}
+            onChangeText={(text) => updateFormData('email', text)}
+            onFocus={handleInputFocus}
+            placeholder="Enter your email"
+            placeholderTextColor="#8E8E93"
+            keyboardType="email-address"
+          />
+          {!trimmedEmail && (
+            <Text style={styles.errorText}>Email address is required.</Text>
+          )}
+          {trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail) && (
+            <Text style={styles.errorText}>Please enter a valid email address.</Text>
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Phone Number *</Text>
+          <TextInput
+            style={[styles.input, styles.disabledInput]}
+            value={formData.phone}
+            placeholder="Enter your phone"
+            placeholderTextColor="#8E8E93"
+            keyboardType="numeric"
+            editable={false}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Firm Name *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              firmNameError && styles.inputError
+            ]}
+            value={formData.firmName}
+            onChangeText={(text) => updateFormData('firmName', text)}
+            onFocus={handleInputFocus}
+            placeholder="Enter firm name"
+            placeholderTextColor="#8E8E93"
+          />
+          {!trimmedFirmName && (
+            <Text style={styles.errorText}>Firm name is required.</Text>
+          )}
+          {trimmedFirmName && trimmedFirmName.length < 2 && (
+            <Text style={styles.errorText}>Firm name must be at least 2 characters.</Text>
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <View style={styles.whatsappHeader}>
+            <Text style={styles.inputLabel}>WhatsApp Number</Text>
+            <TouchableOpacity 
+              style={[styles.phoneButton, !formData.phone && styles.phoneButtonDisabled]}
+              onPress={handleUseCurrentPhoneNumber}
+              disabled={!formData.phone}
+            >
+              <MaterialIcons name="phone" size={16} color={formData.phone ? "#0D542BFF" : "#8E8E93"} />
+              <Text style={[styles.phoneButtonText, !formData.phone && styles.phoneButtonTextDisabled]}>
+                Use Current Phone
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={[
+              styles.input,
+              whatsappError && styles.inputError
+            ]}
+            value={formData.whatsappNumber}
+            onChangeText={handleWhatsAppNumberChange}
+            onFocus={handleInputFocus}
+            placeholder="Enter WhatsApp number"
+            placeholderTextColor="#8E8E93"
+            keyboardType="numeric"
+          />
+          {whatsappError && (
+            <Text style={styles.errorText}>{validateWhatsAppNumber(formData.whatsappNumber).error}</Text>
+          )}
+        </View>
       </View>
-    </View>
-  )
+    )
+  }
 
   // Step 2: Professional Information
   const renderStep2 = () => (
@@ -1802,19 +2003,32 @@ const CreateProfileScreen = ({ navigation, route }) => {
     </View>
   )
 
-  const renderProfessional = () => (
-    <View style={styles.sectionContainer}>
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>License Number *</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.licenseNumber}
-          onChangeText={(text) => updateFormData('licenseNumber', text)}
-          onFocus={handleInputFocus}
-          placeholder="BRE #01234567"
-          placeholderTextColor="#8E8E93"
-        />
-      </View>
+  const renderProfessional = () => {
+    const trimmedLicenseNumber = formData.licenseNumber.trim()
+    const licenseError = !trimmedLicenseNumber
+    
+    const trimmedAddress = formData.address.trim()
+    const addressError = !trimmedAddress || trimmedAddress.length < 5
+    
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>License Number *</Text>
+          <TextInput
+            style={[
+              styles.input,
+              licenseError && styles.inputError
+            ]}
+            value={formData.licenseNumber}
+            onChangeText={(text) => updateFormData('licenseNumber', text)}
+            onFocus={handleInputFocus}
+            placeholder="BRE #01234567"
+            placeholderTextColor="#8E8E93"
+          />
+          {!trimmedLicenseNumber && (
+            <Text style={styles.errorText}>License number is required.</Text>
+          )}
+        </View>
 
       <View style={styles.inputGroup}>
         <Text style={styles.inputLabel}>Experience (Years)</Text>
@@ -1848,7 +2062,10 @@ const CreateProfileScreen = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
         <View style={styles.addressInputContainer}>
-          <View style={styles.addressInputWrapper}>
+          <View style={[
+            styles.addressInputWrapper,
+            addressError && styles.inputError
+          ]}>
             <TextInput
               style={styles.addressInput}
               value={formData.address}
@@ -1913,6 +2130,12 @@ const CreateProfileScreen = ({ navigation, route }) => {
             </View>
           )}
         </View>
+        {!trimmedAddress && (
+          <Text style={styles.errorText}>Address is required.</Text>
+        )}
+        {trimmedAddress && trimmedAddress.length < 5 && (
+          <Text style={styles.errorText}>Address must be at least 5 characters.</Text>
+        )}
       </View>
 
       <View style={styles.inputGroup}>
@@ -2011,7 +2234,8 @@ const CreateProfileScreen = ({ navigation, route }) => {
         />
       </View>
     </View>
-  )
+    )
+  }
 
   // Step 3: Preferred Regions
   const renderStep3 = () => (
@@ -2020,83 +2244,115 @@ const CreateProfileScreen = ({ navigation, route }) => {
     </View>
   )
 
-  const renderRegions = () => (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionDescription}>
-        Select the regions where you provide real estate services
-      </Text>
-      <View style={styles.locationButtonContainer}>
-        <TouchableOpacity 
-          style={styles.locationButton}
-          onPress={async () => {
-            const newMode = !showManualRegionSelection
-            setShowManualRegionSelection(newMode)
-            
-            // When switching to nearby mode, nearby regions are already loaded
-            // When switching to manual mode, manual regions are already loaded
-            console.log('Switched to mode:', newMode ? 'Manual' : 'Nearby')
-          }}
-        >
-          <MaterialIcons name={showManualRegionSelection ? "location-on" : "search"} size={16} color="#0D542BFF" />
-          <Text style={styles.locationButtonText}>
-            {showManualRegionSelection ? "Use Nearby" : "Choose Manually"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-      
-      {showManualRegionSelection ? (
-        <>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>State *</Text>
-            <TouchableOpacity 
-              style={styles.input}
-              onPress={() => setShowStateModal(true)}
-            >
-              <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
-                {formData.state || 'Select state'}
-              </Text>
-              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>City *</Text>
-            <TouchableOpacity 
-              style={styles.input}
-              onPress={() => setShowCityModal(true)}
-            >
-              <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
-                {formData.city || 'Select city'}
-              </Text>
-              <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Regions *</Text>
-            <TouchableOpacity 
-              style={[styles.input, (regionsLoading || manualRegionsList.length === 0) && styles.disabledInput]}
-              onPress={() => !regionsLoading && manualRegionsList.length > 0 && setShowRegionModal(true)}
-              disabled={regionsLoading || manualRegionsList.length === 0}
-            >
-              <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
-                {regionsLoading ? 'Loading regions...' : 
-                 manualRegionsList.length === 0 && formData.city ? 'No regions available' :
-                 formData.regions || 'Select regions'}
-              </Text>
-              {regionsLoading ? (
-                <ActivityIndicator size="small" color="#0D542BFF" />
-              ) : (
+  const renderRegions = () => {
+    const stateError = !formData.state
+    const cityError = !formData.city
+    const regionError = !formData.selectedRegionId
+    
+    return (
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionDescription}>
+          Select the regions where you provide real estate services
+        </Text>
+        <View style={styles.locationButtonContainer}>
+          <TouchableOpacity 
+            style={styles.locationButton}
+            onPress={async () => {
+              const newMode = !showManualRegionSelection
+              setShowManualRegionSelection(newMode)
+              
+              // When switching to nearby mode, nearby regions are already loaded
+              // When switching to manual mode, manual regions are already loaded
+              console.log('Switched to mode:', newMode ? 'Manual' : 'Nearby')
+            }}
+          >
+            <MaterialIcons name={showManualRegionSelection ? "location-on" : "search"} size={16} color="#0D542BFF" />
+            <Text style={styles.locationButtonText}>
+              {showManualRegionSelection ? "Use Nearby" : "Choose Manually"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
+        {showManualRegionSelection ? (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>State *</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.input,
+                  stateError && styles.inputError
+                ]}
+                onPress={() => setShowStateModal(true)}
+              >
+                <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
+                  {formData.state || 'Select state'}
+                </Text>
                 <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+              </TouchableOpacity>
+              {!formData.state && (
+                <Text style={styles.errorText}>State is required.</Text>
               )}
-            </TouchableOpacity>
-          </View>
-        </>
-      ) : (
-        renderRegionCards()
-      )}
-    </View>
-  )
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>City *</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.input,
+                  cityError && styles.inputError
+                ]}
+                onPress={() => setShowCityModal(true)}
+              >
+                <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
+                  {formData.city || 'Select city'}
+                </Text>
+                <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+              </TouchableOpacity>
+              {!formData.city && (
+                <Text style={styles.errorText}>City is required.</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Regions *</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.input, 
+                  (regionsLoading || manualRegionsList.length === 0) && styles.disabledInput,
+                  regionError && styles.inputError
+                ]}
+                onPress={() => !regionsLoading && manualRegionsList.length > 0 && setShowRegionModal(true)}
+                disabled={regionsLoading || manualRegionsList.length === 0}
+              >
+                <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
+                  {regionsLoading ? 'Loading regions...' : 
+                   manualRegionsList.length === 0 && formData.city ? 'No regions available' :
+                   formData.regions || 'Select regions'}
+                </Text>
+                {regionsLoading ? (
+                  <ActivityIndicator size="small" color="#0D542BFF" />
+                ) : (
+                  <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
+                )}
+              </TouchableOpacity>
+              {!formData.selectedRegionId && (
+                <Text style={styles.errorText}>Region is required.</Text>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {renderRegionCards()}
+            {!formData.selectedRegionId && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.errorText}>Region is required.</Text>
+              </View>
+            )}
+          </>
+        )}
+      </View>
+    )
+  }
 
   // Step 4: Documents
   const renderStep4 = () => (
@@ -2317,6 +2573,13 @@ const CreateProfileScreen = ({ navigation, route }) => {
                       updateFormData('regions', option)
                       updateFormData('selectedRegionId', selectedRegion ? selectedRegion._id : '')
                       setSelectedRegionId(selectedRegion ? selectedRegion._id : '')
+                      // Validate region selection
+                      const error = validateField('selectedRegionId', selectedRegion ? selectedRegion._id : '')
+                      if (error) {
+                        updateFieldError('selectedRegionId', error)
+                      } else {
+                        clearFieldError('selectedRegionId')
+                      }
                     } else if (field === 'city') {
                       // Handle city selection - fetch regions and clear selected region
                       updateFormData(field, option)
@@ -2324,8 +2587,22 @@ const CreateProfileScreen = ({ navigation, route }) => {
                       updateFormData('selectedRegionId', '') // Clear selected region ID
                       setSelectedRegionId('') // Clear selected region state
                       fetchRegions(option) // Fetch regions for the selected city
+                      // Validate city selection
+                      const error = validateField('city', option)
+                      if (error) {
+                        updateFieldError('city', error)
+                      } else {
+                        clearFieldError('city')
+                      }
                     } else {
                       updateFormData(field, option)
+                      // Validate other fields
+                      const error = validateField(field, option)
+                      if (error) {
+                        updateFieldError(field, error)
+                      } else {
+                        clearFieldError(field)
+                      }
                     }
                     onClose()
                   }}
