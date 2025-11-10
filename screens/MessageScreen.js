@@ -18,6 +18,7 @@ import { io } from 'socket.io-client'
 import { styles } from '../styles/MessageScreenStyles'
 import { chatAPI, leadsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { MessageScreenLoader } from '../components/ContentLoader'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const getSecureImageUrl = (url) => {
@@ -494,10 +495,7 @@ const MessageScreen = ({ navigation, route }) => {
       <KeyboardAvoidingView style={styles.content} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.messagesContainer}>
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#0D542BFF" />
-              <Text style={styles.loadingText}>Loading messages...</Text>
-            </View>
+            <MessageScreenLoader />
           ) : (
             <FlatList
               ref={flatListRef}

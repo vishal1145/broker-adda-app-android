@@ -23,6 +23,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { leadsAPI, authAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
+import { CardLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -273,6 +274,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchLeadDetails()
+    fetchRegions() // Fetch regions on mount for share history
   }, [leadId])
 
   const getStatusColor = (status) => {
@@ -308,6 +310,13 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       return `$${(budget / 1000).toFixed(0)}K`
     }
     return `$${budget.toLocaleString()}`
+  }
+
+  // Helper function to get region name by ID
+  const getRegionNameById = (regionId) => {
+    if (!regionId) return 'Unknown'
+    const region = regions.find(r => r._id === regionId)
+    return region?.name || 'Unknown'
   }
 
   // Fetch regions for edit modal dropdown
@@ -657,10 +666,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
         <View style={styles.container}>
-          <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0D542BFF" />
-          <Text style={styles.loadingText}>Loading lead details...</Text>
-          </View>
+          <CardLoader count={3} />
         </View>
       </SafeAreaView>
     )
@@ -877,40 +883,62 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           <View style={styles.shareHistoryCard}>
             {leadData.transfers && leadData.transfers.length > 0 ? (
               <View style={styles.shareHistoryContent}>
-                {leadData.transfers.map((transfer, index) => (
-                  <View key={index} style={styles.shareHistoryItem}>
-                    <View style={styles.shareHistoryAvatar}>
-                      {transfer.toBroker?.brokerImage ? (
-                        <SafeImage
-                          source={{ uri: getSecureImageUrl(transfer.toBroker.brokerImage) }}
-                          style={styles.shareHistoryAvatarImage}
-                          imageType="share-avatar"
-                          fallbackText={transfer.toBroker?.name ? transfer.toBroker.name.split(' ').map(n => n[0]).join('') : 'N/A'}
-                        />
-                      ) : (
-                        <Text style={styles.shareHistoryAvatarText}>
-                          {transfer.toBroker?.name ? transfer.toBroker.name.split(' ').map(n => n[0]).join('') : 'N/A'}
+                {leadData.transfers.map((transfer, index) => {
+                  const shareType = transfer.shareType || 'individual'
+                  let displayName = ''
+                  let displayIcon = null
+                  
+                  // Determine display based on shareType
+                  if (shareType === 'all') {
+                    displayName = 'All Brokers'
+                    displayIcon = <MaterialIcons name="people" size={20} color="#6B7280" />
+                  } else if (shareType === 'region') {
+                    const regionName = getRegionNameById(transfer.region)
+                    displayName = regionName
+                    displayIcon = <MaterialIcons name="location-on" size={20} color="#6B7280" />
+                  } else {
+                    // individual
+                    displayName = transfer.toBroker?.name || 'Unknown Broker'
+                    displayIcon = transfer.toBroker?.brokerImage ? (
+                      <SafeImage
+                        source={{ uri: getSecureImageUrl(transfer.toBroker.brokerImage) }}
+                        style={styles.shareHistoryAvatarImage}
+                        imageType="share-avatar"
+                        fallbackText={transfer.toBroker?.name ? transfer.toBroker.name.split(' ').map(n => n[0]).join('') : 'N/A'}
+                      />
+                    ) : (
+                      <Text style={styles.shareHistoryAvatarText}>
+                        {transfer.toBroker?.name ? transfer.toBroker.name.split(' ').map(n => n[0]).join('') : 'N/A'}
+                      </Text>
+                    )
+                  }
+
+                  return (
+                    <View key={index} style={styles.shareHistoryItem}>
+                      <View style={styles.shareHistoryAvatar}>
+                        {displayIcon}
+                      </View>
+                      <View style={styles.shareHistoryInfo}>
+                        <Text style={styles.shareHistoryNames}>
+                          {transfer.fromBroker?.name || 'You'} → {displayName}
                         </Text>
+                        {shareType === 'individual' && (
+                          <Text style={styles.shareHistoryLocation}>
+                            {transfer.fromBroker?.primaryRegion?.name || transfer.fromBroker?.region?.[0]?.name || 'Unknown'} → {transfer.toBroker?.primaryRegion?.name || transfer.toBroker?.region?.[0]?.name || 'Unknown'}
+                          </Text>
+                        )}
+                      </View>
+                      {!isTransferredLead && (
+                        <TouchableOpacity 
+                          style={styles.shareHistoryDeleteButton}
+                          onPress={() => handleDeleteTransfer(transfer)}
+                        >
+                          <MaterialIcons name="delete" size={18} color="#EF4444" />
+                        </TouchableOpacity>
                       )}
                     </View>
-                    <View style={styles.shareHistoryInfo}>
-                      <Text style={styles.shareHistoryNames}>
-                        {transfer.fromBroker?.name || 'You'} → {transfer.toBroker?.name || 'Agra Broker'}
-                      </Text>
-                      <Text style={styles.shareHistoryLocation}>
-                        {transfer.fromBroker?.primaryRegion?.name || transfer.fromBroker?.region?.[0]?.name || 'Unknown'} → {transfer.toBroker?.primaryRegion?.name || transfer.toBroker?.region?.[0]?.name || 'Unknown'}
-                      </Text>
-                    </View>
-                    {!isTransferredLead && (
-                      <TouchableOpacity 
-                        style={styles.shareHistoryDeleteButton}
-                        onPress={() => handleDeleteTransfer(transfer)}
-                      >
-                        <MaterialIcons name="delete" size={18} color="#EF4444" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             ) : (
               <View style={styles.shareHistoryEmpty}>
@@ -1734,6 +1762,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    overflow: 'hidden',
   },
   shareHistoryAvatarText: {
     fontSize: 14,

@@ -12,6 +12,7 @@ import { styles } from '../styles/ChatListScreenStyles'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { chatAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { ChatListScreenLoader } from '../components/ContentLoader'
 
 
 // Helper function to handle image URLs
@@ -357,14 +358,18 @@ const ChatListScreen = ({ navigation }) => {
                 </View>
 
                 {/* Chat List */}
-                <FlatList
-                    data={chats}
-                    keyExtractor={(item) => item.chatId}
-                    renderItem={renderChatItem}
-                    ListEmptyComponent={renderEmpty}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={chats.length === 0 ? { flex: 1 } : {}}
-                />
+                {isLoading ? (
+                    <ChatListScreenLoader />
+                ) : (
+                    <FlatList
+                        data={chats}
+                        keyExtractor={(item) => item.chatId}
+                        renderItem={renderChatItem}
+                        ListEmptyComponent={renderEmpty}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={chats.length === 0 ? { flex: 1 } : {}}
+                    />
+                )}
             </View>
         </SafeAreaView>
     )

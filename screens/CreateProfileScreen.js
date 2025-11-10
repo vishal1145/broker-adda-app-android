@@ -26,6 +26,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons'
 import { authAPI, placesAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { ListLoader } from '../components/ContentLoader'
 import * as Location from 'expo-location'
 
 const CreateProfileScreen = ({ navigation, route }) => {
@@ -2725,8 +2726,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
         >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0D542BFF" />
-            <Text style={styles.loadingText}>Loading profile data...</Text>
+            <ListLoader count={5} />
           </View>
         ) : (
           <View style={styles.singlePageForm}>

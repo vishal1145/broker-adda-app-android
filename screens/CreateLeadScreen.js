@@ -478,8 +478,41 @@ const CreateLeadScreen = ({ navigation, route }) => {
         
         if (response.success) {
           Snackbar.showSuccess('Success', response.message || 'Lead created successfully!')
-          resetAddLeadForm()
-          navigation.goBack()
+          
+          // Get the created lead ID from response
+          const createdLeadId = response.data?.lead?._id || response.data?._id
+          
+          if (createdLeadId) {
+            // Fetch the created lead details to navigate to ShareLeadScreen
+            try {
+              const leadDetailsResponse = await leadsAPI.getLeadDetails(createdLeadId, token)
+              if (leadDetailsResponse.success && leadDetailsResponse.data && leadDetailsResponse.data.lead) {
+                resetAddLeadForm()
+                navigation.navigate('ShareLead', { lead: leadDetailsResponse.data.lead })
+              } else if (response.data?.lead) {
+                // Use lead data from create response if available
+                resetAddLeadForm()
+                navigation.navigate('ShareLead', { lead: response.data.lead })
+              } else {
+                // Fallback: navigate with minimal lead data
+                resetAddLeadForm()
+                navigation.navigate('ShareLead', { lead: { _id: createdLeadId, id: createdLeadId } })
+              }
+            } catch (error) {
+              console.error('Error fetching lead details:', error)
+              // Fallback: use lead data from create response or minimal data
+              resetAddLeadForm()
+              if (response.data?.lead) {
+                navigation.navigate('ShareLead', { lead: response.data.lead })
+              } else {
+                navigation.navigate('ShareLead', { lead: { _id: createdLeadId, id: createdLeadId } })
+              }
+            }
+          } else {
+            // If no lead ID in response, just go back
+            resetAddLeadForm()
+            navigation.goBack()
+          }
         } else {
           Snackbar.showError('Error', response.message || 'Failed to create lead')
         }

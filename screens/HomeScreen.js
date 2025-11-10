@@ -16,6 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import Svg, { Circle, G, Path, Text as SvgText, Rect, Line, Polygon } from 'react-native-svg'
 import { authAPI, chatAPI, leadsAPI, notificationsAPI, propertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { HomeScreenLoader } from '../components/ContentLoader'
 const { width } = Dimensions.get('window')
 
 const HomeScreen = ({ navigation }) => {
@@ -1257,6 +1258,9 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
+        {isLoading ? (
+          <HomeScreenLoader />
+        ) : (
         <ScrollView 
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollViewContent}
@@ -1457,6 +1461,7 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+        )}
       </View>
     </SafeAreaView>
   )

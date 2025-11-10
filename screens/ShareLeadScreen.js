@@ -206,58 +206,69 @@ const ShareLeadScreen = ({ navigation, route }) => {
       
       if (!lead) {
         Snackbar.showError('Error', 'No lead selected for sharing')
+        setIsSharing(false)
         return
       }
 
       const token = await storage.getToken()
       if (!token) {
         Snackbar.showError('Error', 'Authentication token not found')
+        setIsSharing(false)
         return
       }
 
-      // Get current user's broker ID to exclude from sharing
-      const currentBrokerId = await storage.getBrokerId()
-      
-      let toBrokers = []
+      let transfers = []
       
       if (shareData.shareType === 'all') {
-        // Get all broker IDs from the dedicated brokers API
-        const response = await leadsAPI.getAllBrokers(token)
-        if (response.success && response.data && response.data.brokers) {
-          toBrokers = response.data.brokers
-            .map(broker => broker._id)
-            .filter(id => id && id !== currentBrokerId) // Exclude current user
-        }
+        // Share with all brokers
+        transfers = [{
+          shareType: 'all'
+        }]
       } else if (shareData.shareType === 'region') {
         if (!shareData.selectedRegion) {
           Snackbar.showError('Error', 'Please select a region')
+          setIsSharing(false)
           return
         }
-        // Use the filtered brokers for the selected region
-        toBrokers = filteredBrokers
-          .map(broker => broker._id)
-          .filter(id => id && id !== currentBrokerId) // Exclude current user
+        // Share with region
+        transfers = [{
+          shareType: 'region',
+          region: shareData.selectedRegion
+        }]
       } else if (shareData.shareType === 'selected') {
         if (shareData.selectedBrokers.length === 0) {
           Snackbar.showError('Error', 'Please select at least one broker')
+          setIsSharing(false)
           return
         }
-        toBrokers = shareData.selectedBrokers.map(broker => broker._id)
+        // Share with individual brokers - create one transfer per broker
+        transfers = shareData.selectedBrokers.map(broker => ({
+          shareType: 'individual',
+          toBroker: broker._id
+        }))
       }
 
-      if (toBrokers.length === 0) {
-        Snackbar.showError('Error', 'No brokers available to share with')
+      if (transfers.length === 0) {
+        Snackbar.showError('Error', 'Invalid share configuration')
+        setIsSharing(false)
         return
       }
 
       const sharePayload = {
-        toBrokers,
-        notes: shareData.notes
+        transfers,
+        notes: shareData.notes || ''
       }
 
       console.log('Sharing lead with payload:', sharePayload)
 
-      const response = await leadsAPI.shareLead(lead.id, sharePayload, token)
+      const leadId = lead.id || lead._id
+      if (!leadId) {
+        Snackbar.showError('Error', 'Invalid lead ID')
+        setIsSharing(false)
+        return
+      }
+
+      const response = await leadsAPI.shareLead(leadId, sharePayload, token)
       
       if (response.success) {
         Snackbar.showSuccess('Success', response.message || 'Lead shared successfully!')

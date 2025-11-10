@@ -19,6 +19,7 @@ import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@
 import { LinearGradient } from 'expo-linear-gradient'
 import { authAPI, brokerRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { ProfileScreenLoader } from '../components/ContentLoader'
 
 const { width, height } = Dimensions.get('window')
 
@@ -383,6 +384,17 @@ const ProfileScreen = ({ navigation }) => {
   )
 
   const statusBarHeight = Platform.OS === 'ios' ? 44 : (StatusBar.currentHeight || 0)
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.wrapper} edges={['top','bottom']}>
+        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
+        <View style={styles.container}>
+          <ProfileScreenLoader />
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.wrapper} edges={['top','bottom']}>

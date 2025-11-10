@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons'
 import { propertiesAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { PropertiesScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -613,10 +614,7 @@ const PropertiesScreen = ({ navigation }) => {
       <SafeAreaView style={styles.wrapper} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
         <View style={styles.container}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0D542BFF" />
-            <Text style={styles.loadingText}>Loading properties...</Text>
-          </View>
+          <PropertiesScreenLoader />
         </View>
       </SafeAreaView>
     )

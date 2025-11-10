@@ -17,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI, leadsAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
+import { ListLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -776,10 +777,7 @@ const SearchScreen = ({ navigation }) => {
             <Text style={styles.resultsCount}>{getHeadingText()}</Text>
             
             {isSearching ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#0D542BFF" />
-                <Text style={styles.loadingText}>Searching...</Text>
-              </View>
+              <ListLoader count={3} />
             ) : filteredResults.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <MaterialIcons 

@@ -18,6 +18,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI, savedPropertiesAPI, propertyRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
+import { CardLoader } from '../components/ContentLoader'
 
 // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
 const getSecureImageUrl = (url) => {
@@ -551,10 +552,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.wrapper} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
         <View style={styles.container}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0D542BFF" />
-            <Text style={styles.loadingText}>Loading property details...</Text>
-          </View>
+          <CardLoader count={3} />
         </View>
       </SafeAreaView>
     )

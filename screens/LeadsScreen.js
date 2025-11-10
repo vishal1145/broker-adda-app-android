@@ -24,6 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { leadsAPI, authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
+import { LeadsScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -256,6 +257,13 @@ const LeadsScreen = ({ navigation }) => {
     }
   }
 
+  // Helper function to get region name by ID
+  const getRegionNameById = (regionId) => {
+    if (!regionId) return 'Unknown'
+    const region = regions.find(r => r._id === regionId)
+    return region?.name || 'Unknown'
+  }
+
   // Fetch user profile data
   const fetchUserProfile = async () => {
     try {
@@ -470,11 +478,35 @@ const LeadsScreen = ({ navigation }) => {
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
             avatar: null, // No customer image in API, show initials instead
-            sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
-              id: t.toBroker._id,
-              name: t.toBroker.name,
-              avatar: t.toBroker.brokerImage
-            })) || [],
+            sharedWith: lead.transfers?.map(t => {
+              const shareType = t.shareType || 'individual'
+              if (shareType === 'all') {
+                return {
+                  id: `all-${t._id}`,
+                  name: 'All Brokers',
+                  avatar: null,
+                  shareType: 'all',
+                  icon: 'people'
+                }
+              } else if (shareType === 'region') {
+                return {
+                  id: `region-${t._id}`,
+                  name: getRegionNameById(t.region),
+                  avatar: null,
+                  shareType: 'region',
+                  icon: 'location-on'
+                }
+              } else {
+                // individual
+                return {
+                  id: t.toBroker?._id || `individual-${t._id}`,
+                  name: t.toBroker?.name || 'Unknown Broker',
+                  avatar: t.toBroker?.brokerImage || null,
+                  shareType: 'individual',
+                  icon: null
+                }
+              }
+            }) || [],
             additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
           }
         })
@@ -555,11 +587,35 @@ const LeadsScreen = ({ navigation }) => {
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
             avatar: null, // No customer image in API, show initials instead
-            sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
-              id: t.toBroker._id,
-              name: t.toBroker.name,
-              avatar: t.toBroker.brokerImage
-            })) || [],
+            sharedWith: lead.transfers?.map(t => {
+              const shareType = t.shareType || 'individual'
+              if (shareType === 'all') {
+                return {
+                  id: `all-${t._id}`,
+                  name: 'All Brokers',
+                  avatar: null,
+                  shareType: 'all',
+                  icon: 'people'
+                }
+              } else if (shareType === 'region') {
+                return {
+                  id: `region-${t._id}`,
+                  name: getRegionNameById(t.region),
+                  avatar: null,
+                  shareType: 'region',
+                  icon: 'location-on'
+                }
+              } else {
+                // individual
+                return {
+                  id: t.toBroker?._id || `individual-${t._id}`,
+                  name: t.toBroker?.name || 'Unknown Broker',
+                  avatar: t.toBroker?.brokerImage || null,
+                  shareType: 'individual',
+                  icon: null
+                }
+              }
+            }) || [],
             additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
           }
         })
@@ -672,11 +728,35 @@ const LeadsScreen = ({ navigation }) => {
             lastContact: lead.updatedAt ? new Date(lead.updatedAt).toISOString().split('T')[0] : 'Unknown',
             notes: lead.notes || '',
             avatar: null, // No customer image in API, show initials instead
-            sharedWith: lead.transfers?.filter(t => t.toBroker).map(t => ({
-              id: t.toBroker._id,
-              name: t.toBroker.name,
-              avatar: t.toBroker.brokerImage
-            })) || [],
+            sharedWith: lead.transfers?.map(t => {
+              const shareType = t.shareType || 'individual'
+              if (shareType === 'all') {
+                return {
+                  id: `all-${t._id}`,
+                  name: 'All Brokers',
+                  avatar: null,
+                  shareType: 'all',
+                  icon: 'people'
+                }
+              } else if (shareType === 'region') {
+                return {
+                  id: `region-${t._id}`,
+                  name: getRegionNameById(t.region),
+                  avatar: null,
+                  shareType: 'region',
+                  icon: 'location-on'
+                }
+              } else {
+                // individual
+                return {
+                  id: t.toBroker?._id || `individual-${t._id}`,
+                  name: t.toBroker?.name || 'Unknown Broker',
+                  avatar: t.toBroker?.brokerImage || null,
+                  shareType: 'individual',
+                  icon: null
+                }
+              }
+            }) || [],
             additionalShared: Math.max(0, (lead.transfers?.length || 0) - 3)
           }
         })
@@ -1128,15 +1208,19 @@ const LeadsScreen = ({ navigation }) => {
             <View style={styles.sharedAvatars}>
               {lead.sharedWith.slice(0, 3).map((person, index) => (
                 <View key={person.id} style={[styles.sharedAvatar, { marginLeft: index > 0 ? -8 : 0 }]}>
-                  {person.avatar ? (
+                  {person.shareType === 'individual' && person.avatar ? (
                     <SafeImage
                       source={{ uri: getSecureImageUrl(person.avatar) }}
                       style={styles.sharedAvatarImage}
                       imageType="shared-avatar"
                       fallbackText={person.name ? person.name.split(' ').map(n => n[0]).join('') : 'N/A'}
                     />
-                  ) : (
+                  ) : person.shareType === 'individual' ? (
                     <Text style={styles.sharedAvatarText}>{person.name ? person.name.split(' ').map(n => n[0]).join('') : 'N/A'}</Text>
+                  ) : person.icon ? (
+                    <MaterialIcons name={person.icon} size={20} color="#6B7280" />
+                  ) : (
+                    <Text style={styles.sharedAvatarText}>N/A</Text>
                   )}
                 </View>
               ))}
@@ -1417,10 +1501,7 @@ const LeadsScreen = ({ navigation }) => {
           </View>
           
           {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#0D542BFF" />
-              <Text style={styles.loadingText}>Loading leads...</Text>
-            </View>
+            <LeadsScreenLoader />
           ) : error ? (
             <View style={styles.errorContainer}>
               <MaterialIcons name="error-outline" size={48} color="#EF4444" />
