@@ -22,6 +22,27 @@ import { PropertiesScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
+// Helper function to format price in K/M format
+const formatPrice = (price, currency = 'INR') => {
+  if (!price || price === 0) return currency === 'INR' ? '₹0' : '$0'
+  
+  const currencySymbol = currency === 'INR' ? '₹' : '$'
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price
+  
+  if (numPrice >= 1000000) {
+    // Millions
+    const millions = numPrice / 1000000
+    return `${currencySymbol}${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+  } else if (numPrice >= 1000) {
+    // Thousands
+    const thousands = numPrice / 1000
+    return `${currencySymbol}${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+  } else {
+    // Less than 1000, show as is
+    return `${currencySymbol}${numPrice.toLocaleString()}`
+  }
+}
+
 // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
 const getSecureImageUrl = (url) => {
   if (!url) return null
@@ -112,7 +133,7 @@ const PropertiesScreen = ({ navigation }) => {
       id: prop._id,
       title: prop.title,
       address: prop.address ? `${prop.address}, ${prop.city}` : prop.city,
-      price: prop.priceUnit === 'INR' ? `₹${prop.price?.toLocaleString()}` : `$${prop.price?.toLocaleString()}`,
+      price: formatPrice(prop.price, prop.priceUnit || 'INR'),
       priceRaw: prop.price || 0, // Raw numeric price for editing
       priceUnit: prop.priceUnit || 'INR', // Price unit for editing
       bedrooms: prop.bedrooms || 0,

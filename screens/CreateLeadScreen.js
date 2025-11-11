@@ -39,13 +39,13 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
 
   const formatValue = (val) => {
     if (val === 0) {
-      return '$0'
+      return '₹0'
     } else if (val >= 1000000) {
-      return `$${(val / 1000000).toFixed(1)}M`
+      return `₹${(val / 1000000).toFixed(1)}M`
     } else if (val >= 1000) {
-      return `$${(val / 1000).toFixed(0)}K`
+      return `₹${(val / 1000).toFixed(0)}K`
     }
-    return `$${val.toLocaleString()}`
+    return `₹${val.toLocaleString()}`
   }
 
   return (

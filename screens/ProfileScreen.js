@@ -24,6 +24,47 @@ import { ProfileScreenLoader } from '../components/ContentLoader'
 const { width, height } = Dimensions.get('window')
 
 const ProfileScreen = ({ navigation }) => {
+  // Format date function to show relative dates (Today, Yesterday, X days ago, or actual date)
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified'
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      
+      // Reset time to midnight for accurate day comparison
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dateToCompare = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      
+      // Calculate difference in days
+      const diffTime = today - dateToCompare
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 0) {
+        return 'Today'
+      } else if (diffDays === 1) {
+        return 'Yesterday'
+      } else if (diffDays > 1 && diffDays <= 30) {
+        return `${diffDays} days ago`
+      } else if (diffDays < 0) {
+        // Future date - show actual date
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } else {
+        // Show actual date for dates older than 30 days
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
+    } catch (error) {
+      return 'Not specified'
+    }
+  }
+
   // Debug navigation state
   useEffect(() => {
     console.log('ProfileScreen mounted');
@@ -196,7 +237,7 @@ const ProfileScreen = ({ navigation }) => {
               brokerId: broker._id || '',
               role: 'Senior Broker', // Default role
               mobileNumber: broker.phone || broker.userId?.phone || user?.phone || '-',
-              whatsappNumber: broker.whatsappNumber || broker.phone || broker.userId?.phone || user?.phone || '-',
+              whatsappNumber: broker.whatsappNumber || '-',
               email: broker.email || broker.userId?.email || user?.email || '-',
               officeAddress: broker.address || '-',
               website: broker.website || '-',
@@ -204,11 +245,7 @@ const ProfileScreen = ({ navigation }) => {
               content: broker.content || '',
               gender: broker.gender ? broker.gender.charAt(0).toUpperCase() + broker.gender.slice(1).toLowerCase() : '-',
               status: broker.approvedByAdmin === 'unblocked' ? 'Unblock' : 'Block',
-              joinedDate: broker.createdAt ? new Date(broker.createdAt).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              }) : '-',
+              joinedDate: broker.createdAt || '',
               licenseNumber: broker.licenseNumber || '-',
               specializations: broker.specializations || [],
               regions: broker.region ? broker.region.map(r => r.name) : [],
@@ -528,10 +565,10 @@ const ProfileScreen = ({ navigation }) => {
                         <Text style={styles.headerInfoText}>{profileData.gender}</Text>
                       </View>
                     )}
-                    {profileData.joinedDate && profileData.joinedDate !== '-' && (
+                    {profileData.joinedDate && profileData.joinedDate !== '' && (
                       <View style={styles.headerInfoItem}>
                         <MaterialIcons name="calendar-today" size={12} color="rgba(255, 255, 255, 0.9)" />
-                        <Text style={styles.headerInfoText}>{profileData.joinedDate}</Text>
+                        <Text style={styles.headerInfoText}>{formatDate(profileData.joinedDate)}</Text>
                       </View>
                     )}
                     {profileData.licenseNumber && profileData.licenseNumber !== '-' && (

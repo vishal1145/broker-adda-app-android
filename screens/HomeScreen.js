@@ -1,23 +1,45 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
   View, 
   StatusBar, 
   TouchableOpacity, 
-  ScrollView,
+  ScrollView,     
   Dimensions,
   ActivityIndicator,
   Image,
   FlatList
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons } from '@expo/vector-icons'
 import Svg, { Circle, G, Path, Text as SvgText, Rect, Line, Polygon } from 'react-native-svg'
 import { authAPI, chatAPI, leadsAPI, notificationsAPI, propertiesAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { HomeScreenLoader } from '../components/ContentLoader'
 const { width } = Dimensions.get('window')
+
+// Helper function to format price in K/M format
+const formatPrice = (price, currency = 'INR') => {
+  if (!price || price === 0) return currency === 'INR' ? '₹0' : '$0'
+  
+  const currencySymbol = currency === 'INR' ? '₹' : '$'
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price
+  
+  if (numPrice >= 1000000) {
+    // Millions
+    const millions = numPrice / 1000000
+    return `${currencySymbol}${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+  } else if (numPrice >= 1000) {
+    // Thousands
+    const thousands = numPrice / 1000
+    return `${currencySymbol}${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+  } else {
+    // Less than 1000, show as is
+    return `${currencySymbol}${numPrice.toLocaleString()}`
+  }
+}
 
 const HomeScreen = ({ navigation }) => {
   const [userName, setUserName] = useState('User')
@@ -158,7 +180,7 @@ const HomeScreen = ({ navigation }) => {
     }
   }
 
-  // Fetch chats/connections count
+  // Fetch chats/connections count (fallback if metrics API doesn't provide connections)
   const fetchConnectionsCount = async () => {
     try {
       const token = await storage.getToken()
@@ -170,10 +192,16 @@ const HomeScreen = ({ navigation }) => {
           // Count the total number of chats/connections
           const connectionsCount = response.data.length || 0
           
-          setDashboardCards(prev => ({
-            ...prev,
-            connections: connectionsCount
-          }))
+          // Only update if metrics API didn't set it
+          setDashboardCards(prev => {
+            if (prev.connections === 0) {
+              return {
+                ...prev,
+                connections: connectionsCount
+              }
+            }
+            return prev
+          })
         }
       }
     } catch (error) {
@@ -201,7 +229,11 @@ const HomeScreen = ({ navigation }) => {
           setDashboardCards(prev => ({
             ...prev,
             totalLeads: metrics.totalLeads || 0,
-            propertiesListed: metrics.totalProperties || 0
+            totalLeadsChange: metrics.totalLeadsPercentageChange || 0,
+            propertiesListed: metrics.totalProperties || 0,
+            propertiesListedChange: metrics.totalPropertiesPercentageChange || 0,
+            connections: metrics.totalConnections || 0,
+            connectionsChange: metrics.totalConnectionsPercentageChange || 0
           }))
         }
       } else {
@@ -230,9 +262,8 @@ const HomeScreen = ({ navigation }) => {
 
   // Helper function to format budget as currency
   const formatBudget = (amount) => {
-    if (!amount) return '₹0'
-    // Convert to Indian currency format
-    return `₹${amount.toLocaleString('en-IN')}`
+    if (!amount || amount === 0) return 'Not specified'
+    return formatPrice(amount, 'INR')
   }
 
   // Fetch unread notification count
@@ -365,6 +396,71 @@ const HomeScreen = ({ navigation }) => {
     }
   }
 
+  // Fetch leads by month
+  const fetchLeadsByMonth = async () => {
+    try {
+      const token = await storage.getToken()
+      
+      if (token) {
+        console.log('Calling leadsAPI.getLeadsByMonth')
+        const response = await leadsAPI.getLeadsByMonth(token)
+        console.log('getLeadsByMonth response:', response)
+        
+        if (response && response.success && response.data) {
+          // Transform API response to match chart format
+          // Get last 6 months for display
+          const allMonths = response.data.map(item => ({
+            month: item.monthName || item.month,
+            leads: item.count || 0
+          }))
+          
+          // Get last 6 months
+          const last6Months = allMonths.slice(-6)
+          setLeadsByMonthData(last6Months)
+        }
+      } else {
+        console.warn('fetchLeadsByMonth: Missing token', { token: !!token })
+      }
+    } catch (error) {
+      console.error('Error fetching leads by month:', error)
+      // Keep default values if API fails
+    }
+  }
+
+  // Fetch properties by month
+  const fetchPropertiesByMonth = async () => {
+    try {
+      const token = await storage.getToken()
+      
+      if (token) {
+        console.log('Calling propertiesAPI.getPropertiesByMonth')
+        const response = await propertiesAPI.getPropertiesByMonth(token)
+        console.log('getPropertiesByMonth response:', response)
+        
+        if (response && response.success && response.data) {
+          // Transform API response to match chart format
+          // Get last 6 months for display
+          const allMonths = response.data.map(item => ({
+            month: item.monthName || item.month,
+            count: item.count || 0
+          }))
+          
+          // Get last 6 months
+          const last6Months = allMonths.slice(-6)
+          setPropertiesByMonthData(last6Months)
+        }
+      } else {
+        console.warn('fetchPropertiesByMonth: Missing token', { token: !!token })
+      }
+    } catch (error) {
+      console.error('Error fetching properties by month:', error)
+      // Keep default values if API fails
+    }
+  }
+
+  // Track if this is the first mount to skip refresh on initial load
+  const isFirstMount = useRef(true)
+
   // Load profile data, metrics, connections count, notifications, leads, and properties on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -383,6 +479,8 @@ const HomeScreen = ({ navigation }) => {
         fetchRecentNotifications()
         fetchRecentLeads()
         fetchRecentProperties()
+        fetchLeadsByMonth()
+        fetchPropertiesByMonth()
       } catch (error) {
         console.error('Error loading initial data:', error)
         // Still try to load other data even if profile fetch fails
@@ -392,11 +490,44 @@ const HomeScreen = ({ navigation }) => {
         fetchRecentNotifications()
         fetchRecentLeads()
         fetchRecentProperties()
+        fetchLeadsByMonth()
+        fetchPropertiesByMonth()
       }
     }
     
     loadData()
   }, [])
+
+  // Refresh data when screen comes into focus (e.g., returning from other tabs)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh all data when screen is focused
+      console.log('HomeScreen focused - refreshing data')
+      const refreshData = async () => {
+        try {
+          await fetchUserProfile()
+          await new Promise(resolve => setTimeout(resolve, 100))
+          fetchConnectionsCount()
+          fetchMetrics()
+          fetchUnreadNotificationCount()
+          fetchRecentNotifications()
+          fetchRecentLeads()
+          fetchRecentProperties()
+          fetchLeadsByMonth()
+          fetchPropertiesByMonth()
+        } catch (error) {
+          console.error('Error refreshing data:', error)
+        }
+      }
+      refreshData()
+    }, [])
+  )
 
   const handleLogout = () => {
     // Clear stored data and navigate back to login screen
@@ -416,13 +547,13 @@ const HomeScreen = ({ navigation }) => {
   // Dashboard cards data matching the image
   const [dashboardCards, setDashboardCards] = useState({
     totalLeads: 0,
-    totalLeadsChange: 12.5,
+    totalLeadsChange: 0,
     propertiesListed: 0,
-    propertiesListedChange: 8.2,
+    propertiesListedChange: 0,
     inquiriesReceived: 743,
     inquiriesReceivedChange: 3.1,
     connections: 0,
-    connectionsChange: 20
+    connectionsChange: 0
   })
 
   // Leads by status data
@@ -434,28 +565,23 @@ const HomeScreen = ({ navigation }) => {
   })
 
   // Charts data
-  const [leadsByMonthData] = useState([
-    { month: 'Jan', leads: 110 },
-    { month: 'Feb', leads: 140 },
-    { month: 'Mar', leads: 160 },
-    { month: 'Apr', leads: 140 },
-    { month: 'May', leads: 160 },
-    { month: 'Jun', leads: 180 }
+  const [leadsByMonthData, setLeadsByMonthData] = useState([
+    { month: 'Jan', leads: 0 },
+    { month: 'Feb', leads: 0 },
+    { month: 'Mar', leads: 0 },
+    { month: 'Apr', leads: 0 },
+    { month: 'May', leads: 0 },
+    { month: 'Jun', leads: 0 }
   ])
 
-  const [leadSourcesData] = useState({
-    website: 42,
-    referral: 24,
-    social: 18,
-    other: 16
-  })
-
-  const [closedDealData] = useState([
-    { period: 'Jan', deals: 5 },
-    { period: 'Feb', deals: 7 },
-    { period: 'Mar', deals: 6.5 },
-    { period: 'Apr', deals: 8.5 },
-    { period: 'May', deals: 9 }
+  // Properties by month data
+  const [propertiesByMonthData, setPropertiesByMonthData] = useState([
+    { month: 'Jan', count: 0 },
+    { month: 'Feb', count: 0 },
+    { month: 'Mar', count: 0 },
+    { month: 'Apr', count: 0 },
+    { month: 'May', count: 0 },
+    { month: 'Jun', count: 0 }
   ])
 
   // Performance Summary data
@@ -498,7 +624,7 @@ const HomeScreen = ({ navigation }) => {
       id: prop._id,
       title: prop.title,
       address: prop.address ? `${prop.address}, ${prop.city}` : prop.city,
-      price: prop.priceUnit === 'INR' ? `₹${prop.price?.toLocaleString()}` : `$${prop.price?.toLocaleString()}`,
+      price: formatPrice(prop.price, prop.priceUnit || 'INR'),
       priceRaw: prop.price || 0,
       priceUnit: prop.priceUnit || 'INR',
       bedrooms: prop.bedrooms || 0,
@@ -623,28 +749,49 @@ const HomeScreen = ({ navigation }) => {
   }
 
   // Dashboard Card Component - matching LeadsScreen style exactly
-  const DashboardCard = ({ title, value, icon, colorClass, fullWidth = false }) => (
-    <View style={[styles.statCard, styles[colorClass], fullWidth && styles.statCardFullWidth]}>
-      <View style={styles.statCardContent}>
-        <View style={styles.statTopRow}>
-          <MaterialIcons name={icon} size={22} color="#FFFFFF" />
-          <Text 
-            style={styles.statCount}
-            numberOfLines={1}
-            adjustsFontSizeToFit={true}
-            minimumFontScale={0.6}
-          >
-            {value.toLocaleString()}
-          </Text>
+  const DashboardCard = ({ title, value, icon, colorClass, fullWidth = false, percentageChange = 0 }) => {
+    const isPositive = percentageChange >= 0
+    const displayPercentage = Math.abs(percentageChange)
+    
+    return (
+      <View style={[styles.statCard, styles[colorClass], fullWidth && styles.statCardFullWidth]}>
+        <View style={styles.statCardContent}>
+          <View style={styles.statTopRow}>
+            <MaterialIcons name={icon} size={22} color="#FFFFFF" />
+            <Text 
+              style={styles.statCount}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.6}
+            >
+              {value.toLocaleString()}
+            </Text>
+          </View>
+          <View style={styles.statBottomRow}>
+            <Text style={styles.statTitle}>{title}</Text>
+            {percentageChange !== 0 && (
+              <View style={styles.statChangeContainer}>
+                <MaterialIcons 
+                  name={isPositive ? "arrow-upward" : "arrow-downward"} 
+                  size={14} 
+                  color="#FFFFFF" 
+                />
+                <Text style={styles.statChangeText}>
+                  {displayPercentage}%
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-        <Text style={styles.statTitle}>{title}</Text>
       </View>
-    </View>
-  )
+    )
+  }
 
   // Bar Chart Component - Leads by Month
   const BarChart = ({ data, width: chartWidth = width - 80, height = 220 }) => {
-    const maxValue = 220 // Fixed max value to match Y-axis
+    // Calculate max value from data, but ensure minimum for better visualization
+    const maxLeads = Math.max(...data.map(item => item.leads || 0), 0)
+    const maxValue = Math.max(maxLeads * 1.2, 20) // Add 20% padding, minimum 20
     const chartHeight = height - 60
     const availableWidth = chartWidth - 60 // Leave space for Y-axis labels
     const gap = 8 // Gap between bars
@@ -652,11 +799,19 @@ const HomeScreen = ({ navigation }) => {
     const barWidth = (availableWidth - totalGaps) / data.length
     const xAxisY = chartHeight + 20
 
+    // Generate Y-axis labels dynamically
+    const yAxisSteps = 4
+    const stepValue = Math.ceil(maxValue / yAxisSteps)
+    const yAxisLabels = []
+    for (let i = 0; i <= yAxisSteps; i++) {
+      yAxisLabels.push(i * stepValue)
+    }
+
     return (
       <View style={styles.chartWrapper}>
         <Svg width={chartWidth} height={height}>
           {/* Y-axis labels */}
-          {[0, 55, 110, 165, 220].map((value) => {
+          {yAxisLabels.map((value) => {
             const y = chartHeight - (value / maxValue) * chartHeight + 20
             return (
               <G key={value}>
@@ -733,86 +888,30 @@ const HomeScreen = ({ navigation }) => {
     )
   }
 
-  // Lead Sources Donut Chart
-  const LeadSourcesDonutChart = ({ data, size = 180 }) => {
-    const colors = {
-      website: '#3B82F6',
-      referral: '#10B981',
-      social: '#F59E0B',
-      other: '#EF4444'
-    }
-
-    const segments = [
-      { color: colors.website, percentage: data.website, label: 'Website' },
-      { color: colors.referral, percentage: data.referral, label: 'Referral' },
-      { color: colors.social, percentage: data.social, label: 'Social' },
-      { color: colors.other, percentage: data.other, label: 'Other' }
-    ]
-
-    const radius = size / 2 - 20
-    const innerRadius = radius - 30
-    const centerX = size / 2
-    const centerY = size / 2
-
-    return (
-      <View style={styles.donutChartWrapper}>
-        <Svg width={size} height={size} style={styles.donutSvg}>
-          <G transform={`translate(${centerX}, ${centerY})`}>
-            <Circle
-              r={radius}
-              stroke="#F5F5F5"
-              strokeWidth={30}
-              fill="transparent"
-            />
-            
-            {segments.map((segment, index) => {
-              const circumference = 2 * Math.PI * radius
-              const segmentLength = (segment.percentage / 100) * circumference
-              const strokeDasharray = `${segmentLength} ${circumference}`
-              const strokeDashoffset = -((segments.slice(0, index).reduce((sum, s) => sum + s.percentage, 0) / 100) * circumference)
-              
-              return (
-                <Circle
-                  key={index}
-                  r={radius}
-                  stroke={segment.color}
-                  strokeWidth={30}
-                  fill="transparent"
-                  strokeDasharray={strokeDasharray}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  transform={`rotate(-90)`}
-                />
-              )
-            })}
-            
-            <Circle
-              r={innerRadius}
-              fill="#FFFFFF"
-            />
-          </G>
-        </Svg>
-        
-        <View style={styles.sourcesLegendContainer}>
-          {segments.map((segment, index) => (
-            <View key={index} style={styles.sourcesLegendItem}>
-              <View style={[styles.sourcesLegendColor, { backgroundColor: segment.color }]} />
-              <Text style={styles.sourcesLegendText}>{segment.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    )
-  }
 
   // Recent Lead Card Component
   const RecentLeadCard = ({ lead }) => {
     const getRequirementColor = (req) => {
-      return req === 'Buy' ? '#0D542BFF' : '#F59E0B'
+      // Buy, Rent, Sell show in green badge
+      const greenRequirements = ['Buy', 'Rent', 'Sell']
+      return greenRequirements.includes(req) ? '#0D542BFF' : '#F59E0B'
     }
 
     const getRequirementTextColor = (req) => {
-      return req === 'Buy' ? '#FFFFFF' : '#1F2937'
+      // Green badge has white text
+      const greenRequirements = ['Buy', 'Rent', 'Sell']
+      return greenRequirements.includes(req) ? '#FFFFFF' : '#1F2937'
+    }
+
+    const getPropertyTypeColor = (propertyType) => {
+      // Residential, Commercial, Plot, Other show in yellow badge
+      const yellowTypes = ['Residential', 'Commercial', 'Plot', 'Other']
+      return yellowTypes.includes(propertyType) ? '#FCD34D' : '#F59E0B'
+    }
+
+    const getPropertyTypeTextColor = (propertyType) => {
+      // Yellow badge has dark text
+      return '#1F2937'
     }
 
     return (
@@ -831,8 +930,10 @@ const HomeScreen = ({ navigation }) => {
                   {lead.requirement}
                 </Text>
               </View>
-              <View style={[styles.recentLeadTag, { backgroundColor: '#FCD34D' }]}>
-                <Text style={styles.recentLeadTagTextYellow}>{lead.propertyType}</Text>
+              <View style={[styles.recentLeadTag, { backgroundColor: getPropertyTypeColor(lead.propertyType) }]}>
+                <Text style={[styles.recentLeadTagTextYellow, { color: getPropertyTypeTextColor(lead.propertyType) }]}>
+                  {lead.propertyType}
+                </Text>
               </View>
             </View>
           </View>
@@ -1082,19 +1183,29 @@ const HomeScreen = ({ navigation }) => {
     )
   }
 
-  // Line Chart Component - Closed Deal
+  // Line Chart Component - Properties by Month
   const LineChart = ({ data, width: chartWidth = width - 80, height = 200 }) => {
-    const maxValue = Math.max(...data.map(d => d.deals))
-    const minValue = Math.min(...data.map(d => d.deals))
-    const range = maxValue - minValue || 1
+    // Calculate max value from data, but ensure minimum for better visualization
+    const maxCount = Math.max(...data.map(d => d.count || 0), 0)
+    const minCount = Math.min(...data.map(d => d.count || 0), 0)
+    const maxValue = Math.max(maxCount * 1.2, 5) // Add 20% padding, minimum 5
+    const range = maxValue - minCount || 1
     const chartHeight = height - 50
     const pointSpacing = (chartWidth - 60) / (data.length - 1)
+
+    // Generate Y-axis labels dynamically
+    const yAxisSteps = 4
+    const stepValue = Math.ceil(maxValue / yAxisSteps)
+    const yAxisLabels = []
+    for (let i = 0; i <= yAxisSteps; i++) {
+      yAxisLabels.push(i * stepValue)
+    }
 
     // Generate path for line
     let pathData = ''
     data.forEach((item, index) => {
       const x = 40 + index * pointSpacing
-      const y = chartHeight - ((item.deals - minValue) / range) * chartHeight + 20
+      const y = chartHeight - ((item.count - minCount) / range) * chartHeight + 20
       if (index === 0) {
         pathData = `M ${x} ${y}`
       } else {
@@ -1105,17 +1216,17 @@ const HomeScreen = ({ navigation }) => {
     // Generate points
     const points = data.map((item, index) => {
       const x = 40 + index * pointSpacing
-      const y = chartHeight - ((item.deals - minValue) / range) * chartHeight + 20
-      return { x, y, value: item.deals }
+      const y = chartHeight - ((item.count - minCount) / range) * chartHeight + 20
+      return { x, y, value: item.count }
     })
 
     return (
       <View style={styles.chartWrapper}>
         <Svg width={chartWidth} height={height}>
           {/* Y-axis labels */}
-          {[5, 7, 9, 11].map((value) => {
-            if (value < minValue || value > maxValue) return null
-            const y = chartHeight - ((value - minValue) / range) * chartHeight + 20
+          {yAxisLabels.map((value) => {
+            if (value < minCount || value > maxValue) return null
+            const y = chartHeight - ((value - minCount) / range) * chartHeight + 20
             return (
               <G key={value}>
                 <Line
@@ -1188,7 +1299,7 @@ const HomeScreen = ({ navigation }) => {
                 fill="#6B7280"
                 textAnchor="middle"
               >
-                {item.period}
+                {item.month}
               </SvgText>
             )
           })}
@@ -1275,12 +1386,14 @@ const HomeScreen = ({ navigation }) => {
               value={dashboardCards.totalLeads}
               icon="people"
               colorClass="statCardGreen"
+              percentageChange={dashboardCards.totalLeadsChange}
             />
             <DashboardCard
               title="Properties Listed"
               value={dashboardCards.propertiesListed}
               icon="home"
               colorClass="statCardBlue"
+              percentageChange={dashboardCards.propertiesListedChange}
             />
           </View>
           <View style={styles.connectionsCardContainer}>
@@ -1290,6 +1403,7 @@ const HomeScreen = ({ navigation }) => {
               icon="chat"
               colorClass="statCardPurple"
               fullWidth={true}
+              percentageChange={dashboardCards.connectionsChange}
             />
           </View>
         </View>
@@ -1306,16 +1420,10 @@ const HomeScreen = ({ navigation }) => {
             <BarChart data={leadsByMonthData} />
           </View>
 
-          {/* Lead Sources Chart */}
+          {/* Properties by Month Chart */}
           <View style={styles.chartCardContainer}>
-            <Text style={styles.chartCardTitle}>Lead Sources</Text>
-            <LeadSourcesDonutChart data={leadSourcesData} />
-          </View>
-
-          {/* Closed Deal Chart */}
-          <View style={styles.chartCardContainer}>
-            <Text style={styles.chartCardTitle}>Closed Deal</Text>
-            <LineChart data={closedDealData} />
+            <Text style={styles.chartCardTitle}>Properties by Month</Text>
+            <LineChart data={propertiesByMonthData} />
           </View>
         </View>
 
@@ -1449,7 +1557,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Performance Summary */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Performance Summary</Text>
           </View>
@@ -1459,7 +1567,7 @@ const HomeScreen = ({ navigation }) => {
               <PerformanceSummaryCard key={item.id} item={item} />
             ))}
           </View>
-        </View>
+        </View> */}
       </ScrollView>
         )}
       </View>
@@ -1729,6 +1837,23 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    flex: 1,
+  },
+  statBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  statChangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  statChangeText: {
+    fontSize: 11,
     fontWeight: '600',
     color: '#FFFFFF',
   },

@@ -27,6 +27,27 @@ import { CardLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
+// Helper function to format price in K/M format
+const formatPrice = (price, currency = 'INR') => {
+  if (!price || price === 0) return currency === 'INR' ? '₹0' : '$0'
+  
+  const currencySymbol = currency === 'INR' ? '₹' : '$'
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price
+  
+  if (numPrice >= 1000000) {
+    // Millions
+    const millions = numPrice / 1000000
+    return `${currencySymbol}${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+  } else if (numPrice >= 1000) {
+    // Thousands
+    const thousands = numPrice / 1000
+    return `${currencySymbol}${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+  } else {
+    // Less than 1000, show as is
+    return `${currencySymbol}${numPrice.toLocaleString()}`
+  }
+}
+
 // Custom Slider Component
 const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 100000 }) => {
   const [sliderWidth, setSliderWidth] = useState(0)
@@ -46,12 +67,7 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
   }
 
   const formatValue = (val) => {
-    if (val >= 1000000) {
-      return `$${(val / 1000000).toFixed(1)}M`
-    } else if (val >= 1000) {
-      return `$${(val / 1000).toFixed(0)}K`
-    }
-    return `$${val.toLocaleString()}`
+    return formatPrice(val, 'INR')
   }
 
   return (
@@ -292,11 +308,37 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     if (!dateString) return 'Not specified'
     try {
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
+      const now = new Date()
+      
+      // Reset time to midnight for accurate day comparison
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dateToCompare = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      
+      // Calculate difference in days
+      const diffTime = today - dateToCompare
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 0) {
+        return 'Today'
+      } else if (diffDays === 1) {
+        return 'Yesterday'
+      } else if (diffDays > 1 && diffDays <= 30) {
+        return `${diffDays} days ago`
+      } else if (diffDays < 0) {
+        // Future date - show actual date
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } else {
+        // Show actual date for dates older than 30 days
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
     } catch (error) {
       return 'Invalid date'
     }
@@ -304,12 +346,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
   const formatBudget = (budget) => {
     if (!budget) return 'Not specified'
-    if (budget >= 1000000) {
-      return `$${(budget / 1000000).toFixed(1)}M`
-    } else if (budget >= 1000) {
-      return `$${(budget / 1000).toFixed(0)}K`
-    }
-    return `$${budget.toLocaleString()}`
+    return formatPrice(budget, 'INR')
   }
 
   // Helper function to get region name by ID

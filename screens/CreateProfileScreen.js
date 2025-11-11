@@ -70,11 +70,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
     companyId: null
   })
 
-  const [showGenderModal, setShowGenderModal] = useState(false)
   const [showSpecializationModal, setShowSpecializationModal] = useState(false)
-  const [showStateModal, setShowStateModal] = useState(false)
-  const [showCityModal, setShowCityModal] = useState(false)
-  const [showRegionModal, setShowRegionModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedDocs, setUploadedDocs] = useState({
@@ -878,7 +874,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
             fullName: broker.name || broker.userId?.name || '',
             email: broker.email || broker.userId?.email || '',
             phone: broker.phone || broker.userId?.phone || '',
-            gender: broker.gender || '',
+            gender: broker.gender ? broker.gender.charAt(0).toUpperCase() + broker.gender.slice(1).toLowerCase() : '',
             firmName: broker.firmName || '',
             whatsappNumber: broker.whatsappNumber || '',
             
@@ -1891,18 +1887,29 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Gender *</Text>
-          <TouchableOpacity 
-            style={[
-              styles.input,
-              !formData.gender && styles.inputError
-            ]}
-            onPress={() => setShowGenderModal(true)}
-          >
-            <Text style={[styles.inputText, !formData.gender && styles.placeholderText]}>
-              {formData.gender || 'Select gender'}
-            </Text>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-          </TouchableOpacity>
+          <View style={styles.chipContainer}>
+            {genderOptions.map((option) => {
+              const selected = formData.gender === option
+              return (
+                <TouchableOpacity
+                  key={option}
+                  style={[styles.chip, selected && styles.chipSelected]}
+                  onPress={() => {
+                    updateFormData('gender', option)
+                    const error = validateField('gender', option)
+                    if (error) {
+                      updateFieldError('gender', error)
+                    } else {
+                      clearFieldError('gender')
+                    }
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
           {!formData.gender && (
             <Text style={styles.errorText}>Gender is required.</Text>
           )}
@@ -2278,18 +2285,29 @@ const CreateProfileScreen = ({ navigation, route }) => {
           <>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>State *</Text>
-              <TouchableOpacity 
-                style={[
-                  styles.input,
-                  stateError && styles.inputError
-                ]}
-                onPress={() => setShowStateModal(true)}
-              >
-                <Text style={[styles.inputText, !formData.state && styles.placeholderText]}>
-                  {formData.state || 'Select state'}
-                </Text>
-                <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-              </TouchableOpacity>
+              <View style={styles.chipContainer}>
+                {states.map((option) => {
+                  const selected = formData.state === option
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.chip, selected && styles.chipSelected]}
+                      onPress={() => {
+                        updateFormData('state', option)
+                        const error = validateField('state', option)
+                        if (error) {
+                          updateFieldError('state', error)
+                        } else {
+                          clearFieldError('state')
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
               {!formData.state && (
                 <Text style={styles.errorText}>State is required.</Text>
               )}
@@ -2297,18 +2315,33 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>City *</Text>
-              <TouchableOpacity 
-                style={[
-                  styles.input,
-                  cityError && styles.inputError
-                ]}
-                onPress={() => setShowCityModal(true)}
-              >
-                <Text style={[styles.inputText, !formData.city && styles.placeholderText]}>
-                  {formData.city || 'Select city'}
-                </Text>
-                <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-              </TouchableOpacity>
+              <View style={styles.chipContainer}>
+                {cities.map((option) => {
+                  const selected = formData.city === option
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.chip, selected && styles.chipSelected]}
+                      onPress={() => {
+                        updateFormData('city', option)
+                        updateFormData('regions', '') // Clear selected region
+                        updateFormData('selectedRegionId', '') // Clear selected region ID
+                        setSelectedRegionId('') // Clear selected region state
+                        fetchRegions(option) // Fetch regions for the selected city
+                        const error = validateField('city', option)
+                        if (error) {
+                          updateFieldError('city', error)
+                        } else {
+                          clearFieldError('city')
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
               {!formData.city && (
                 <Text style={styles.errorText}>City is required.</Text>
               )}
@@ -2316,26 +2349,42 @@ const CreateProfileScreen = ({ navigation, route }) => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Regions *</Text>
-              <TouchableOpacity 
-                style={[
-                  styles.input, 
-                  (regionsLoading || manualRegionsList.length === 0) && styles.disabledInput,
-                  regionError && styles.inputError
-                ]}
-                onPress={() => !regionsLoading && manualRegionsList.length > 0 && setShowRegionModal(true)}
-                disabled={regionsLoading || manualRegionsList.length === 0}
-              >
-                <Text style={[styles.inputText, !formData.regions && styles.placeholderText]}>
-                  {regionsLoading ? 'Loading regions...' : 
-                   manualRegionsList.length === 0 && formData.city ? 'No regions available' :
-                   formData.regions || 'Select regions'}
-                </Text>
-                {regionsLoading ? (
+              {regionsLoading ? (
+                <View style={[styles.chipContainer, { alignItems: 'center', paddingVertical: 16 }]}>
                   <ActivityIndicator size="small" color="#0D542BFF" />
-                ) : (
-                  <MaterialIcons name="keyboard-arrow-down" size={20} color="#8E8E93" />
-                )}
-              </TouchableOpacity>
+                  <Text style={[styles.errorText, { marginTop: 8, color: '#8E8E93' }]}>Loading regions...</Text>
+                </View>
+              ) : manualRegionsList.length === 0 && formData.city ? (
+                <View style={styles.chipContainer}>
+                  <Text style={styles.errorText}>No regions available for this city.</Text>
+                </View>
+              ) : (
+                <View style={styles.chipContainer}>
+                  {manualRegionsList.map((region) => {
+                    const selected = formData.selectedRegionId === region._id
+                    return (
+                      <TouchableOpacity
+                        key={region._id}
+                        style={[styles.chip, selected && styles.chipSelected]}
+                        onPress={() => {
+                          updateFormData('regions', region.name)
+                          updateFormData('selectedRegionId', region._id)
+                          setSelectedRegionId(region._id)
+                          const error = validateField('selectedRegionId', region._id)
+                          if (error) {
+                            updateFieldError('selectedRegionId', error)
+                          } else {
+                            clearFieldError('selectedRegionId')
+                          }
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{region.name}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              )}
               {!formData.selectedRegionId && (
                 <Text style={styles.errorText}>Region is required.</Text>
               )}
@@ -2770,11 +2819,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
       </ScrollView>
 
         {/* Modals */}
-        {renderModal('Select Gender', genderOptions, 'gender', showGenderModal, () => setShowGenderModal(false))}
-        {/* Specializations now rendered as chips, modal removed */}
-        {renderModal('Select State', states, 'state', showStateModal, () => setShowStateModal(false))}
-        {renderModal('Select City', cities, 'city', showCityModal, () => setShowCityModal(false))}
-        {renderModal('Select Regions', manualRegionsList.length > 0 ? manualRegionsList.map(region => region.name) : ['No regions available'], 'regions', showRegionModal, () => setShowRegionModal(false))}
+        {/* Gender, State, City, and Regions now rendered as chips, modals removed */}
       </KeyboardAvoidingView>
     </SafeAreaView>
   )

@@ -20,6 +20,27 @@ import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
 import { CardLoader } from '../components/ContentLoader'
 
+// Helper function to format price in K/M format
+const formatPrice = (price, currency = 'INR') => {
+  if (!price || price === 0) return currency === 'INR' ? '₹0' : '$0'
+  
+  const currencySymbol = currency === 'INR' ? '₹' : '$'
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price
+  
+  if (numPrice >= 1000000) {
+    // Millions
+    const millions = numPrice / 1000000
+    return `${currencySymbol}${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+  } else if (numPrice >= 1000) {
+    // Thousands
+    const thousands = numPrice / 1000
+    return `${currencySymbol}${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+  } else {
+    // Less than 1000, show as is
+    return `${currencySymbol}${numPrice.toLocaleString()}`
+  }
+}
+
 // Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
 const getSecureImageUrl = (url) => {
   if (!url) return null
@@ -135,7 +156,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       id: apiProperty._id,
       title: apiProperty.title,
       address: apiProperty.address ? `${apiProperty.address}, ${apiProperty.city}` : apiProperty.city,
-      price: apiProperty.priceUnit === 'INR' ? `₹${apiProperty.price?.toLocaleString()}` : `$${apiProperty.price?.toLocaleString()}`,
+      price: formatPrice(apiProperty.price, apiProperty.priceUnit || 'INR'),
       priceRaw: apiProperty.price || 0, // Raw numeric price for editing
       bedrooms: apiProperty.bedrooms || 0,
       bathrooms: apiProperty.bathrooms || 0,
@@ -155,7 +176,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       agentLocation: apiProperty.city || '',
       brokerImage: apiProperty.broker?.brokerImage || null,
       brokerId: apiProperty.broker?._id || null, // Store broker ID for ownership check
-      listedDate: apiProperty.createdAt ? new Date(apiProperty.createdAt).toISOString().split('T')[0] : '',
+      listedDate: apiProperty.createdAt || '',
       views: apiProperty.viewsCount || 0,
       favorites: 0,
       amenities: apiProperty.amenities || [],
@@ -414,7 +435,48 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     }
   }
 
-  // Helper function to get time ago string
+  // Format date function to show relative dates (Today, Yesterday, X days ago, or actual date)
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified'
+    try {
+      const date = new Date(dateString)
+      const now = new Date()
+      
+      // Reset time to midnight for accurate day comparison
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dateToCompare = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      
+      // Calculate difference in days
+      const diffTime = today - dateToCompare
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (diffDays === 0) {
+        return 'Today'
+      } else if (diffDays === 1) {
+        return 'Yesterday'
+      } else if (diffDays > 1 && diffDays <= 30) {
+        return `${diffDays} days ago`
+      } else if (diffDays < 0) {
+        // Future date - show actual date
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      } else {
+        // Show actual date for dates older than 30 days
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
+    } catch (error) {
+      return 'Not specified'
+    }
+  }
+
+  // Helper function to get time ago string (for reviews)
   const getTimeAgo = (date) => {
     const now = new Date()
     const diffInSeconds = Math.floor((now - date) / 1000)
@@ -759,7 +821,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
                   <MaterialIcons name="schedule" size={20} color="#6B7280" />
                   <View style={styles.propertyDetailContent}>
                     <Text style={styles.propertyDetailLabel}>Listed</Text>
-                    <Text style={styles.propertyDetailValue}>{property.listedDate || '3 days ago'}</Text>
+                    <Text style={styles.propertyDetailValue}>{formatDate(property.listedDate)}</Text>
                   </View>
                 </View>
               </View>

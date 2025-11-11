@@ -339,6 +339,25 @@ export const leadsAPI = {
     }
   },
 
+  // Get leads by month
+  getLeadsByMonth: async (token) => {
+    try {
+      console.log('Fetching leads by month');
+      const response = await api.get('/api/leads/by-month', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Leads by month fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get leads by month error:', error);
+      throw error;
+    }
+  },
+
   // Get transferred leads with search, status, and advanced filters (no pagination)
   getTransferredLeads: async (token, userId, search = '', status = 'all', filters = {}) => {
     try {
@@ -686,6 +705,25 @@ export const propertiesAPI = {
       return response.data;
     } catch (error) {
       console.error('Get all properties error:', error);
+      throw error;
+    }
+  },
+
+  // Get properties by month
+  getPropertiesByMonth: async (token) => {
+    try {
+      console.log('Fetching properties by month');
+      const response = await api.get('/api/properties/by-month', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Properties by month fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Get properties by month error:', error);
       throw error;
     }
   }

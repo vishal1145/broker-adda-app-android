@@ -28,6 +28,27 @@ import { LeadsScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
+// Helper function to format price in K/M format
+const formatPrice = (price, currency = 'INR') => {
+  if (!price || price === 0) return currency === 'INR' ? '₹0' : '$0'
+  
+  const currencySymbol = currency === 'INR' ? '₹' : '$'
+  const numPrice = typeof price === 'string' ? parseFloat(price.replace(/[^0-9.]/g, '')) : price
+  
+  if (numPrice >= 1000000) {
+    // Millions
+    const millions = numPrice / 1000000
+    return `${currencySymbol}${millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)}M`
+  } else if (numPrice >= 1000) {
+    // Thousands
+    const thousands = numPrice / 1000
+    return `${currencySymbol}${thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)}K`
+  } else {
+    // Less than 1000, show as is
+    return `${currencySymbol}${numPrice.toLocaleString()}`
+  }
+}
+
 // Custom Slider Component
 const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 100000 }) => {
   const [sliderWidth, setSliderWidth] = useState(0)
@@ -47,14 +68,7 @@ const CustomSlider = ({ value, onValueChange, min = 0, max = 10000000, step = 10
   }
 
   const formatValue = (val) => {
-    if (val === 0) {
-      return '$0'
-    } else if (val >= 1000000) {
-      return `$${(val / 1000000).toFixed(1)}M`
-    } else if (val >= 1000) {
-      return `$${(val / 1000).toFixed(0)}K`
-    }
-    return `$${val.toLocaleString()}`
+    return formatPrice(val, 'INR')
   }
 
   return (
@@ -469,7 +483,7 @@ const LeadsScreen = ({ navigation }) => {
             phone: lead.customerPhone,
             requirement: lead.requirement,
             propertyType: lead.propertyType,
-            budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
+            budget: lead.budget ? formatPrice(lead.budget, 'INR') : 'Not specified',
             region: regionString,
             status: lead.status.toLowerCase().replace(' ', '-'),
             priority: 'medium',
@@ -578,7 +592,7 @@ const LeadsScreen = ({ navigation }) => {
             phone: lead.customerPhone,
             requirement: lead.requirement,
             propertyType: lead.propertyType,
-            budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
+            budget: lead.budget ? formatPrice(lead.budget, 'INR') : 'Not specified',
             region: regionString,
             status: lead.status.toLowerCase().replace(' ', '-'),
             priority: 'medium',
@@ -719,7 +733,7 @@ const LeadsScreen = ({ navigation }) => {
             phone: lead.customerPhone,
             requirement: lead.requirement,
             propertyType: lead.propertyType,
-            budget: lead.budget ? `$${lead.budget.toLocaleString()}` : 'Not specified',
+            budget: lead.budget ? formatPrice(lead.budget, 'INR') : 'Not specified',
             region: regionString,
             status: lead.status.toLowerCase().replace(' ', '-'),
             priority: 'medium', // Default priority as not in API
