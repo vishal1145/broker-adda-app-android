@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
-  Image
+  Image,
+  Modal
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
@@ -101,11 +102,21 @@ const NotificationsScreen = ({ navigation }) => {
   // Notifications data
   const [notifications, setNotifications] = useState([])
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true)
+  const [selectedType, setSelectedType] = useState('all')
+  const [showTypeModal, setShowTypeModal] = useState(false)
   const [countsByType, setCountsByType] = useState({
     lead: { total: 0, unread: 0 },
     property: { total: 0, unread: 0 },
     transfer: { total: 0, unread: 0 }
   })
+
+  // Type filter options
+  const typeOptions = [
+    { key: 'all', label: 'All Notifications' },
+    { key: 'lead', label: 'Lead' },
+    { key: 'property', label: 'Property' },
+    { key: 'broker', label: 'Broker' }
+  ]
 
   // Helper function to format time ago
   const formatTimeAgo = (dateString) => {
@@ -167,13 +178,15 @@ const NotificationsScreen = ({ navigation }) => {
   }
 
   // Fetch notifications from API
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (type = null) => {
     try {
       setIsLoadingNotifications(true)
       const token = await storage.getToken()
       
       if (token) {
-        const response = await notificationsAPI.getNotifications(token)
+        // Use provided type or selectedType state, but only send if not 'all'
+        const apiType = type !== null ? type : (selectedType !== 'all' ? selectedType : null)
+        const response = await notificationsAPI.getNotifications(token, apiType)
         
         if (response && response.success && response.data && response.data.notifications) {
           const apiNotifications = response.data.notifications.map((notification) => {
@@ -265,6 +278,19 @@ const NotificationsScreen = ({ navigation }) => {
     }
   }
 
+  // Handle type filter change
+  const handleTypeFilterChange = (type) => {
+    setSelectedType(type)
+    fetchNotifications(type === 'all' ? null : type)
+  }
+
+  // Handle type change in modal
+  const handleTypeChangeInModal = (typeKey) => {
+    setSelectedType(typeKey)
+    setShowTypeModal(false)
+    fetchNotifications(typeKey === 'all' ? null : typeKey)
+  }
+
   // Load profile and notifications on component mount
   useEffect(() => {
     fetchUserProfile()
@@ -281,14 +307,13 @@ const NotificationsScreen = ({ navigation }) => {
         return
       }
       
-      // Refresh all data when screen is focused
+      // Refresh all data when screen is focused, respecting current filter
       console.log('NotificationsScreen focused - refreshing data')
-      fetchNotifications()
+      const apiType = selectedType !== 'all' ? selectedType : null
+      fetchNotifications(apiType)
       fetchUserProfile()
-    }, [])
+    }, [selectedType])
   )
-
-  // Filters removed as per UI requirement
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -435,7 +460,24 @@ const NotificationsScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Filters intentionally removed */}
+        {/* Filter Section */}
+        <View style={styles.filterSection}>
+          <View style={styles.dropdownContainerFullWidth}>
+            <TouchableOpacity
+              style={styles.dropdownButton}
+              onPress={() => setShowTypeModal(true)}
+            >
+              <Text style={styles.dropdownButtonText}>
+                {typeOptions.find(option => option.key === selectedType)?.label || 'All Notifications'}
+              </Text>
+              <MaterialIcons 
+                name="keyboard-arrow-down" 
+                size={24} 
+                color="#6B7280" 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Notifications List */}
         <View style={styles.notificationsSection}>
@@ -469,6 +511,56 @@ const NotificationsScreen = ({ navigation }) => {
       </ScrollView>
         )}
       </View>
+
+      {/* Type Filter Modal */}
+      <Modal
+        visible={showTypeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowTypeModal(false)}
+        statusBarTranslucent={true}
+      >
+        <SafeAreaView style={styles.modalOverlay} edges={['top', 'bottom']}>
+          <TouchableOpacity 
+            style={styles.modalBackdrop} 
+            activeOpacity={1} 
+            onPress={() => setShowTypeModal(false)}
+          />
+          <View style={styles.typeModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Type</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowTypeModal(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.statusModalBody}>
+              <View style={styles.chipContainer}>
+                {typeOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[
+                      styles.filterChip,
+                      selectedType === option.key && styles.filterChipActive
+                    ]}
+                    onPress={() => handleTypeChangeInModal(option.key)}
+                  >
+                    <Text style={[
+                      styles.filterChipText,
+                      selectedType === option.key && styles.filterChipTextActive
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -640,6 +732,32 @@ const styles = StyleSheet.create({
   filterSection: {
     paddingHorizontal: 20,
     marginBottom: 24,
+  },
+  dropdownContainerFullWidth: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 12,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  dropdownButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
   },
   filterScroll: {
     flexDirection: 'row',
@@ -871,6 +989,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  typeModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    maxHeight: '60%',
+    minHeight: 300,
+  },
+  statusModalBody: {
+    paddingVertical: 0,
+    paddingTop: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 0,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 0,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  filterChipActive: {
+    backgroundColor: '#E8F5E8',
+    borderWidth: 0,
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: '#000000',
+  },
+  filterChipTextActive: {
+    color: '#0D542BFF',
+    fontWeight: '600',
   },
 })
 

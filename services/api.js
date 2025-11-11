@@ -951,10 +951,15 @@ export const chatAPI = {
 
 // Notifications API functions
 export const notificationsAPI = {
-  getNotifications: async (token) => {
+  getNotifications: async (token, type = null) => {
     try {
-      console.log('Fetching notifications');
-      const response = await api.get('/api/notifications', {
+      console.log('Fetching notifications:', { type });
+      let url = '/api/notifications';
+      // Only add type parameter if it's not null/undefined and not 'all'
+      if (type && type !== 'all') {
+        url += `?type=${encodeURIComponent(type)}`;
+      }
+      const response = await api.get(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
