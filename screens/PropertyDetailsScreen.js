@@ -14,6 +14,7 @@ import {
   Modal
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI, savedPropertiesAPI, propertyRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -386,6 +387,31 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       fetchPropertyRatings()
     }
   }, [property])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh property details when screen is focused
+      const propertyFromRoute = route.params?.property
+      const propertyId = propertyFromRoute?.id || propertyFromRoute?._id
+      
+      if (propertyId) {
+        console.log('PropertyDetailsScreen focused - refreshing data')
+        fetchPropertyDetails()
+        if (property && (property.id || property._id)) {
+          checkSavedProperty()
+          fetchPropertyRatings()
+        }
+      }
+    }, [route.params?.property])
+  )
 
   // Fetch property ratings
   const fetchPropertyRatings = async () => {

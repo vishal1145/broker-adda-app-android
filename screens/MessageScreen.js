@@ -14,6 +14,7 @@ import {
   Modal
 } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
+import { useFocusEffect } from '@react-navigation/native'
 import { io } from 'socket.io-client'
 import { styles } from '../styles/MessageScreenStyles'
 import { chatAPI, leadsAPI } from '../services/api'
@@ -208,6 +209,23 @@ const MessageScreen = ({ navigation, route }) => {
     fetchMessages()
     fetchLeads()
   }, [chatId])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh messages and leads when screen is focused
+      console.log('MessageScreen focused - refreshing data')
+      fetchMessages()
+      fetchLeads()
+    }, [chatId])
+  )
 
   useEffect(() => {
     let mounted = true;

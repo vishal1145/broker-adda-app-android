@@ -18,6 +18,7 @@ import {
   Keyboard
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { leadsAPI, authAPI } from '../services/api'
@@ -292,6 +293,22 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     fetchLeadDetails()
     fetchRegions() // Fetch regions on mount for share history
   }, [leadId])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh lead details when screen is focused
+      console.log('LeadDetailsScreen focused - refreshing data')
+      fetchLeadDetails()
+    }, [leadId])
+  )
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {

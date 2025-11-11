@@ -15,6 +15,7 @@ import {
   Dimensions
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { leadsAPI, authAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -316,6 +317,27 @@ const ShareLeadScreen = ({ navigation, route }) => {
       fetchAllBrokers()
     }
   }, [shareData.shareType])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh regions and brokers when screen is focused
+      console.log('ShareLeadScreen focused - refreshing data')
+      fetchRegions()
+      if (shareData.shareType === 'selected') {
+        fetchAllBrokers()
+      } else if (shareData.shareType === 'region' && shareData.selectedRegion) {
+        fetchBrokersByRegion(shareData.selectedRegion._id)
+      }
+    }, [shareData.shareType, shareData.selectedRegion])
+  )
 
   // Keyboard event listeners
   useEffect(() => {

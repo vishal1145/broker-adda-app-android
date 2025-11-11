@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -11,6 +11,7 @@ import {
   Image
 } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
@@ -269,6 +270,23 @@ const NotificationsScreen = ({ navigation }) => {
     fetchUserProfile()
     fetchNotifications()
   }, [])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh all data when screen is focused
+      console.log('NotificationsScreen focused - refreshing data')
+      fetchNotifications()
+      fetchUserProfile()
+    }, [])
+  )
 
   // Filters removed as per UI requirement
 

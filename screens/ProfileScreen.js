@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   StyleSheet, 
   Text, 
@@ -15,6 +15,7 @@ import {
   Platform
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from '@react-navigation/native'
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome, AntDesign } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { authAPI, brokerRatingsAPI } from '../services/api'
@@ -349,6 +350,23 @@ const ProfileScreen = ({ navigation }) => {
     fetchProfileData()
     fetchBrokerRatings()
   }, [])
+
+  // Refresh data when screen comes into focus (e.g., returning from other screens)
+  const isFirstMount = useRef(true)
+  useFocusEffect(
+    React.useCallback(() => {
+      // Skip refresh on initial mount (already handled by useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false
+        return
+      }
+      
+      // Refresh all data when screen is focused
+      console.log('ProfileScreen focused - refreshing data')
+      fetchProfileData()
+      fetchBrokerRatings()
+    }, [])
+  )
 
   const handleLogout = async () => {
     try {

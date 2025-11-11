@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
     View,
     Text,
@@ -8,6 +8,7 @@ import {
     Image
 } from 'react-native'
 import { MaterialIcons } from '@expo/vector-icons'
+import { useFocusEffect } from '@react-navigation/native'
 import { styles } from '../styles/ChatListScreenStyles'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { chatAPI, authAPI, notificationsAPI } from '../services/api'
@@ -205,6 +206,24 @@ const ChatListScreen = ({ navigation }) => {
         fetchUserProfile()
         fetchUnreadNotificationCount()
     }, [])
+
+    // Refresh data when screen comes into focus (e.g., returning from other tabs)
+    const isFirstMount = useRef(true)
+    useFocusEffect(
+        React.useCallback(() => {
+            // Skip refresh on initial mount (already handled by useEffect)
+            if (isFirstMount.current) {
+                isFirstMount.current = false
+                return
+            }
+            
+            // Refresh all data when screen is focused
+            console.log('ChatListScreen focused - refreshing data')
+            fetchChats()
+            fetchUserProfile()
+            fetchUnreadNotificationCount()
+        }, [])
+    )
 
     const renderChatItem = ({ item }) => {
         const participant = item.participants[0]
