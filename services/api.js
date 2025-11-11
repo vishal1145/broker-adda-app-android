@@ -53,14 +53,14 @@ const handleTokenExpiration = async () => {
   try {
     // Clear all authentication data
     await storage.clearAuthData();
-    console.log('Token expired or removed. Clearing auth data and redirecting to login...');
+    console.log('Token expired or removed. Clearing auth data and redirecting to phone login...');
     
-    // Navigate to Login screen using navigation ref
+    // Navigate to PhoneLogin screen using navigation ref
     if (navigationRef.current) {
       navigationRef.current.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: 'Login' }],
+          routes: [{ name: 'PhoneLogin' }],
         })
       );
     }
