@@ -981,7 +981,11 @@ const CreateProfileScreen = ({ navigation, route }) => {
               // Check if broker has completed profile (has name, gender, etc.)
               if (broker.name && broker.gender) {
                 console.log('Profile already exists, redirecting to MainTabs')
-                navigation.replace('MainTabs')
+                // Reset navigation stack to prevent going back to login/OTP screens
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs' }],
+                })
                 return
               }
               // If incomplete profile exists, don't set edit mode - user is creating profile
@@ -1782,7 +1786,11 @@ const CreateProfileScreen = ({ navigation, route }) => {
         navigation.navigate('Profile')
       } else {
         console.log('Profile created successfully, navigating to home...')
-        navigation.navigate('MainTabs')
+        // Reset navigation stack to prevent going back to CreateProfile/OTP screens
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainTabs' }],
+        })
       }
       
     } catch (error) {

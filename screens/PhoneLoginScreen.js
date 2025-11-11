@@ -83,8 +83,12 @@ const PhoneLoginScreen = ({ navigation }) => {
   }
 
   const handleOtpVerified = () => {
-    // Navigate to main tabs after successful login
-    navigation.navigate('MainTabs')
+    // Reset navigation stack to main tabs after successful login
+    // This prevents going back to OTP/login screens
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabs' }],
+    })
   }
 
   const handleResendOtp = async () => {

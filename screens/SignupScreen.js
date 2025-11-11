@@ -95,7 +95,8 @@ const SignupScreen = ({ navigation }) => {
 
   const handleOtpVerified = () => {
     // Navigate to create profile after successful signup
-    navigation.navigate('CreateProfile')
+    // Use replace to prevent going back to OTP screen
+    navigation.replace('CreateProfile')
   }
 
   const handleResendOtp = async () => {
