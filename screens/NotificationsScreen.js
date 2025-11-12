@@ -17,7 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { authAPI, notificationsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
-import { ListLoader } from '../components/ContentLoader'
+import { NotificationsScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -425,7 +425,7 @@ const NotificationsScreen = ({ navigation }) => {
         </View>
 
         {isLoadingNotifications ? (
-          <ListLoader count={5} />
+          <NotificationsScreenLoader />
         ) : (
         <ScrollView 
         style={styles.scrollView} 

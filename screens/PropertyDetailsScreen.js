@@ -19,7 +19,7 @@ import { MaterialIcons } from '@expo/vector-icons'
 import { propertiesAPI, savedPropertiesAPI, propertyRatingsAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
-import { CardLoader } from '../components/ContentLoader'
+import { PropertyDetailsScreenLoader } from '../components/ContentLoader'
 
 // Helper function to format price in K/M format
 const formatPrice = (price, currency = 'INR') => {
@@ -640,7 +640,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.wrapper} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
         <View style={styles.container}>
-          <CardLoader count={3} />
+          <PropertyDetailsScreenLoader />
         </View>
       </SafeAreaView>
     )

@@ -24,7 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { leadsAPI, authAPI } from '../services/api'
 import { storage } from '../services/storage'
 import { Snackbar } from '../utils/snackbar'
-import { CardLoader } from '../components/ContentLoader'
+import { LeadDetailsScreenLoader } from '../components/ContentLoader'
 
 const { width } = Dimensions.get('window')
 
@@ -720,7 +720,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
       <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
         <View style={styles.container}>
-          <CardLoader count={3} />
+          <LeadDetailsScreenLoader />
         </View>
       </SafeAreaView>
     )
