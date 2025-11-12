@@ -2557,10 +2557,10 @@ const CreateProfileScreen = ({ navigation, route }) => {
                       style={styles.editButton}
                       onPress={(e) => {
                         e.stopPropagation?.()
-                        handleViewDocument(doc.key)
+                        handleRemoveDocument(doc.key)
                       }}
                     >
-                      <MaterialIcons name="cloud-upload" size={16} color="#FFFFFF" />
+                      <MaterialIcons name="close" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                 ) : existingDoc && !removedDocs[doc.key] ? (
