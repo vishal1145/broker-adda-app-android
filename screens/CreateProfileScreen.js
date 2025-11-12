@@ -94,6 +94,13 @@ const CreateProfileScreen = ({ navigation, route }) => {
     brokerLicense: null,
     companyId: null
   })
+  const [removedDocs, setRemovedDocs] = useState({
+    aadharCard: false,
+    panCard: false,
+    gstCertificate: false,
+    brokerLicense: false,
+    companyId: false
+  })
   const [profileImage, setProfileImage] = useState(null)
   const [profileImageLoading, setProfileImageLoading] = useState(false)
   const [imageLoadErrors, setImageLoadErrors] = useState({})
@@ -948,6 +955,15 @@ const CreateProfileScreen = ({ navigation, route }) => {
               companyId: getSecureImageUrl(broker.kycDocs.companyId) || null
             })
           }
+          
+          // Initialize removedDocs to false when fetching profile
+          setRemovedDocs({
+            aadharCard: false,
+            panCard: false,
+            gstCertificate: false,
+            brokerLicense: false,
+            companyId: false
+          })
         }
       }
     } catch (error) {
@@ -1318,6 +1334,11 @@ const CreateProfileScreen = ({ navigation, route }) => {
               ...prev,
               [docType]: null
             }))
+            // Clear removed flag when new document is selected
+            setRemovedDocs(prev => ({
+              ...prev,
+              [docType]: false
+            }))
             
             console.log('Document states updated for', docType, ':', {
               selectedImage: formattedAsset,
@@ -1381,6 +1402,11 @@ const CreateProfileScreen = ({ navigation, route }) => {
             ...prev,
             [docType]: null
           }))
+          // Clear removed flag when new document is selected
+          setRemovedDocs(prev => ({
+            ...prev,
+            [docType]: false
+          }))
           
           console.log('Image states updated for', docType, ':', {
             selectedImage: formattedAsset,
@@ -1424,11 +1450,24 @@ const CreateProfileScreen = ({ navigation, route }) => {
       [docType]: false
     }))
     
-    // Clear existing document if it was from API
-    setExistingDocs(prev => ({
-      ...prev,
-      [docType]: null
-    }))
+    // If in edit mode and document exists, mark it for removal
+    if (isEditMode && existingDocs[docType]) {
+      setRemovedDocs(prev => ({
+        ...prev,
+        [docType]: true
+      }))
+      // Clear existing document URL (but keep the removed flag)
+      setExistingDocs(prev => ({
+        ...prev,
+        [docType]: null
+      }))
+    } else {
+      // Clear existing document if it was from API
+      setExistingDocs(prev => ({
+        ...prev,
+        [docType]: null
+      }))
+    }
     
     console.log(`Document ${docType} removed - all states cleared`)
     
@@ -1747,6 +1786,35 @@ const CreateProfileScreen = ({ navigation, route }) => {
           name: selectedImages.companyId.fileName || 'company_id.jpg'
         })
         console.log('Added Company ID document to FormData')
+      }
+      
+      // Add remove flags and blank values for documents marked for removal (only in edit mode)
+      if (isEditMode) {
+        // For PAN, Aadhar, GST: send remove flag + blank value
+        if (removedDocs.aadharCard) {
+          profileData.append('removeAadhar', 'true')
+          profileData.append('aadhar', '')
+          console.log('Added removeAadhar flag and blank aadhar value to FormData')
+        }
+        if (removedDocs.panCard) {
+          profileData.append('removePan', 'true')
+          profileData.append('pan', '')
+          console.log('Added removePan flag and blank pan value to FormData')
+        }
+        if (removedDocs.gstCertificate) {
+          profileData.append('removeGst', 'true')
+          profileData.append('gst', '')
+          console.log('Added removeGst flag and blank gst value to FormData')
+        }
+        // For broker licence and Company ID: send only blank value (no remove flag)
+        if (removedDocs.brokerLicense) {
+          profileData.append('brokerLicense', '')
+          console.log('Added blank brokerLicense value to FormData')
+        }
+        if (removedDocs.companyId) {
+          profileData.append('companyId', '')
+          console.log('Added blank companyId value to FormData')
+        }
       }
       
       // Debug: Log the selected images being sent
@@ -2496,7 +2564,7 @@ const CreateProfileScreen = ({ navigation, route }) => {
                       <MaterialIcons name="cloud-upload" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
-                ) : existingDoc ? (
+                ) : existingDoc && !removedDocs[doc.key] ? (
                   <View style={styles.documentImageWrapper}>
                     {isExistingImage ? (
                       <SafeImage 
@@ -2524,10 +2592,19 @@ const CreateProfileScreen = ({ navigation, route }) => {
                       style={styles.editButton}
                       onPress={(e) => {
                         e.stopPropagation?.()
-                        handleViewDocument(doc.key)
+                        // In edit mode, show remove button (cross), otherwise show upload button
+                        if (isEditMode) {
+                          handleRemoveDocument(doc.key)
+                        } else {
+                          handleViewDocument(doc.key)
+                        }
                       }}
                     >
-                      <MaterialIcons name="cloud-upload" size={16} color="#FFFFFF" />
+                      <MaterialIcons 
+                        name={isEditMode ? "close" : "cloud-upload"} 
+                        size={16} 
+                        color="#FFFFFF" 
+                      />
                     </TouchableOpacity>
                   </View>
                 ) : (
