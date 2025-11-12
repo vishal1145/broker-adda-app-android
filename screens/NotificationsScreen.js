@@ -107,7 +107,8 @@ const NotificationsScreen = ({ navigation }) => {
   const [countsByType, setCountsByType] = useState({
     lead: { total: 0, unread: 0 },
     property: { total: 0, unread: 0 },
-    transfer: { total: 0, unread: 0 }
+    transfer: { total: 0, unread: 0 },
+    approval: { total: 0, unread: 0 }
   })
 
   // Type filter options
@@ -115,6 +116,8 @@ const NotificationsScreen = ({ navigation }) => {
     { key: 'all', label: 'All Notifications' },
     { key: 'lead', label: 'Lead' },
     { key: 'property', label: 'Property' },
+    { key: 'approval', label: 'Approval' },
+    { key: 'transfer', label: 'Transfer' },
     { key: 'broker', label: 'Broker' }
   ]
 
@@ -196,8 +199,10 @@ const NotificationsScreen = ({ navigation }) => {
             // Determine icon based on type
             let icon = 'notifications'
             if (notificationType === 'property') icon = 'home'
-            else if (notificationType === 'lead' || notificationType === 'approval') icon = 'trending-up'
+            else if (notificationType === 'lead') icon = 'trending-up'
+            else if (notificationType === 'approval') icon = 'check-circle'
             else if (notificationType === 'transfer') icon = 'swap-horiz'
+            else if (notificationType === 'broker') icon = 'person'
             else if (notificationType.includes('payment')) icon = 'attach-money'
             else if (notificationType.includes('message')) icon = 'chat-bubble-outline'
             else if (notificationType.includes('system')) icon = 'build'
@@ -222,7 +227,8 @@ const NotificationsScreen = ({ navigation }) => {
             setCountsByType({
               lead: response.data.countsByType.lead || { total: 0, unread: 0 },
               property: response.data.countsByType.property || { total: 0, unread: 0 },
-              transfer: response.data.countsByType.transfer || { total: 0, unread: 0 }
+              transfer: response.data.countsByType.transfer || { total: 0, unread: 0 },
+              approval: response.data.countsByType.approval || { total: 0, unread: 0 }
             })
           }
         }
@@ -344,7 +350,9 @@ const NotificationsScreen = ({ navigation }) => {
     switch (type) {
       case 'lead': return 'trending-up'
       case 'property': return 'home'
+      case 'approval': return 'check-circle'
       case 'transfer': return 'swap-horiz'
+      case 'broker': return 'person'
       case 'payment': return 'attach-money'
       case 'message': return 'chat-bubble-outline'
       case 'system': return 'build'
@@ -424,7 +432,7 @@ const NotificationsScreen = ({ navigation }) => {
         contentContainerStyle={[styles.scrollViewContent, { paddingBottom: 20 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Overview - three cards */}
+        {/* Stats Overview - four cards */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, styles.statCardGreen]}> 
@@ -446,9 +454,18 @@ const NotificationsScreen = ({ navigation }) => {
                 <Text style={styles.statTitle}>Property Updates</Text>
               </View>
             </View>
-          </View>
-          <View style={styles.transferCardContainer}>
-            <View style={[styles.statCard, styles.statCardBlue, styles.statCardFullWidth]}>
+
+            <View style={[styles.statCard, styles.statCardPurple]}>
+              <View style={styles.statCardContent}>
+                <View style={styles.statTopRow}>
+                  <MaterialIcons name="check-circle" size={22} color="#FFFFFF" />
+                  <Text style={styles.statCount}>{countsByType.approval?.total || 0}</Text>
+                </View>
+                <Text style={styles.statTitle}>Approval Updates</Text>
+              </View>
+            </View>
+
+            <View style={[styles.statCard, styles.statCardBlue]}>
               <View style={styles.statCardContent}>
                 <View style={styles.statTopRow}>
                   <MaterialIcons name="swap-horiz" size={22} color="#FFFFFF" />
@@ -692,9 +709,6 @@ const styles = StyleSheet.create({
   statCardFullWidth: {
     width: width - 40,
   },
-  transferCardContainer: {
-    marginTop: 12,
-  },
   statCardGreen: {
     backgroundColor: '#34D399',
   },
@@ -703,6 +717,9 @@ const styles = StyleSheet.create({
   },
   statCardBlue: {
     backgroundColor: '#3B82F6',
+  },
+  statCardPurple: {
+    backgroundColor: '#A855F7',
   },
   statCardContent: {
     padding: 16,

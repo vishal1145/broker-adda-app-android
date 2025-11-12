@@ -76,6 +76,16 @@ const PriceSlider = ({ value, onValueChange, min = 0, max = 100000000, step = 10
   )
 }
 
+// Helper function to handle image URLs - convert HTTP to HTTPS for APK builds
+const getSecureImageUrl = (url) => {
+  if (!url) return null
+  // Convert HTTP to HTTPS for better compatibility with APK builds
+  if (url.startsWith('http://')) {
+    return url.replace('http://', 'https://')
+  }
+  return url
+}
+
 const CreatePropertyScreen = ({ navigation, route }) => {
   const { property: editProperty } = route.params || {}
   const isEditMode = !!editProperty
@@ -351,7 +361,19 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         nearbyAmenities: editProperty.nearbyAmenities || [],
         features: editProperty.features || [],
         locationBenefits: editProperty.locationBenefits || [],
-        images: editProperty.images || [],
+        images: (editProperty.images || []).filter(img => 
+          img && typeof img === 'string' && img.trim() !== '' &&
+          (img.trim().startsWith('http://') || 
+           img.trim().startsWith('https://') || 
+           img.trim().startsWith('file://'))
+        ).map(img => {
+          // Convert HTTP to HTTPS for APK builds when loading
+          const trimmedImg = img.trim()
+          if (trimmedImg.startsWith('http://')) {
+            return getSecureImageUrl(trimmedImg) || trimmedImg
+          }
+          return trimmedImg
+        }),
         videos: (editProperty.videos || []).filter(video => 
           video && typeof video === 'string' && video.trim() !== '' &&
           (video.trim().startsWith('http://') || 
@@ -1041,40 +1063,53 @@ const CreatePropertyScreen = ({ navigation, route }) => {
         }
       })
       
-      // Images - handle file uploads
-      formData.images.forEach((imageUri, index) => {
-        if (imageUri && imageUri.startsWith('file://')) {
-          // Local file URI - append as file object
-          const fileObject = {
-            uri: imageUri,
-            type: 'image/jpeg',
-            name: `property_image_${index}.jpg`
+      // Images - handle file uploads and existing URLs
+      // Send all images (both new file:// and existing http:// URLs) so API knows which ones to keep
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach((imageUri, index) => {
+          if (imageUri && imageUri.startsWith('file://')) {
+            // Local file URI - append as file object
+            const fileObject = {
+              uri: imageUri,
+              type: 'image/jpeg',
+              name: `property_image_${index}.jpg`
+            }
+            propertyFormData.append('images[]', fileObject)
+          } else if (imageUri && (imageUri.startsWith('http://') || imageUri.startsWith('https://'))) {
+            // HTTP/HTTPS URL - existing image from server, send URL to keep it
+            console.log('Including existing HTTP URL image:', imageUri)
+            propertyFormData.append('images[]', imageUri)
+          } else if (imageUri) {
+            // Other format - append as string
+            propertyFormData.append('images[]', imageUri)
           }
-          propertyFormData.append('images[]', fileObject)
-        } else if (imageUri && imageUri.startsWith('http')) {
-          // HTTP URL - skip, not a local file
-          console.log('Skipping HTTP URL image:', imageUri)
-        } else if (imageUri) {
-          // Other format - append as string
-          propertyFormData.append('images[]', imageUri)
-        }
-      })
+        })
+      } else {
+        // Explicitly send empty array to clear all images
+        propertyFormData.append('images[]', '')
+      }
       
-      // Videos - only send valid URIs
-      formData.videos.forEach(video => {
-        // Only append if video is a valid URI (http, https, or file://)
-        if (video && typeof video === 'string' && video.trim() !== '') {
-          const trimmedVideo = video.trim()
-          // Check if it's a valid URI (starts with http://, https://, or file://)
-          if (trimmedVideo.startsWith('http://') || 
-              trimmedVideo.startsWith('https://') || 
-              trimmedVideo.startsWith('file://')) {
-            propertyFormData.append('videos[]', trimmedVideo)
-          } else {
-            console.log('Skipping invalid video URI:', trimmedVideo)
+      // Videos - handle file uploads and existing URLs
+      // Send all videos (both new file:// and existing http:// URLs) so API knows which ones to keep
+      if (formData.videos && formData.videos.length > 0) {
+        formData.videos.forEach(video => {
+          // Only append if video is a valid URI (http, https, or file://)
+          if (video && typeof video === 'string' && video.trim() !== '') {
+            const trimmedVideo = video.trim()
+            // Check if it's a valid URI (starts with http://, https://, or file://)
+            if (trimmedVideo.startsWith('http://') || 
+                trimmedVideo.startsWith('https://') || 
+                trimmedVideo.startsWith('file://')) {
+              propertyFormData.append('videos[]', trimmedVideo)
+            } else {
+              console.log('Skipping invalid video URI:', trimmedVideo)
+            }
           }
-        }
-      })
+        })
+      } else {
+        // Explicitly send empty array to clear all videos
+        propertyFormData.append('videos[]', '')
+      }
       
       // Notes
       if (formData.notes) {
@@ -1808,13 +1843,38 @@ const CreatePropertyScreen = ({ navigation, route }) => {
                   contentContainerStyle={styles.imagePreviewScrollContent}
                 >
                   {formData.images.map((item, index) => {
-                    const imageUri = item.startsWith('file://') ? item : (item.startsWith('http') ? item : `file://${item}`)
+                    if (!item || typeof item !== 'string' || item.trim() === '') {
+                      return null
+                    }
+                    
+                    let imageUri = item.trim()
+                    
+                    // Handle different URI formats
+                    if (imageUri.startsWith('file://')) {
+                      // Local file - use as is
+                      imageUri = imageUri
+                    } else if (imageUri.startsWith('http://') || imageUri.startsWith('https://')) {
+                      // HTTP/HTTPS URL - convert to secure URL for APK builds
+                      imageUri = getSecureImageUrl(imageUri) || imageUri
+                    } else {
+                      // Assume it's a local file path
+                      imageUri = `file://${imageUri}`
+                    }
+                    
                     return (
-                      <View key={index} style={styles.imagePreviewItem}>
+                      <View key={`image-${index}-${item}`} style={styles.imagePreviewItem}>
                         <Image 
                           source={{ uri: imageUri }} 
                           style={styles.imagePreview}
                           resizeMode="cover"
+                          onError={(error) => {
+                            console.log('Image load error:', error.nativeEvent.error)
+                            console.log('Failed image URI:', imageUri)
+                            console.log('Original item:', item)
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully:', imageUri)
+                          }}
                         />
                         <TouchableOpacity 
                           style={styles.imageRemoveButton}

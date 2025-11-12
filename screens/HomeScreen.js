@@ -228,6 +228,8 @@ const HomeScreen = ({ navigation }) => {
           
           setDashboardCards(prev => ({
             ...prev,
+            closedLeads: metrics.closedLeads || 0,
+            closedLeadsChange: metrics.closedLeadsPercentage || 0,
             totalLeads: metrics.totalLeads || 0,
             totalLeadsChange: metrics.totalLeadsPercentageChange || 0,
             propertiesListed: metrics.totalProperties || 0,
@@ -411,7 +413,8 @@ const HomeScreen = ({ navigation }) => {
           // Get last 6 months for display
           const allMonths = response.data.map(item => ({
             month: item.monthName || item.month,
-            leads: item.count || 0
+            leads: item.count || 0,
+            closedCount: item.closedCount || 0
           }))
           
           // Get last 6 months
@@ -546,6 +549,8 @@ const HomeScreen = ({ navigation }) => {
   
   // Dashboard cards data matching the image
   const [dashboardCards, setDashboardCards] = useState({
+    closedLeads: 0,
+    closedLeadsChange: 0,
     totalLeads: 0,
     totalLeadsChange: 0,
     propertiesListed: 0,
@@ -566,12 +571,12 @@ const HomeScreen = ({ navigation }) => {
 
   // Charts data
   const [leadsByMonthData, setLeadsByMonthData] = useState([
-    { month: 'Jan', leads: 0 },
-    { month: 'Feb', leads: 0 },
-    { month: 'Mar', leads: 0 },
-    { month: 'Apr', leads: 0 },
-    { month: 'May', leads: 0 },
-    { month: 'Jun', leads: 0 }
+    { month: 'Jan', leads: 0, closedCount: 0 },
+    { month: 'Feb', leads: 0, closedCount: 0 },
+    { month: 'Mar', leads: 0, closedCount: 0 },
+    { month: 'Apr', leads: 0, closedCount: 0 },
+    { month: 'May', leads: 0, closedCount: 0 },
+    { month: 'Jun', leads: 0, closedCount: 0 }
   ])
 
   // Properties by month data
@@ -789,14 +794,16 @@ const HomeScreen = ({ navigation }) => {
 
   // Bar Chart Component - Leads by Month
   const BarChart = ({ data, width: chartWidth = width - 80, height = 220 }) => {
-    // Calculate max value from data, but ensure minimum for better visualization
-    const maxLeads = Math.max(...data.map(item => item.leads || 0), 0)
+    // Calculate max value from both leads and closedCount, but ensure minimum for better visualization
+    const maxLeads = Math.max(...data.map(item => Math.max(item.leads || 0, item.closedCount || 0)), 0)
     const maxValue = Math.max(maxLeads * 1.2, 20) // Add 20% padding, minimum 20
-    const chartHeight = height - 60
+    const chartHeight = height - 80 // More space for legend
     const availableWidth = chartWidth - 60 // Leave space for Y-axis labels
-    const gap = 8 // Gap between bars
+    const gap = 8 // Gap between month groups
+    const barGap = 4 // Gap between two bars in a group
     const totalGaps = (data.length - 1) * gap
-    const barWidth = (availableWidth - totalGaps) / data.length
+    const groupWidth = (availableWidth - totalGaps) / data.length
+    const barWidth = (groupWidth - barGap) / 2 // Two bars per group
     const xAxisY = chartHeight + 20
 
     // Generate Y-axis labels dynamically
@@ -837,39 +844,72 @@ const HomeScreen = ({ navigation }) => {
             )
           })}
 
-          {/* Bars */}
+          {/* Bars - Two bars per month */}
           {data.map((item, index) => {
-            const barHeight = (item.leads / maxValue) * chartHeight
-            const x = 40 + index * (barWidth + gap)
-            const y = chartHeight - barHeight + 20
+            const groupX = 40 + index * (groupWidth + gap)
+            
+            // Total leads bar (blue)
+            const totalLeadsHeight = (item.leads / maxValue) * chartHeight
+            const totalLeadsY = chartHeight - totalLeadsHeight + 20
+            const totalLeadsX = groupX
+            
+            // Closed leads bar (red)
+            const closedCountHeight = (item.closedCount / maxValue) * chartHeight
+            const closedCountY = chartHeight - closedCountHeight + 20
+            const closedCountX = groupX + barWidth + barGap
 
             return (
               <G key={index}>
+                {/* Total Leads Bar (Blue) */}
                 <Rect
-                  x={x}
-                  y={y}
+                  x={totalLeadsX}
+                  y={totalLeadsY}
                   width={barWidth}
-                  height={barHeight}
+                  height={totalLeadsHeight}
                   fill="#3B82F6"
                   rx={4}
                 />
-                <SvgText
-                  x={x + barWidth / 2}
-                  y={y - 5}
-                  fontSize="11"
-                  fill="#1F2937"
-                  textAnchor="middle"
-                  fontWeight="600"
-                >
-                  {item.leads}
-                </SvgText>
+                {item.leads > 0 && (
+                  <SvgText
+                    x={totalLeadsX + barWidth / 2}
+                    y={totalLeadsY - 5}
+                    fontSize="10"
+                    fill="#1F2937"
+                    textAnchor="middle"
+                    fontWeight="600"
+                  >
+                    {item.leads}
+                  </SvgText>
+                )}
+                
+                {/* Closed Count Bar (Red) */}
+                <Rect
+                  x={closedCountX}
+                  y={closedCountY}
+                  width={barWidth}
+                  height={closedCountHeight}
+                  fill="#EF4444"
+                  rx={4}
+                />
+                {item.closedCount > 0 && (
+                  <SvgText
+                    x={closedCountX + barWidth / 2}
+                    y={closedCountY - 5}
+                    fontSize="10"
+                    fill="#1F2937"
+                    textAnchor="middle"
+                    fontWeight="600"
+                  >
+                    {item.closedCount}
+                  </SvgText>
+                )}
               </G>
             )
           })}
 
           {/* X-axis labels */}
           {data.map((item, index) => {
-            const x = 40 + index * (barWidth + gap) + barWidth / 2
+            const x = 40 + index * (groupWidth + gap) + groupWidth / 2
             return (
               <SvgText
                 key={index}
@@ -884,6 +924,18 @@ const HomeScreen = ({ navigation }) => {
             )
           })}
         </Svg>
+        
+        {/* Legend */}
+        <View style={styles.barChartLegend}>
+          <View style={styles.barChartLegendItem}>
+            <View style={[styles.barChartLegendColor, { backgroundColor: '#3B82F6' }]} />
+            <Text style={styles.barChartLegendText}>Total Leads</Text>
+          </View>
+          <View style={styles.barChartLegendItem}>
+            <View style={[styles.barChartLegendColor, { backgroundColor: '#EF4444' }]} />
+            <Text style={styles.barChartLegendText}>Closed Leads</Text>
+          </View>
+        </View>
       </View>
     )
   }
@@ -1380,7 +1432,7 @@ const HomeScreen = ({ navigation }) => {
       >
         {/* Dashboard Cards - Matching LeadsScreen Style */}
         <View style={styles.statsSection}>
-          <View style={styles.statsGrid}>
+          <View style={[styles.statsGrid, styles.statsGridFirstRow]}>
             <DashboardCard
               title="Total Leads"
               value={dashboardCards.totalLeads}
@@ -1389,20 +1441,26 @@ const HomeScreen = ({ navigation }) => {
               percentageChange={dashboardCards.totalLeadsChange}
             />
             <DashboardCard
+              title="Closed Leads"
+              value={dashboardCards.closedLeads}
+              icon="check-circle"
+              colorClass="statCardRed"
+              percentageChange={dashboardCards.closedLeadsChange}
+            />
+          </View>
+          <View style={styles.statsGrid}>
+            <DashboardCard
               title="Properties Listed"
               value={dashboardCards.propertiesListed}
               icon="home"
               colorClass="statCardBlue"
               percentageChange={dashboardCards.propertiesListedChange}
             />
-          </View>
-          <View style={styles.connectionsCardContainer}>
             <DashboardCard
               title="Connections"
               value={dashboardCards.connections}
               icon="chat"
               colorClass="statCardPurple"
-              fullWidth={true}
               percentageChange={dashboardCards.connectionsChange}
             />
           </View>
@@ -1788,6 +1846,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
   },
+  statsGridFirstRow: {
+    marginBottom: 12,
+  },
   statCard: {
     width: (width - 52) / 2,
     borderRadius: 12,
@@ -1816,6 +1877,9 @@ const styles = StyleSheet.create({
   },
   statCardPurple: {
     backgroundColor: '#A78BFA',
+  },
+  statCardRed: {
+    backgroundColor: '#EF4444',
   },
   statCardContent: {
     padding: 16,
@@ -2114,6 +2178,28 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  barChartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 20,
+  },
+  barChartLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barChartLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+  },
+  barChartLegendText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#6B7280',
   },
   donutChartWrapper: {
     alignItems: 'center',
