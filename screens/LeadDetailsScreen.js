@@ -675,6 +675,11 @@ const LeadDetailsScreen = ({ navigation, route }) => {
 
                 // Determine broker IDs based on current user
                 let fromBrokerId, toBrokerId
+                const shareType = transfer.shareType || 'individual'
+                // Extract region ID - handle both string ID and object with _id
+                const regionId = shareType === 'region' 
+                  ? (typeof transfer.region === 'string' ? transfer.region : transfer.region?._id || transfer.region)
+                  : null
                 
                 if (transfer.fromBroker?._id === currentUserId) {
                   // Current user is the sender
@@ -690,9 +695,9 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                   toBrokerId = transfer.toBroker?._id || null
                 }
 
-                console.log('Deleting transfer with broker IDs:', { fromBrokerId, toBrokerId })
+                console.log('Deleting transfer with broker IDs:', { fromBrokerId, toBrokerId, regionId, shareType })
 
-                const response = await leadsAPI.deleteTransfer(leadId, transfer._id, fromBrokerId, toBrokerId, token)
+                const response = await leadsAPI.deleteTransfer(leadId, transfer._id, fromBrokerId, toBrokerId, token, regionId)
                 
                 if (response.success) {
                   Snackbar.showSuccess('Success', response.message || 'Transfer deleted successfully')
@@ -713,17 +718,6 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     } catch (error) {
       console.error('Error showing delete confirmation:', error)
     }
-  }
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
-        <View style={styles.container}>
-          <LeadDetailsScreenLoader />
-        </View>
-      </SafeAreaView>
-    )
   }
 
   if (error) {
@@ -747,7 +741,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
     )
   }
 
-  if (!leadData) {
+  if (!leadData && !isLoading) {
     return (
       <SafeAreaView style={styles.wrapper} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
@@ -797,19 +791,22 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           </View>
         </View>
       
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => fetchLeadDetails(true)}
-            colors={['#0D542BFF']}
-            tintColor="#0D542BFF"
-          />
-        }
-      >
+      {isLoading ? (
+        <LeadDetailsScreenLoader />
+      ) : (
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={() => fetchLeadDetails(true)}
+              colors={['#0D542BFF']}
+              tintColor="#0D542BFF"
+            />
+          }
+        >
         {/* Lead Information Card - Matching LeadsScreen style */}
         <View style={styles.leadInfoCard}>
           <View style={styles.leadInfoHeader}>
@@ -982,7 +979,7 @@ const LeadDetailsScreen = ({ navigation, route }) => {
                           </Text>
                         )}
                       </View>
-                      {!isTransferredLead && (
+                      {!isTransferredLead && shareType !== 'all' && (
                         <TouchableOpacity 
                           style={styles.shareHistoryDeleteButton}
                           onPress={() => handleDeleteTransfer(transfer)}
@@ -1002,7 +999,8 @@ const LeadDetailsScreen = ({ navigation, route }) => {
           </View>
         </View>
 
-      </ScrollView>
+        </ScrollView>
+      )}
       </View>
 
       {/* Edit Lead Modal */}

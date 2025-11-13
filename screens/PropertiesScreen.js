@@ -629,18 +629,6 @@ const PropertiesScreen = ({ navigation }) => {
     )
   }
 
-  // Show loading state
-  if (loading && propertiesData.length === 0) {
-    return (
-      <SafeAreaView style={styles.wrapper} edges={['top']}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
-        <View style={styles.container}>
-          <PropertiesScreenLoader />
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   return (
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
@@ -701,18 +689,21 @@ const PropertiesScreen = ({ navigation }) => {
           </View>
         </View>
       
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#0D542BFF"
-          />
-        }
-      >
+      {loading && propertiesData.length === 0 ? (
+        <PropertiesScreenLoader />
+      ) : (
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#0D542BFF"
+            />
+          }
+        >
         {/* Stats Overview */}
         <View style={styles.statsSection}>
           <View style={styles.statsGrid}>
@@ -837,7 +828,8 @@ const PropertiesScreen = ({ navigation }) => {
           />
           )}
         </View>
-      </ScrollView>
+        </ScrollView>
+      )}
       </View>
     </SafeAreaView>
   )

@@ -634,18 +634,6 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
     return propertyBrokerId?.toString() === currentBrokerId?.toString()
   }
 
-  // Show loading state
-  if (isLoading || !property) {
-    return (
-      <SafeAreaView style={styles.wrapper} edges={['top']}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
-        <View style={styles.container}>
-          <PropertyDetailsScreenLoader />
-        </View>
-      </SafeAreaView>
-    )
-  }
-
   return (
     <SafeAreaView style={styles.wrapper} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#0D542BFF" />
@@ -679,12 +667,15 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
         </View>
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-      >
+      {isLoading || !property ? (
+        <PropertyDetailsScreenLoader />
+      ) : (
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Property Images & Videos */}
         <View style={styles.imageSection}>
           {/* Fixed Main Image/Video */}
@@ -1143,10 +1134,11 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
             )}
           </View>
         </View>
-      </ScrollView>
+        </ScrollView>
+      )}
 
       {/* Floating Action Buttons - Only show for broker's own properties */}
-      {isPropertyOwner() && (
+      {!isLoading && property && isPropertyOwner() && (
         <View style={[styles.floatingActionButtons, { bottom: 20 + insets.bottom }]}>
           <TouchableOpacity 
             style={styles.floatingDeleteButton} 

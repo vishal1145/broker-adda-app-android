@@ -94,8 +94,6 @@ const ShareLeadScreen = ({ navigation, route }) => {
         selectedRegion: selectedRegion._id,
         selectedRegionName: selectedRegion.name
       }))
-      // Fetch brokers for this region
-      fetchBrokersByRegion(selectedRegion._id)
     }
   }
 
@@ -333,10 +331,8 @@ const ShareLeadScreen = ({ navigation, route }) => {
       fetchRegions()
       if (shareData.shareType === 'selected') {
         fetchAllBrokers()
-      } else if (shareData.shareType === 'region' && shareData.selectedRegion) {
-        fetchBrokersByRegion(shareData.selectedRegion._id)
       }
-    }, [shareData.shareType, shareData.selectedRegion])
+    }, [shareData.shareType])
   )
 
   // Keyboard event listeners

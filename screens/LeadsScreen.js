@@ -1341,232 +1341,234 @@ const LeadsScreen = ({ navigation }) => {
           </View>
         </View>
       
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={async () => {
-              const statusOption = statusOptions.find(option => option.key === selectedStatus)
-              const apiStatus = statusOption ? statusOption.apiValue : 'all'
-              
-              // Check if advanced filters are applied and use them
-              const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
-                                        filterData.requirement !== 'All Requirements' || 
-                                        filterData.propertyType !== 'All Property Types' || 
-                                        filterData.budgetMax !== 0
-              
-              await Promise.all([
-                fetchMetrics(),
-                hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(true, searchQuery, apiStatus)
-              ])
-            }}
-            colors={['#0D542BFF']}
-            tintColor="#0D542BFF"
-          />
-        }
-      >
+      {isLoading ? (
+        <LeadsScreenLoader />
+      ) : (
+        <ScrollView 
+          style={styles.scrollView} 
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={async () => {
+                const statusOption = statusOptions.find(option => option.key === selectedStatus)
+                const apiStatus = statusOption ? statusOption.apiValue : 'all'
+                
+                // Check if advanced filters are applied and use them
+                const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                          filterData.requirement !== 'All Requirements' || 
+                                          filterData.propertyType !== 'All Property Types' || 
+                                          filterData.budgetMax !== 0
+                
+                await Promise.all([
+                  fetchMetrics(),
+                  hasAdvancedFilters ? applyFiltersWithStatus(apiStatus) : fetchLeads(true, searchQuery, apiStatus)
+                ])
+              }}
+              colors={['#0D542BFF']}
+              tintColor="#0D542BFF"
+            />
+          }
+        >
 
-        {/* Stats Overview */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsGrid}>
-            <View style={[styles.statCard, styles.statCardGreen]}>
-              <View style={styles.statCardContent}>
-                <View style={styles.statTopRow}>
-                  <MaterialIcons name="people" size={22} color="#FFFFFF" />
-                  <Text 
-                    style={styles.statCount}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.6}
-                  >
-                    {isLoadingMetrics ? '...' : (metrics.totalLeads || 0).toLocaleString()}
-                  </Text>
+          {/* Stats Overview */}
+          <View style={styles.statsSection}>
+            <View style={styles.statsGrid}>
+              <View style={[styles.statCard, styles.statCardGreen]}>
+                <View style={styles.statCardContent}>
+                  <View style={styles.statTopRow}>
+                    <MaterialIcons name="people" size={22} color="#FFFFFF" />
+                    <Text 
+                      style={styles.statCount}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.6}
+                    >
+                      {isLoadingMetrics ? '...' : (metrics.totalLeads || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                  <Text style={styles.statTitle}>Total Leads</Text>
                 </View>
-                <Text style={styles.statTitle}>Total Leads</Text>
+              </View>
+              
+              <View style={[styles.statCard, styles.statCardBlue]}>
+                <View style={styles.statCardContent}>
+                  <View style={styles.statTopRow}>
+                    <MaterialIcons name="share" size={22} color="#FFFFFF" />
+                    <Text 
+                      style={styles.statCount}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.6}
+                    >
+                      {isLoadingMetrics ? '...' : (metrics.transfersToMe || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                  <Text style={styles.statTitle}>Share with me</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.shareByMeCardContainer}>
+              <View style={[styles.statCard, styles.statCardYellow, styles.statCardFullWidth]}>
+                <View style={styles.statCardContent}>
+                  <View style={styles.statTopRow}>
+                    <MaterialIcons name="send" size={22} color="#FFFFFF" />
+                    <Text 
+                      style={styles.statCount}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.6}
+                    >
+                      {isLoadingMetrics ? '...' : (metrics.transfersByMe || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                  <Text style={styles.statTitle}>Share by me</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search leads..."
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+                  <MaterialIcons name="clear" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
+              )}
+            </View>
+            {isSearching && (
+              <View style={styles.searchLoadingContainer}>
+                <ActivityIndicator size="small" color="#0D542BFF" />
+                <Text style={styles.searchLoadingText}>Searching...</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Status Filter Dropdown */}
+          <View style={styles.filterSection}>
+            {/* All Leads Dropdown - Full Width */}
+            <View style={styles.dropdownContainerFullWidth}>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowStatusModal(true)}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
+                </Text>
+                <MaterialIcons 
+                  name="keyboard-arrow-down" 
+                  size={24} 
+                  color="#6B7280" 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Advanced Filter Button - Full Width */}
+            <View style={styles.filterButtonRow}>
+              <TouchableOpacity
+                style={styles.advancedFilterButtonFullWidth}
+                onPress={() => setShowAdvancedFilter(true)}
+              >
+                <MaterialIcons name="tune" size={18} color="#6B7280" />
+                <Text style={styles.advancedFilterText} numberOfLines={1} ellipsizeMode="tail">Advanced</Text>
+              </TouchableOpacity>
+            </View>
+            
+          </View>
+
+          {/* Leads List */}
+          <View style={styles.leadsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {showTransferredLeads ? 'Transferred Leads' : 'Leads'}
+              </Text>
+              <View style={styles.toggleContainer}>
+                <Text style={styles.toggleLabel}>All</Text>
+                <TouchableOpacity 
+                  style={[styles.toggleButton, showTransferredLeads && styles.toggleButtonActive]}
+                  onPress={() => handleToggleChange(!showTransferredLeads)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.toggleThumb, showTransferredLeads && styles.toggleThumbActive]} />
+                </TouchableOpacity>
+                <Text style={styles.toggleLabel}>Transferred Me</Text>
               </View>
             </View>
             
-            <View style={[styles.statCard, styles.statCardBlue]}>
-              <View style={styles.statCardContent}>
-                <View style={styles.statTopRow}>
-                  <MaterialIcons name="share" size={22} color="#FFFFFF" />
-                  <Text 
-                    style={styles.statCount}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.6}
-                  >
-                    {isLoadingMetrics ? '...' : (metrics.transfersToMe || 0).toLocaleString()}
-                  </Text>
-                </View>
-                <Text style={styles.statTitle}>Share with me</Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.shareByMeCardContainer}>
-            <View style={[styles.statCard, styles.statCardYellow, styles.statCardFullWidth]}>
-              <View style={styles.statCardContent}>
-                <View style={styles.statTopRow}>
-                  <MaterialIcons name="send" size={22} color="#FFFFFF" />
-                  <Text 
-                    style={styles.statCount}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.6}
-                  >
-                    {isLoadingMetrics ? '...' : (metrics.transfersByMe || 0).toLocaleString()}
-                  </Text>
-                </View>
-                <Text style={styles.statTitle}>Share by me</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search leads..."
-              placeholderTextColor="#9CA3AF"
-              value={searchQuery}
-              onChangeText={handleSearchChange}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-                <MaterialIcons name="clear" size={20} color="#9CA3AF" />
+            {/* Add Lead Button */}
+            <View style={styles.addLeadButtonContainer}>
+              <TouchableOpacity 
+                style={styles.addLeadButtonPlaceholder}
+                onPress={() => navigation.navigate('CreateLead')}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="add" size={32} color="#6B7280" />
+                <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
               </TouchableOpacity>
-            )}
-          </View>
-          {isSearching && (
-            <View style={styles.searchLoadingContainer}>
-              <ActivityIndicator size="small" color="#0D542BFF" />
-              <Text style={styles.searchLoadingText}>Searching...</Text>
             </View>
-          )}
-        </View>
-
-        {/* Status Filter Dropdown */}
-        <View style={styles.filterSection}>
-          {/* All Leads Dropdown - Full Width */}
-          <View style={styles.dropdownContainerFullWidth}>
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => setShowStatusModal(true)}
-            >
-              <Text style={styles.dropdownButtonText}>
-                {statusOptions.find(option => option.key === selectedStatus)?.label || 'All Leads'}
-              </Text>
-              <MaterialIcons 
-                name="keyboard-arrow-down" 
-                size={24} 
-                color="#6B7280" 
+            
+            {error ? (
+              <View style={styles.errorContainer}>
+                <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+                <Text style={styles.errorTitle}>Failed to Load Leads</Text>
+                <Text style={styles.errorMessage}>{error}</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={() => {
+                    const statusOption = statusOptions.find(option => option.key === selectedStatus)
+                    const apiStatus = statusOption ? statusOption.apiValue : 'all'
+                    
+                    // Check if advanced filters are applied and use them
+                    const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
+                                              filterData.requirement !== 'All Requirements' || 
+                                              filterData.propertyType !== 'All Property Types' || 
+                                              filterData.budgetMax !== 0
+                    
+                    if (hasAdvancedFilters) {
+                      applyFiltersWithStatus(apiStatus)
+                    } else {
+                      fetchLeads(false, searchQuery, apiStatus)
+                    }
+                  }}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : filteredLeads.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <MaterialIcons name="people" size={48} color="#9CA3AF" />
+                <Text style={styles.emptyTitle}>No Leads Found</Text>
+                <Text style={styles.emptyMessage}>
+                  {selectedStatus === 'all' 
+                    ? (showTransferredLeads 
+                        ? 'No transferred leads available at the moment' 
+                        : 'No leads available at the moment')
+                    : `No ${statusOptions.find(option => option.key === selectedStatus)?.label.toLowerCase() || 'leads'} found`}
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={filteredLeads}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => <LeadCard lead={item} navigation={navigation} isTransferredLead={showTransferredLeads} />}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={false}
               />
-            </TouchableOpacity>
-          </View>
+            )}
 
-          {/* Advanced Filter Button - Full Width */}
-          <View style={styles.filterButtonRow}>
-            <TouchableOpacity
-              style={styles.advancedFilterButtonFullWidth}
-              onPress={() => setShowAdvancedFilter(true)}
-            >
-              <MaterialIcons name="tune" size={18} color="#6B7280" />
-              <Text style={styles.advancedFilterText} numberOfLines={1} ellipsizeMode="tail">Advanced</Text>
-            </TouchableOpacity>
           </View>
-          
-        </View>
-
-        {/* Leads List */}
-        <View style={styles.leadsSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {showTransferredLeads ? 'Transferred Leads' : 'Leads'}
-            </Text>
-            <View style={styles.toggleContainer}>
-              <Text style={styles.toggleLabel}>All</Text>
-              <TouchableOpacity 
-                style={[styles.toggleButton, showTransferredLeads && styles.toggleButtonActive]}
-                onPress={() => handleToggleChange(!showTransferredLeads)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.toggleThumb, showTransferredLeads && styles.toggleThumbActive]} />
-              </TouchableOpacity>
-              <Text style={styles.toggleLabel}>Transferred Me</Text>
-            </View>
-          </View>
-          
-          {/* Add Lead Button */}
-          <View style={styles.addLeadButtonContainer}>
-            <TouchableOpacity 
-              style={styles.addLeadButtonPlaceholder}
-              onPress={() => navigation.navigate('CreateLead')}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="add" size={32} color="#6B7280" />
-              <Text style={styles.addLeadButtonPlaceholderText}>Add Lead</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {isLoading ? (
-            <LeadsScreenLoader />
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <MaterialIcons name="error-outline" size={48} color="#EF4444" />
-              <Text style={styles.errorTitle}>Failed to Load Leads</Text>
-              <Text style={styles.errorMessage}>{error}</Text>
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={() => {
-                  const statusOption = statusOptions.find(option => option.key === selectedStatus)
-                  const apiStatus = statusOption ? statusOption.apiValue : 'all'
-                  
-                  // Check if advanced filters are applied and use them
-                  const hasAdvancedFilters = filterData.regionName !== 'All Regions' || 
-                                            filterData.requirement !== 'All Requirements' || 
-                                            filterData.propertyType !== 'All Property Types' || 
-                                            filterData.budgetMax !== 0
-                  
-                  if (hasAdvancedFilters) {
-                    applyFiltersWithStatus(apiStatus)
-                  } else {
-                    fetchLeads(false, searchQuery, apiStatus)
-                  }
-                }}
-              >
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : filteredLeads.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <MaterialIcons name="people" size={48} color="#9CA3AF" />
-              <Text style={styles.emptyTitle}>No Leads Found</Text>
-              <Text style={styles.emptyMessage}>
-                {selectedStatus === 'all' 
-                  ? (showTransferredLeads 
-                      ? 'No transferred leads available at the moment' 
-                      : 'No leads available at the moment')
-                  : `No ${statusOptions.find(option => option.key === selectedStatus)?.label.toLowerCase() || 'leads'} found`}
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={filteredLeads}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => <LeadCard lead={item} navigation={navigation} isTransferredLead={showTransferredLeads} />}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={false}
-            />
-          )}
-
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
       </View>
 
       {/* Advanced Filter Modal */}

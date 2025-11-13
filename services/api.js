@@ -497,11 +497,19 @@ export const leadsAPI = {
   },
 
   // Delete transfer by ID
-  deleteTransfer: async (leadId, transferId, fromBrokerId, toBrokerId, token) => {
+  deleteTransfer: async (leadId, transferId, fromBrokerId, toBrokerId, token, regionId = null) => {
     try {
-      console.log('Deleting transfer:', leadId, transferId, fromBrokerId, toBrokerId);
+      console.log('Deleting transfer:', leadId, transferId, fromBrokerId, toBrokerId, regionId);
 
-      const url = `/api/leads/${leadId}/transfers/${toBrokerId}`;
+      // Use different endpoint for region shares
+      let url;
+      if (regionId) {
+        // For region shares: /api/leads/{leadId}/region-transfers/{regionId}
+        url = `/api/leads/${leadId}/region-transfers/${regionId}`;
+      } else {
+        // For individual shares: /api/leads/{leadId}/transfers/{toBrokerId}
+        url = `/api/leads/${leadId}/transfers/${toBrokerId}`;
+      }
 
       const response = await api.delete(url, {
         headers: {
