@@ -140,8 +140,13 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
   // Combine images and videos into a single media array
   const getMediaArray = () => {
     if (!property) return []
-    const images = (property.images || []).map(img => ({ type: 'image', url: img }))
-    const videos = (property.videos || []).map(vid => ({ type: 'video', url: vid }))
+    // Filter out empty strings, null, undefined, and whitespace-only values
+    const images = (property.images || [])
+      .filter(img => img && typeof img === 'string' && img.trim() !== '')
+      .map(img => ({ type: 'image', url: img }))
+    const videos = (property.videos || [])
+      .filter(vid => vid && typeof vid === 'string' && vid.trim() !== '')
+      .map(vid => ({ type: 'video', url: vid }))
     return [...images, ...videos]
   }
 
@@ -167,7 +172,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       subType: apiProperty.subType || '',
       status: apiProperty.status || 'Pending Approval', // Original status for editing
       statusDisplay: apiProperty.status?.toLowerCase().replace(' ', '_') || 'active', // Normalized status for display
-      images: apiProperty.images?.filter(img => img && img !== '') || [],
+      images: apiProperty.images?.filter(img => img && typeof img === 'string' && img.trim() !== '') || [],
       features: apiProperty.features || [],
       description: apiProperty.description || apiProperty.propertyDescription || '',
       propertyDescription: apiProperty.propertyDescription || apiProperty.description || '',
@@ -187,7 +192,7 @@ const PropertyDetailsScreen = ({ navigation, route }) => {
       possessionStatus: apiProperty.possessionStatus || '',
       propertyAgeYears: apiProperty.propertyAgeYears || 0,
       region: apiProperty.region || {},
-      videos: apiProperty.videos || [],
+      videos: apiProperty.videos?.filter(vid => vid && typeof vid === 'string' && vid.trim() !== '') || [],
       notes: apiProperty.notes || '',
       priceUnit: apiProperty.priceUnit || 'INR' // Include priceUnit for editing
     }

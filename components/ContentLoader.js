@@ -1054,18 +1054,6 @@ export const LeadDetailsScreenLoader = () => (
 // Property Details Screen Loader
 export const PropertyDetailsScreenLoader = () => (
   <View style={styles.container}>
-    {/* Header */}
-    <View style={styles.propertyDetailsHeader}>
-      <View style={styles.propertyDetailsHeaderContent}>
-        <SkeletonBox width={40} height={40} borderRadius={20} />
-        <View style={styles.propertyDetailsHeaderText}>
-          <SkeletonBox width={160} height={24} style={{ marginBottom: 4 }} />
-          <SkeletonBox width={200} height={16} />
-        </View>
-        <SkeletonBox width={40} height={40} borderRadius={20} />
-      </View>
-    </View>
-
     {/* Image Section */}
     <View style={styles.propertyDetailsImageSection}>
       <SkeletonBox width="100%" height={300} borderRadius={12} />
